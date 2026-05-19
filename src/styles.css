@@ -140,5 +140,35 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@theme inline {
+  --color-canvas: #f7f8fa;
+  --color-hairline: #e7eaef;
+  --color-accent-green: #16a34a;
+  --color-accent-green-hover: #15803d;
+}
+
+@layer components {
+  .input {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-hairline);
+    background: #fff;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-foreground);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .input::placeholder { color: #94a3b8; }
+  .input:focus {
+    outline: none;
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+  }
+  .shadow-card {
+    box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 1px 3px rgba(15,23,42,0.03);
   }
 }
