@@ -121,11 +121,27 @@ function VibeShotDashboard() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        throw new Error(`Worker responded ${res.status} ${res.statusText}`);
+      const rawBody = await res.text();
+      let parsedBody: any = null;
+      try {
+        parsedBody = rawBody ? JSON.parse(rawBody) : null;
+      } catch {
+        // not JSON
       }
 
-      const data: any = await res.json();
+      if (!res.ok) {
+        const detail =
+          (parsedBody &&
+            (parsedBody.error ||
+              parsedBody.message ||
+              parsedBody.detail ||
+              (typeof parsedBody === "string" ? parsedBody : null))) ||
+          rawBody ||
+          `${res.status} ${res.statusText}`;
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+
+      const data: any = parsedBody ?? {};
 
       const nextShots =
         normalizeShots(data?.shotlist ?? data?.shots ?? data?.shotList) ??
