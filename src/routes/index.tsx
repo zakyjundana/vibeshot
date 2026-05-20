@@ -69,10 +69,10 @@ function normalizeMoodboard(raw: unknown): string[] | null {
 }
 
 function VibeShotDashboard() {
-  const [workerUrl, setWorkerUrl] = useState(DEFAULT_WORKER_URL);
+  const workerUrl = DEFAULT_WORKER_URL;
   const [productName, setProductName] = useState("");
   const [usp, setUsp] = useState("");
-  const [trend, setTrend] = useState(TRENDS[0]);
+  const [trend, setTrend] = useState("");
   const [tone, setTone] = useState<Tone>("Comedic");
   const [shotCount, setShotCount] = useState(4);
   const [shots, setShots] = useState<Shot[]>(() => seedShots(4));
@@ -194,14 +194,6 @@ function VibeShotDashboard() {
           </p>
 
           <div className="mt-6 space-y-5">
-            <Field label="Worker URL">
-              <input
-                value={workerUrl}
-                onChange={(e) => setWorkerUrl(e.target.value)}
-                placeholder="https://your-worker.workers.dev/"
-                className="input"
-              />
-            </Field>
 
             <Field label="Product Name">
               <input
@@ -222,16 +214,14 @@ function VibeShotDashboard() {
               />
             </Field>
 
-            <Field label="TikTok Trend">
-              <select
+            <Field label="Trend">
+              <input
+                type="text"
                 value={trend}
                 onChange={(e) => setTrend(e.target.value)}
-                className="input appearance-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2364748b%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22/></svg>')] bg-[length:12px] bg-[right_0.85rem_center] bg-no-repeat pr-9"
-              >
-                {TRENDS.map((t) => (
-                  <option key={t}>{t}</option>
-                ))}
-              </select>
+                placeholder="Contoh: POV Storytime, ASMR Unboxing, atau tempel link video TikTok/Reels di sini"
+                className="input"
+              />
             </Field>
 
             <Field label="Content Tone">
