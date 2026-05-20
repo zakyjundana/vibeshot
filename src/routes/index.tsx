@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Plus, Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy } from "lucide-react";
 import { toast } from "sonner";
 
@@ -42,6 +42,54 @@ const TRENDS = [
 const TONES: Tone[] = ["Comedic", "Emotional", "Educational", "Dramatic"];
 
 const DEFAULT_WORKER_URL = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
+
+// MODIFIKASI KOMPONEN: SISTEM ANTREAN BERJEDA (STAGGERED LOADING)
+function SafeAIImage({ src, alt, className, index = 0 }: { src: string; alt: string; className: string; index?: number }) {
+  const [currentSrc, setCurrentSrc] = useState("");
+  const [retries, setRetries] = useState(0);
+
+  useEffect(() => {
+    // Kosongkan dulu setiap kali ada generate baru
+    setCurrentSrc("");
+    setRetries(0);
+
+    // Berikan jeda inisialisasi awal berdasarkan indeks agar tidak menembak bersamaan
+    const timer = setTimeout(() => {
+      setCurrentSrc(src);
+    }, index * 1200); // Gambar akan dimuat bergantian setiap jeda 1.2 detik
+
+    return () => clearTimeout(timer);
+  }, [src, index]);
+
+  const handleError = () => {
+    if (retries < 10) {
+      setTimeout(() => {
+        const separator = src.includes("?") ? "&" : "?";
+        // Tambahkan cache buster acak agar mencoba antrean ulang ke server
+        setCurrentSrc(`${src}${separator}retry=${retries}-${Date.now()}`);
+        setRetries((prev) => prev + 1);
+      }, 3000 + Math.random() * 2000); // Jika gagal, tunggu 3-5 detik baru antre lagi
+    }
+  };
+
+  if (!currentSrc) {
+    return (
+      <div className={`${className} flex flex-col items-center justify-center bg-slate-50 border border-dashed border-slate-200 text-[10px] text-slate-400 animate-pulse font-medium`}>
+        <span>Queued...</span>
+      </div>
+    );
+  }
+
+  return (
+    <img 
+      src={currentSrc} 
+      alt={alt} 
+      className={className} 
+      onError={handleError} 
+      loading="lazy"
+    />
+  );
+}
 
 const seedShots = (n: number): Shot[] =>
   Array.from({ length: n }, (_, i) => ({
@@ -164,7 +212,6 @@ function VibeShotDashboard() {
     }
   };
 
-  // FUNGSI SAKTI UNTUK COPY TABEL YANG COMPATIBLE LANGSUNG DENGAN EXCEL & GOOGLE SLIDES
   const handleCopyTable = async () => {
     if (shots.length === 0) {
       toast.error("Belum ada data untuk disalin.");
@@ -234,7 +281,6 @@ function VibeShotDashboard() {
       </header>
 
       <div className="grid min-h-[calc(100vh-49px)] grid-cols-1 lg:grid-cols-[440px_1fr]">
-        {/* LEFT — Input Panel */}
         <aside className="border-r border-hairline bg-white p-6 lg:sticky lg:top-[49px] lg:h-[calc(100vh-49px)] lg:overflow-y-auto">
           <h1 className="text-base font-semibold tracking-tight">Brief Inputs</h1>
           <p className="mt-1 text-xs text-muted-foreground">Output renders on the right in real-time.</p>
@@ -274,10 +320,8 @@ function VibeShotDashboard() {
           </div>
         </aside>
 
-        {/* RIGHT — Live Preview Board */}
         <main className="bg-canvas p-6 lg:p-10">
           <div className="mx-auto max-w-5xl">
-            {/* Header */}
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground"><FileText className="h-3.5 w-3.5" /> Content Plan</div>
@@ -288,13 +332,11 @@ function VibeShotDashboard() {
               </span>
             </div>
 
-            {/* Premise */}
             <section className="mt-6 rounded-xl border border-hairline bg-white p-5 shadow-card">
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Content Premise</h3>
               <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">{premise}</p>
             </section>
 
-            {/* Moodboard - MEMAKSA RASIO VIDEO TIKTOK 9:16 */}
             <section className="mt-6">
               <div className="flex items-end justify-between">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Visual Moodboard (Skala Vertikal 9:16)</h3>
@@ -303,18 +345,21 @@ function VibeShotDashboard() {
               <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
                 {moodboardTiles.map((src, i) => (
                   <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50 transition hover:bg-slate-100">
-                    {src ? <img src={src} alt={`Moodboard reference ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" /> : <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-slate-400"><ImageIcon className="h-5 w-5" /><span className="text-[10px] uppercase tracking-wider">Ref {i + 1}</span></div>}
+                    {src ? (
+                      // MENAMBAHKAN INDEKS ANTREAN UNTUK MOODBOARD (0, 1, 2, 3)
+                      <SafeAIImage src={src} alt={`Moodboard reference ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" index={i} />
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-slate-400"><ImageIcon className="h-5 w-5" /><span className="text-[10px] uppercase tracking-wider">Ref {i + 1}</span></div>
+                    )}
                   </div>
                 ))}
               </div>
             </section>
 
-            {/* Shotlist */}
             <section className="mt-6 overflow-hidden rounded-xl border border-hairline bg-white shadow-card">
               <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Interactive Shotlist</h3>
                 <div className="flex items-center gap-2">
-                  {/* TOMBOL COPY TABEL UNTUK EXCEL / SLIDES */}
                   <button onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 shadow-sm">
                     <Copy className="h-3.5 w-3.5" /> Copy for Excel/Slides
                   </button>
@@ -343,13 +388,14 @@ function VibeShotDashboard() {
                       <tr key={s.id} className="group border-b border-hairline last:border-0 hover:bg-slate-50/60">
                         <td className="px-4 py-2 align-top text-xs font-mono font-medium text-slate-400">{String(idx + 1).padStart(2, "0")}</td>
                         
-                        {/* VISUAL THUMBNAIL SKALA PAS DENGAN FITUR HOVER ZOOM */}
                         <td className="px-3 py-2 align-top">
                           {s.image ? (
-                            <img 
+                            // MENAMBAHKAN INDEKS LANJUTAN UNTUK SHOTLIST TABLE (Mulai dari indeks 4, 5, 6, dst)
+                            <SafeAIImage 
                               src={s.image} 
                               alt={`Shot ${idx + 1}`} 
                               className="h-14 w-24 rounded object-cover border border-hairline bg-slate-100 shadow-sm transition-transform duration-200 hover:scale-125 hover:z-10 cursor-zoom-in" 
+                              index={idx + 4}
                             />
                           ) : (
                             <div className="h-14 w-24 rounded border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-[10px] text-slate-400">No Visual</div>
