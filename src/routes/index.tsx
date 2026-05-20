@@ -1,5 +1,5 @@
+import React, { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState, useEffect } from "react";
 import { Plus, Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy } from "lucide-react";
 import { toast } from "sonner";
 
@@ -16,6 +16,8 @@ export const Route = createFileRoute("/")({
     ],
   }),
 });
+
+type Tone = "Comedic" | "Emotional" | "Educational" | "Dramatic";
 
 interface Shot {
   id: string;
@@ -171,6 +173,7 @@ function VibeShotDashboard() {
     }
   };
 
+  // PENGAMAN FINAL COPY TABEL UNTUK EXCEL / SLIDES
   const handleCopyTable = async () => {
     if (shots.length === 0) return;
     let htmlString = `<table border="1" style="border-collapse: collapse; font-family: Arial, sans-serif; width: 100%;">`;
@@ -185,11 +188,21 @@ function VibeShotDashboard() {
                     </tr>`;
     });
     htmlString += `</table>`;
+
     try {
-      const blob = new Blob([htmlString], { type: "text/html" });
-      await navigator.clipboard.write([new ClipboardItem({ "text/html": blob })]);
-      toast.success("Tabel disalin! Buka Excel/Slides lalu tekan Ctrl+V.");
-    } catch { toast.error("Gagal menyalin tabel."); }
+      const ClipboardItemObj = (window as any).ClipboardItem;
+      if (ClipboardItemObj) {
+        const blob = new Blob([htmlString], { type: "text/html" });
+        await navigator.clipboard.write([new ClipboardItemObj({ "text/html": blob })]);
+        toast.success("Tabel disalin! Buka Excel/Slides lalu tekan Ctrl+V.");
+      } else {
+        const textFallback = shots.map((s, i) => `${i+1}\t${s.angle}\t${s.location}\t${s.action}\t${s.audio}`).join("\n");
+        await navigator.clipboard.writeText(textFallback);
+        toast.success("Tabel disalin sebagai kolom teks! Buka Excel lalu tekan Ctrl+V.");
+      }
+    } catch { 
+      toast.error("Gagal menyalin tabel."); 
+    }
   };
 
   const updateShot = (id: string, key: keyof Omit<Shot, "id">, value: string) => {
@@ -209,7 +222,6 @@ function VibeShotDashboard() {
       </header>
 
       <div className="grid min-h-[calc(100vh-49px)] grid-cols-1 lg:grid-cols-[440px_1fr]">
-        {/* PANEL INPUT KIRI — MODERATOR KOMERSIAL HYBRID */}
         <aside className="border-r border-hairline bg-white p-6 lg:sticky lg:top-[49px] lg:h-[calc(100vh-49px)] lg:overflow-y-auto">
           <h1 className="text-base font-semibold tracking-tight">Brief Inputs & Strategy</h1>
           <p className="mt-1 text-xs text-muted-foreground">Tulis ide kasarmu, biarkan AI meracik seluruh strateginya.</p>
@@ -252,7 +264,6 @@ function VibeShotDashboard() {
               <input value={trend} onChange={(e) => setTrend(e.target.value)} placeholder="Contoh: POV Storytime, Day in the Life, Unboxing ASMR" className="input" />
             </Field>
 
-            {/* HYBRID TONE FIELD: BISA KETIK KUSTOM + KLIK PRESET */}
             <Field label="Content Tone (Bisa Ketik / Pilih Preset)">
               <input value={tone} onChange={(e) => setTone(e.target.value)} placeholder="Ketik tone kustom brand di sini..." className="input mb-2" />
               <div className="flex flex-wrap gap-1.5">
@@ -276,7 +287,6 @@ function VibeShotDashboard() {
           </div>
         </aside>
 
-        {/* PREVIEW BOARD KANAN */}
         <main className="bg-canvas p-6 lg:p-10">
           <div className="mx-auto max-w-5xl">
             <div className="flex flex-wrap items-start justify-between gap-4">
@@ -367,6 +377,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+// FIX: Menambahkan deklarasi tipe global React yang aman untuk kompilasi
 function Cell({ value, placeholder, onChange }: { value: string; placeholder: string; onChange: (v: string) => void }) {
   return (
     <td className="px-3 py-1 align-top">
