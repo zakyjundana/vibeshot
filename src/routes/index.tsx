@@ -143,8 +143,6 @@ function VibeShotDashboard() {
 
       const data: any = parsedBody ?? {};
 
-      const data: any = await res.json();
-
       const nextShots =
         normalizeShots(data?.shotlist ?? data?.shots ?? data?.shotList) ??
         seedShots(Math.max(1, Math.min(20, shotCount)));
