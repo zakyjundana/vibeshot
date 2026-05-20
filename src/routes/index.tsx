@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Trash2, Sparkles, Image as ImageIcon, FileText } from "lucide-react";
+import { Plus, Trash2, Sparkles, Image as ImageIcon, FileText, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   component: VibeShotDashboard,
@@ -38,6 +39,8 @@ const TRENDS = [
 
 const TONES: Tone[] = ["Comedic", "Emotional", "Educational", "Dramatic"];
 
+const DEFAULT_WORKER_URL = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
+
 const seedShots = (n: number): Shot[] =>
   Array.from({ length: n }, (_, i) => ({
     id: crypto.randomUUID(),
@@ -47,30 +50,108 @@ const seedShots = (n: number): Shot[] =>
     audio: "",
   }));
 
+function normalizeShots(raw: unknown): Shot[] | null {
+  if (!Array.isArray(raw)) return null;
+  return raw.map((r: any) => ({
+    id: crypto.randomUUID(),
+    angle: String(r?.angle ?? r?.cameraAngle ?? r?.camera_angle ?? r?.["Camera Angle"] ?? ""),
+    location: String(r?.location ?? r?.Location ?? ""),
+    action: String(r?.action ?? r?.visual ?? r?.actionVisual ?? r?.["Action/Visual"] ?? r?.["Action / Visual"] ?? ""),
+    audio: String(r?.audio ?? r?.vo ?? r?.audioVO ?? r?.["Audio/VO"] ?? r?.["Audio / VO"] ?? ""),
+  }));
+}
+
+function normalizeMoodboard(raw: unknown): string[] | null {
+  if (!Array.isArray(raw)) return null;
+  return raw
+    .map((r: any) => (typeof r === "string" ? r : r?.url ?? r?.image ?? r?.src ?? ""))
+    .filter(Boolean);
+}
+
 function VibeShotDashboard() {
+  const [workerUrl, setWorkerUrl] = useState(DEFAULT_WORKER_URL);
   const [productName, setProductName] = useState("");
   const [usp, setUsp] = useState("");
   const [trend, setTrend] = useState(TRENDS[0]);
   const [tone, setTone] = useState<Tone>("Comedic");
   const [shotCount, setShotCount] = useState(4);
   const [shots, setShots] = useState<Shot[]>(() => seedShots(4));
+  const [moodboard, setMoodboard] = useState<string[]>([]);
+  const [premiseOverride, setPremiseOverride] = useState<string | null>(null);
+  const [titleOverride, setTitleOverride] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [hasResult, setHasResult] = useState(false);
 
-  const title = useMemo(
-    () =>
-      productName.trim()
-        ? `${productName.trim()} — ${trend} (${tone})`
-        : "Untitled Content Plan",
-    [productName, trend, tone],
-  );
+  const title = useMemo(() => {
+    if (titleOverride) return titleOverride;
+    return productName.trim()
+      ? `${productName.trim()} — ${trend} (${tone})`
+      : "Untitled Content Plan";
+  }, [titleOverride, productName, trend, tone]);
 
   const premise = useMemo(() => {
+    if (premiseOverride) return premiseOverride;
     if (!productName && !usp)
       return "Your content premise will appear here. Fill in the product name and core USP on the left, pick a TikTok trend and tone, then generate a brief. The premise will weave the product's unique selling point into a short, scroll-stopping narrative built around the chosen trend — opening hook, mid-roll tension, and a satisfying payoff that ties back to the product.";
     return `A ${tone.toLowerCase()} short-form video built around the "${trend}" trend, introducing ${productName || "the product"} through a relatable opening hook. The story leans into ${usp || "the product's core benefit"}, escalating through a moment of tension or curiosity before delivering a satisfying payoff. The final beat ties the product back to the viewer's daily life — engineered for completion rate, saves, and shares.`;
-  }, [productName, usp, trend, tone]);
+  }, [premiseOverride, productName, usp, trend, tone]);
 
-  const handleGenerate = () => {
-    setShots(seedShots(Math.max(1, Math.min(20, shotCount))));
+  const handleGenerate = async () => {
+    if (!workerUrl.trim()) {
+      setErrorMsg("Worker URL is required.");
+      toast.error("Worker URL is required.");
+      return;
+    }
+    setIsGenerating(true);
+    setErrorMsg(null);
+
+    const payload = {
+      product: productName,
+      usp,
+      trend,
+      tone,
+      shotCount,
+    };
+
+    try {
+      const res = await fetch(workerUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Worker responded ${res.status} ${res.statusText}`);
+      }
+
+      const data: any = await res.json();
+
+      const nextShots =
+        normalizeShots(data?.shotlist ?? data?.shots ?? data?.shotList) ??
+        seedShots(Math.max(1, Math.min(20, shotCount)));
+      const nextMoodboard = normalizeMoodboard(data?.moodboard ?? data?.moodBoard ?? data?.images) ?? [];
+      const nextPremise =
+        typeof data?.premise === "string"
+          ? data.premise
+          : typeof data?.contentPremise === "string"
+            ? data.contentPremise
+            : null;
+      const nextTitle = typeof data?.title === "string" ? data.title : null;
+
+      setShots(nextShots);
+      setMoodboard(nextMoodboard);
+      setPremiseOverride(nextPremise);
+      setTitleOverride(nextTitle);
+      setHasResult(true);
+      toast.success("Production brief generated!");
+    } catch (err: any) {
+      const msg = err?.message ?? "Failed to generate brief.";
+      setErrorMsg(msg);
+      toast.error(msg);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const updateShot = (id: string, key: keyof Omit<Shot, "id">, value: string) => {
@@ -85,6 +166,8 @@ function VibeShotDashboard() {
 
   const removeShot = (id: string) =>
     setShots((prev) => prev.filter((s) => s.id !== id));
+
+  const moodboardTiles = moodboard.length > 0 ? moodboard : [null, null, null, null];
 
   return (
     <div className="min-h-screen bg-canvas text-foreground">
@@ -111,6 +194,15 @@ function VibeShotDashboard() {
           </p>
 
           <div className="mt-6 space-y-5">
+            <Field label="Worker URL">
+              <input
+                value={workerUrl}
+                onChange={(e) => setWorkerUrl(e.target.value)}
+                placeholder="https://your-worker.workers.dev/"
+                className="input"
+              />
+            </Field>
+
             <Field label="Product Name">
               <input
                 value={productName}
@@ -174,11 +266,27 @@ function VibeShotDashboard() {
 
             <button
               onClick={handleGenerate}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-accent-green px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-green-hover active:scale-[0.99]"
+              disabled={isGenerating}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-accent-green px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-green-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
             >
-              <Sparkles className="h-4 w-4" />
-              Generate Production Brief
+              {isGenerating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating with AI...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" />
+                  Generate Production Brief
+                </>
+              )}
             </button>
+
+            {errorMsg && (
+              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {errorMsg}
+              </p>
+            )}
           </div>
         </aside>
 
@@ -196,9 +304,19 @@ function VibeShotDashboard() {
                   {title}
                 </h2>
               </div>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-amber-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                Draft
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider ${
+                  hasResult
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-amber-200 bg-amber-50 text-amber-700"
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    hasResult ? "bg-emerald-500" : "bg-amber-500"
+                  }`}
+                />
+                {hasResult ? "Generated" : "Draft"}
               </span>
             </div>
 
@@ -207,7 +325,9 @@ function VibeShotDashboard() {
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Content Premise
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-slate-700">{premise}</p>
+              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                {premise}
+              </p>
             </section>
 
             {/* Moodboard */}
@@ -216,23 +336,30 @@ function VibeShotDashboard() {
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Visual Moodboard
                 </h3>
-                <span className="text-[11px] text-muted-foreground">4 references</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {moodboardTiles.length} references
+                </span>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
-                {[1, 2, 3, 4].map((i) => (
+                {moodboardTiles.map((src, i) => (
                   <div
                     key={i}
                     className="group relative aspect-[4/5] overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50 transition hover:border-slate-400 hover:bg-slate-100"
                   >
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                      <ImageIcon className="h-5 w-5" />
-                      <span className="text-[10px] uppercase tracking-wider">
-                        Ref {i}
-                      </span>
-                    </div>
-                    <div className="absolute bottom-2 left-2 rounded bg-white/80 px-1.5 py-0.5 text-[9px] font-medium text-slate-600 opacity-0 backdrop-blur transition group-hover:opacity-100">
-                      Drop image
-                    </div>
+                    {src ? (
+                      <img
+                        src={src}
+                        alt={`Moodboard reference ${i + 1}`}
+                        className="absolute inset-0 h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-slate-400">
+                        <ImageIcon className="h-5 w-5" />
+                        <span className="text-[10px] uppercase tracking-wider">
+                          Ref {i + 1}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
