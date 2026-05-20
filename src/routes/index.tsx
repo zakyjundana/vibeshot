@@ -10,8 +10,7 @@ export const Route = createFileRoute("/")({
       { title: "VibeShot AI — Creative Strategist Dashboard" },
       {
         name: "description",
-        content:
-          "Generate TikTok production briefs in seconds. Content plans, moodboards, and editable shotlists for creative strategists.",
+        content: "Generate TikTok production briefs in seconds. Content plans, moodboards, and editable shotlists for creative strategists.",
       },
     ],
   }),
@@ -29,43 +28,67 @@ interface Shot {
   imagePrompt?: string;
 }
 
-// KOMPONEN ESKALATOR ANTREAN VISUAL AI
-function SafeAIImage({ src, alt, className, index = 0 }: { src: string; alt: string; className: string; index?: number }) {
+// KOMPONEN ESTAFET GAMBAR (ANTI PARALEL REQUEST - 100% BEBAS DARI RATE LIMIT IP)
+function SafeAIImage({ 
+  src, 
+  alt, 
+  className, 
+  globalIndex, 
+  activeGlobalIndex, 
+  onNextQueue 
+}: { 
+  src: string; 
+  alt: string; 
+  className: string; 
+  globalIndex: number; 
+  activeGlobalIndex: number; 
+  onNextQueue: () => void; 
+}) {
   const [currentSrc, setCurrentSrc] = useState("");
-  const [retries, setRetries] = useState(0);
+  const [hasTriggeredNext, setHasTriggeredNext] = useState(false);
 
   useEffect(() => {
-    setCurrentSrc("");
-    setRetries(0);
-    const timer = setTimeout(() => {
+    // Jika giliran globalIndex ini tiba, baru mulai download gambarnya
+    if (globalIndex === activeGlobalIndex && !currentSrc) {
       setCurrentSrc(src);
-    }, index * 1200); 
-    return () => clearTimeout(timer);
-  }, [src, index]);
+    }
+  }, [globalIndex, activeGlobalIndex, src, currentSrc]);
 
-  const handleError = () => {
-    if (retries < 10) {
-      setTimeout(() => {
-        const separator = src.includes("?") ? "&" : "?";
-        setCurrentSrc(`${src}${separator}retry=${retries}-${Date.now()}`);
-        setRetries((prev) => prev + 1);
-      }, 3000 + Math.random() * 2000);
+  const handleFinish = () => {
+    if (!hasTriggeredNext) {
+      setHasTriggeredNext(true);
+      onNextQueue(); // Oper tongkat estafet ke gambar berikutnya
     }
   };
 
-  if (!currentSrc) {
+  const handleError = () => {
+    // Jika eror karena rate-limit tersisa, tunggu sebentar lalu oper antrean agar tidak nge-stuck
+    setTimeout(() => {
+      handleFinish();
+    }, 1500);
+  };
+
+  if (globalIndex > activeGlobalIndex || !currentSrc) {
     return (
-      <div className={`${className} flex flex-col items-center justify-center bg-slate-50 border border-dashed border-slate-200 text-[10px] text-slate-400 animate-pulse font-medium`}>
-        <span>Queued...</span>
+      <div className={`${className} flex flex-col items-center justify-center bg-slate-50 border border-dashed border-slate-200 text-[10px] text-slate-400 font-medium`}>
+        <span>Antrean #{globalIndex + 1}</span>
       </div>
     );
   }
 
-  return <img src={currentSrc} alt={alt} className={className} onError={handleError} loading="lazy" />;
+  return (
+    <img 
+      src={currentSrc} 
+      alt={alt} 
+      className={className} 
+      onLoad={handleFinish} 
+      onError={handleError} 
+      loading="lazy" 
+    />
+  );
 }
 
 function VibeShotDashboard() {
-  // FIX MUTLAK: Tulis link string langsung di sini agar terhindar dari ReferenceError build compiler
   const workerUrl = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
   
   const [productName, setProductName] = useState("");
@@ -90,6 +113,9 @@ function VibeShotDashboard() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
 
+  // STATE KONTROL ANTREAN GLOBAL
+  const [activeGlobalIndex, setActiveGlobalIndex] = useState(-1);
+
   const PRESET_TONES = ["Comedic", "Emotional", "Educational", "Dramatic", "Gen-Z Sarcastic", "Luxury & Elegant"];
 
   const title = useMemo(() => {
@@ -105,6 +131,8 @@ function VibeShotDashboard() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     setErrorMsg(null);
+    setHasResult(false);
+    setActiveGlobalIndex(-1); // Reset antrean gambar
 
     const payload = {
       product: productName,
@@ -154,7 +182,10 @@ function VibeShotDashboard() {
       setPremiseOverride(data?.premise ?? null);
       setTitleOverride(data?.title ?? null);
       setHasResult(true);
-      toast.success("Production brief generated!");
+      
+      // MULAI ANTREAN ESTAFET DARI GAMBAR INDEKS KE-0
+      setActiveGlobalIndex(0);
+      toast.success("Brief berhasil diracik! Mengunduh gambar storyboard bergantian...");
     } catch (err: any) {
       setErrorMsg(err?.message || "Failed to generate brief.");
       toast.error(err?.message || "Error");
@@ -184,10 +215,6 @@ function VibeShotDashboard() {
         const blob = new Blob([htmlString], { type: "text/html" });
         await navigator.clipboard.write([new ClipboardItemObj({ "text/html": blob })]);
         toast.success("Tabel disalin! Buka Excel/Slides lalu tekan Ctrl+V.");
-      } else {
-        const textFallback = shots.map((s, i) => `${i+1}\t${s.angle}\t${s.location}\t${s.action}\t${s.audio}`).join("\n");
-        await navigator.clipboard.writeText(textFallback);
-        toast.success("Tabel disalin sebagai kolom teks!");
       }
     } catch { 
       toast.error("Gagal menyalin tabel."); 
@@ -298,7 +325,18 @@ function VibeShotDashboard() {
               <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
                 {moodboardTiles.map((src, i) => (
                   <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50">
-                    {src ? <SafeAIImage src={src} alt={`Moodboard ref ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" index={i} /> : <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-slate-400"><ImageIcon className="h-5 w-5" /><span className="text-[10px] uppercase tracking-wider">Ref {i + 1}</span></div>}
+                    {src ? (
+                      <SafeAIImage 
+                        src={src} 
+                        alt={`Moodboard ref ${i + 1}`} 
+                        className="absolute inset-0 h-full w-full object-cover" 
+                        globalIndex={i} 
+                        activeGlobalIndex={activeGlobalIndex} 
+                        onNextQueue={() => setActiveGlobalIndex(prev => prev + 1)} 
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-slate-400"><ImageIcon className="h-5 w-5" /><span className="text-[10px] uppercase tracking-wider">Ref {i + 1}</span></div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -334,7 +372,18 @@ function VibeShotDashboard() {
                       <tr key={s.id} className="group border-b border-hairline last:border-0 hover:bg-slate-50/60">
                         <td className="px-4 py-2 align-top text-xs font-mono font-medium text-slate-400">{String(idx + 1).padStart(2, "0")}</td>
                         <td className="px-3 py-2 align-top">
-                          {s.image ? <SafeAIImage src={s.image} alt={`Shot ${idx + 1}`} className="h-14 w-24 rounded object-cover border border-hairline bg-slate-100 shadow-sm transition-transform duration-200 hover:scale-125 hover:z-10 cursor-zoom-in" index={idx + 4} /> : <div className="h-14 w-24 rounded border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-[10px] text-slate-400">No Visual</div>}
+                          {s.image ? (
+                            <SafeAIImage 
+                              src={s.image} 
+                              alt={`Shot ${idx + 1}`} 
+                              className="h-14 w-24 rounded object-cover border border-hairline bg-slate-100 shadow-sm transition-transform duration-200 hover:scale-125 hover:z-10 cursor-zoom-in" 
+                              globalIndex={idx + moodboard.length} 
+                              activeGlobalIndex={activeGlobalIndex} 
+                              onNextQueue={() => setActiveGlobalIndex(prev => prev + 1)} 
+                            />
+                          ) : (
+                            <div className="h-14 w-24 rounded border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-[10px] text-slate-400">No Visual</div>
+                          )}
                         </td>
                         <Cell value={s.imagePrompt || ""} placeholder="AI Image Prompt text..." onChange={(v) => updateShot(s.id, "imagePrompt", v)} />
                         <Cell value={s.angle} placeholder="Close-up" onChange={(v) => updateShot(s.id, "angle", v)} />
