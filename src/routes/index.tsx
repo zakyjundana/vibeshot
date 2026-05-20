@@ -25,7 +25,8 @@ interface Shot {
   location: string;
   action: string;
   audio: string;
-  image?: string; // Menambahkan penampung gambar storyboard dari AI
+  image?: string;
+  imagePrompt?: string; // Menampung teks prompt asli dari backend
 }
 
 const TRENDS = [
@@ -50,6 +51,7 @@ const seedShots = (n: number): Shot[] =>
     action: "",
     audio: "",
     image: "",
+    imagePrompt: "",
   }));
 
 function normalizeShots(raw: unknown): Shot[] | null {
@@ -60,7 +62,8 @@ function normalizeShots(raw: unknown): Shot[] | null {
     location: String(r?.location ?? r?.Location ?? ""),
     action: String(r?.action ?? r?.visual ?? r?.actionVisual ?? r?.["Action/Visual"] ?? r?.["Action / Visual"] ?? ""),
     audio: String(r?.audio ?? r?.vo ?? r?.audioVO ?? r?.["Audio/VO"] ?? r?.["Audio / VO"] ?? ""),
-    image: String(r?.image ?? ""), // Sinkronisasi link gambar Unsplash dari Worker
+    image: String(r?.image ?? ""),
+    imagePrompt: String(r?.imagePrompt ?? ""), // Normalisasi teks prompt gambar
   }));
 }
 
@@ -180,7 +183,7 @@ function VibeShotDashboard() {
   const addShot = () =>
     setShots((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), angle: "", location: "", action: "", audio: "", image: "" },
+      { id: crypto.randomUUID(), angle: "", location: "", action: "", audio: "", image: "", imagePrompt: "" },
     ]);
 
   const removeShot = (id: string) =>
@@ -389,11 +392,12 @@ function VibeShotDashboard() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] border-collapse text-sm">
+                <table className="w-full min-w-[960px] border-collapse text-sm">
                   <thead>
                     <tr className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                       <th className="w-14 border-b border-hairline px-4 py-2.5">#</th>
-                      <th className="w-24 border-b border-hairline px-3 py-2.5">Visual</th> {/* Header Kolom Baru */}
+                      <th className="w-24 border-b border-hairline px-3 py-2.5">Visual</th>
+                      <th className="w-64 border-b border-hairline px-3 py-2.5">AI Image Prompt Text</th> {/* KOLOM BARU */}
                       <th className="w-40 border-b border-hairline px-3 py-2.5">
                         Camera Angle
                       </th>
@@ -418,7 +422,6 @@ function VibeShotDashboard() {
                         <td className="px-4 py-2 align-top text-xs font-mono font-medium text-slate-400">
                           {String(idx + 1).padStart(2, "0")}
                         </td>
-                        {/* Cell Untuk Merender Thumbnail Gambar Storyboard Dari Worker */}
                         <td className="px-3 py-2 align-top">
                           {s.image ? (
                             <img 
@@ -432,6 +435,12 @@ function VibeShotDashboard() {
                             </div>
                           )}
                         </td>
+                        {/* INPUT FIELD BARU UNTUK EDIT/COPY PROMPT GAMBAR AI */}
+                        <Cell
+                          value={s.imagePrompt || ""}
+                          placeholder="AI Image Prompt text will appear here..."
+                          onChange={(v) => updateShot(s.id, "imagePrompt", v)}
+                        />
                         <Cell
                           value={s.angle}
                           placeholder="Close-up"
