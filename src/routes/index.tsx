@@ -29,8 +29,6 @@ interface Shot {
   imagePrompt?: string;
 }
 
-const PRESET_TONES = ["Comedic", "Emotional", "Educational", "Dramatic", "Gen-Z Sarcastic", "Luxury & Elegant"];
-
 // KOMPONEN ESKALATOR ANTREAN VISUAL AI
 function SafeAIImage({ src, alt, className, index = 0 }: { src: string; alt: string; className: string; index?: number }) {
   const [currentSrc, setCurrentSrc] = useState("");
@@ -66,37 +64,10 @@ function SafeAIImage({ src, alt, className, index = 0 }: { src: string; alt: str
   return <img src={currentSrc} alt={alt} className={className} onError={handleError} loading="lazy" />;
 }
 
-const seedShots = (n: number): Shot[] =>
-  Array.from({ length: n }, (_, i) => ({
-    id: crypto.randomUUID(),
-    angle: i === 0 ? "Close-up" : i === 1 ? "Medium Shot" : "Wide Shot",
-    location: i === 0 ? "Bedroom" : "Living Room",
-    action: "",
-    audio: "",
-    image: "",
-    imagePrompt: "",
-  }));
-
-function normalizeShots(raw: unknown): Shot[] | null {
-  if (!Array.isArray(raw)) return null;
-  return raw.map((r: any) => ({
-    id: crypto.randomUUID(),
-    angle: String(r?.angle ?? r?.cameraAngle ?? r?.camera_angle ?? r?.["Camera Angle"] ?? ""),
-    location: String(r?.location ?? r?.Location ?? ""),
-    action: String(r?.action ?? r?.visual ?? r?.actionVisual ?? r?.["Action/Visual"] ?? r?.["Action / Visual"] ?? ""),
-    audio: String(r?.audio ?? r?.vo ?? r?.audioVO ?? r?.["Audio/VO"] ?? r?.["Audio / VO"] ?? ""),
-    image: String(r?.image ?? ""),
-    imagePrompt: String(r?.imagePrompt ?? ""),
-  }));
-}
-
-function normalizeMoodboard(raw: unknown): string[] | null {
-  if (!Array.isArray(raw)) return null;
-  return raw.map((r: any) => (typeof r === "string" ? r : r?.url ?? r?.image ?? r?.src ?? "")).filter(Boolean);
-}
-
 function VibeShotDashboard() {
-  const workerUrl = DEFAULT_WORKER_URL;
+  // FIX MUTLAK: Tulis link string langsung di sini agar terhindar dari ReferenceError build compiler
+  const workerUrl = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
+  
   const [productName, setProductName] = useState("");
   const [usp, setUsp] = useState("");
   const [trend, setTrend] = useState("");
@@ -106,13 +77,20 @@ function VibeShotDashboard() {
   const [talent, setTalent] = useState("Creator-Led");
   const [shotCount, setShotCount] = useState(4);
   
-  const [shots, setShots] = useState<Shot[]>(() => seedShots(4));
+  const [shots, setShots] = useState<Shot[]>(() => [
+    { id: crypto.randomUUID(), angle: "Close-up", location: "Bedroom", action: "", audio: "", image: "", imagePrompt: "" },
+    { id: crypto.randomUUID(), angle: "Medium Shot", location: "Living Room", action: "", audio: "", image: "", imagePrompt: "" },
+    { id: crypto.randomUUID(), angle: "Wide Shot", location: "Living Room", action: "", audio: "", image: "", imagePrompt: "" },
+    { id: crypto.randomUUID(), angle: "Wide Shot", location: "Living Room", action: "", audio: "", image: "", imagePrompt: "" },
+  ]);
   const [moodboard, setMoodboard] = useState<string[]>([]);
   const [premiseOverride, setPremiseOverride] = useState<string | null>(null);
   const [titleOverride, setTitleOverride] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
+
+  const PRESET_TONES = ["Comedic", "Emotional", "Educational", "Dramatic", "Gen-Z Sarcastic", "Luxury & Elegant"];
 
   const title = useMemo(() => {
     if (titleOverride) return titleOverride;
@@ -125,10 +103,6 @@ function VibeShotDashboard() {
   }, [premiseOverride]);
 
   const handleGenerate = async () => {
-    if (!workerUrl.trim()) {
-      setErrorMsg("Worker URL is required.");
-      return;
-    }
     setIsGenerating(true);
     setErrorMsg(null);
 
@@ -159,21 +133,36 @@ function VibeShotDashboard() {
       }
 
       const data: any = parsedBody ?? {};
-      setShots(normalizeShots(data?.shotlist ?? data?.shots) ?? seedShots(shotCount));
-      setMoodboard(normalizeMoodboard(data?.moodboard) ?? []);
+      
+      if (data?.shotlist && Array.isArray(data.shotlist)) {
+        const normalized = data.shotlist.map((r: any) => ({
+          id: crypto.randomUUID(),
+          angle: String(r?.angle ?? r?.cameraAngle ?? r?.camera_angle ?? ""),
+          location: String(r?.location ?? ""),
+          action: String(r?.action ?? r?.visual ?? ""),
+          audio: String(r?.audio ?? r?.vo ?? ""),
+          image: String(r?.image ?? ""),
+          imagePrompt: String(r?.imagePrompt ?? ""),
+        }));
+        setShots(normalized);
+      }
+      
+      if (data?.moodboard && Array.isArray(data.moodboard)) {
+        setMoodboard(data.moodboard.filter(Boolean));
+      }
+      
       setPremiseOverride(data?.premise ?? null);
       setTitleOverride(data?.title ?? null);
       setHasResult(true);
       toast.success("Production brief generated!");
     } catch (err: any) {
-      setErrorMsg(err?.message ?? "Failed to generate brief.");
-      toast.error(err?.message);
+      setErrorMsg(err?.message || "Failed to generate brief.");
+      toast.error(err?.message || "Error");
     } finally {
       setIsGenerating(false);
     }
   };
 
-  // PENGAMAN FINAL COPY TABEL UNTUK EXCEL / SLIDES
   const handleCopyTable = async () => {
     if (shots.length === 0) return;
     let htmlString = `<table border="1" style="border-collapse: collapse; font-family: Arial, sans-serif; width: 100%;">`;
@@ -198,7 +187,7 @@ function VibeShotDashboard() {
       } else {
         const textFallback = shots.map((s, i) => `${i+1}\t${s.angle}\t${s.location}\t${s.action}\t${s.audio}`).join("\n");
         await navigator.clipboard.writeText(textFallback);
-        toast.success("Tabel disalin sebagai kolom teks! Buka Excel lalu tekan Ctrl+V.");
+        toast.success("Tabel disalin sebagai kolom teks!");
       }
     } catch { 
       toast.error("Gagal menyalin tabel."); 
@@ -377,7 +366,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-// FIX: Menambahkan deklarasi tipe global React yang aman untuk kompilasi
 function Cell({ value, placeholder, onChange }: { value: string; placeholder: string; onChange: (v: string) => void }) {
   return (
     <td className="px-3 py-1 align-top">
