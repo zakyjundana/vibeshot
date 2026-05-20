@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Plus, Trash2, Sparkles, Image as ImageIcon, FileText, Loader2 } from "lucide-react";
+import { Plus, Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -26,7 +26,7 @@ interface Shot {
   action: string;
   audio: string;
   image?: string;
-  imagePrompt?: string; // Menampung teks prompt asli dari backend
+  imagePrompt?: string;
 }
 
 const TRENDS = [
@@ -63,7 +63,7 @@ function normalizeShots(raw: unknown): Shot[] | null {
     action: String(r?.action ?? r?.visual ?? r?.actionVisual ?? r?.["Action/Visual"] ?? r?.["Action / Visual"] ?? ""),
     audio: String(r?.audio ?? r?.vo ?? r?.audioVO ?? r?.["Audio/VO"] ?? r?.["Audio / VO"] ?? ""),
     image: String(r?.image ?? ""),
-    imagePrompt: String(r?.imagePrompt ?? ""), // Normalisasi teks prompt gambar
+    imagePrompt: String(r?.imagePrompt ?? ""),
   }));
 }
 
@@ -149,22 +149,10 @@ function VibeShotDashboard() {
 
       const data: any = parsedBody ?? {};
 
-      const nextShots =
-        normalizeShots(data?.shotlist ?? data?.shots ?? data?.shotList) ??
-        seedShots(Math.max(1, Math.min(20, shotCount)));
-      const nextMoodboard = normalizeMoodboard(data?.moodboard ?? data?.moodBoard ?? data?.images) ?? [];
-      const nextPremise =
-        typeof data?.premise === "string"
-          ? data.premise
-          : typeof data?.contentPremise === "string"
-            ? data.contentPremise
-            : null;
-      const nextTitle = typeof data?.title === "string" ? data.title : null;
-
-      setShots(nextShots);
-      setMoodboard(nextMoodboard);
-      setPremiseOverride(nextPremise);
-      setTitleOverride(nextTitle);
+      setShots(normalizeShots(data?.shotlist ?? data?.shots) ?? seedShots(shotCount));
+      setMoodboard(normalizeMoodboard(data?.moodboard) ?? []);
+      setPremiseOverride(data?.premise ?? null);
+      setTitleOverride(data?.title ?? null);
       setHasResult(true);
       toast.success("Production brief generated!");
     } catch (err: any) {
@@ -173,6 +161,45 @@ function VibeShotDashboard() {
       toast.error(msg);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // FUNGSI SAKTI UNTUK EXPORT/COPY TABEL KE GOOGLE SLIDES & EXCEL
+  const handleCopyTable = async () => {
+    if (shots.length === 0) {
+      toast.error("No data available to copy.");
+      return;
+    }
+
+    let htmlString = `<table border="1" style="border-collapse: collapse; font-family: Arial, sans-serif; width: 100%;">`;
+    htmlString += `<tr style="background-color: #0f172a; color: #ffffff; font-weight: bold;">
+                    <th style="padding: 8px;">#</th>
+                    <th style="padding: 8px;">Camera Angle</th>
+                    <th style="padding: 8px;">Location</th>
+                    <th style="padding: 8px;">Action / Visual</th>
+                    <th style="padding: 8px;">Audio / VO</th>
+                    <th style="padding: 8px;">AI Image Prompt</th>
+                  </tr>`;
+    
+    shots.forEach((s, idx) => {
+      htmlString += `<tr>
+                      <td style="padding: 8px; text-align: center;">${String(idx + 1).padStart(2, "0")}</td>
+                      <td style="padding: 8px;">${s.angle}</td>
+                      <td style="padding: 8px;">${s.location}</td>
+                      <td style="padding: 8px;">${s.action}</td>
+                      <td style="padding: 8px;">${s.audio}</td>
+                      <td style="padding: 8px; font-style: italic; color: #64748b;">${s.imagePrompt || ""}</td>
+                    </tr>`;
+    });
+    htmlString += `</table>`;
+
+    try {
+      const blob = new Blob([htmlString], { type: "text/html" });
+      const data = [new ClipboardItem({ "text/html": blob })];
+      await navigator.clipboard.write(data);
+      toast.success("Tabel berhasil disalin! Tinggal Paste (Ctrl+V) di Excel, Word, atau Google Slides.");
+    } catch (err) {
+      toast.error("Gagal menyalin tabel otomatis.");
     }
   };
 
@@ -193,7 +220,6 @@ function VibeShotDashboard() {
 
   return (
     <div className="min-h-screen bg-canvas text-foreground">
-      {/* Top bar */}
       <header className="flex items-center justify-between border-b border-hairline bg-white/80 px-6 py-3 backdrop-blur">
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-foreground text-white">
@@ -211,54 +237,25 @@ function VibeShotDashboard() {
         {/* LEFT — Input Panel */}
         <aside className="border-r border-hairline bg-white p-6 lg:sticky lg:top-[49px] lg:h-[calc(100vh-49px)] lg:overflow-y-auto">
           <h1 className="text-base font-semibold tracking-tight">Brief Inputs</h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Feed the strategist. Output renders on the right in real-time.
-          </p>
+          <p className="mt-1 text-xs text-muted-foreground">Output renders on the right in real-time.</p>
 
           <div className="mt-6 space-y-5">
-
             <Field label="Product Name">
-              <input
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                placeholder="e.g. Lumio Glow Serum"
-                className="input"
-              />
+              <input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g. Lumio Glow Serum" className="input" />
             </Field>
 
             <Field label="Core USP">
-              <textarea
-                value={usp}
-                onChange={(e) => setUsp(e.target.value)}
-                rows={4}
-                placeholder="What makes this product unforgettable in one sentence?"
-                className="input resize-none"
-              />
+              <textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={4} placeholder="What makes this product unforgettable?" className="input resize-none" />
             </Field>
 
             <Field label="Trend">
-              <input
-                type="text"
-                value={trend}
-                onChange={(e) => setTrend(e.target.value)}
-                placeholder="Contoh: POV Storytime, ASMR Unboxing, atau tempel link video TikTok/Reels di sini"
-                className="input"
-              />
+              <input type="text" value={trend} onChange={(e) => setTrend(e.target.value)} placeholder="Contoh: POV Storytime, ASMR Unboxing..." className="input" />
             </Field>
 
             <Field label="Content Tone">
               <div className="grid grid-cols-2 gap-2">
                 {TONES.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setTone(t)}
-                    className={`rounded-md border px-3 py-2 text-xs font-medium transition ${
-                      tone === t
-                        ? "border-foreground bg-foreground text-white"
-                        : "border-hairline bg-white text-slate-600 hover:border-slate-300"
-                    }`}
-                  >
+                  <button key={t} type="button" onClick={() => setTone(t)} className={`rounded-md border px-3 py-2 text-xs font-medium transition ${tone === t ? "border-foreground bg-foreground text-white" : "border-hairline bg-white text-slate-600"}`}>
                     {t}
                   </button>
                 ))}
@@ -266,39 +263,14 @@ function VibeShotDashboard() {
             </Field>
 
             <Field label="Number of Shots">
-              <input
-                type="number"
-                min={1}
-                max={20}
-                value={shotCount}
-                onChange={(e) => setShotCount(parseInt(e.target.value || "1", 10))}
-                className="input w-28"
-              />
+              <input type="number" min={1} max={20} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "1", 10))} className="input w-28" />
             </Field>
 
-            <button
-              onClick={handleGenerate}
-              disabled={isGenerating}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-accent-green px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-green-hover active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Generating with AI...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" />
-                  Generate Production Brief
-                </>
-              )}
+            <button onClick={handleGenerate} disabled={isGenerating} className="mt-2 flex w-full items-center justify-center gap-2 rounded-md bg-accent-green px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-green-hover disabled:opacity-70">
+              {isGenerating ? <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</> : <><Sparkles className="h-4 w-4" /> Generate Production Brief</>}
             </button>
 
-            {errorMsg && (
-              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                {errorMsg}
-              </p>
-            )}
+            {errorMsg && <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{errorMsg}</p>}
           </div>
         </aside>
 
@@ -308,70 +280,30 @@ function VibeShotDashboard() {
             {/* Header */}
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                  <FileText className="h-3.5 w-3.5" />
-                  Content Plan
-                </div>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">
-                  {title}
-                </h2>
+                <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground"><FileText className="h-3.5 w-3.5" /> Content Plan</div>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">{title}</h2>
               </div>
-              <span
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider ${
-                  hasResult
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                    : "border-amber-200 bg-amber-50 text-amber-700"
-                }`}
-              >
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    hasResult ? "bg-emerald-500" : "bg-amber-500"
-                  }`}
-                />
-                {hasResult ? "Generated" : "Draft"}
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider ${hasResult ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${hasResult ? "bg-emerald-500" : "bg-amber-500"}`} /> {hasResult ? "Generated" : "Draft"}
               </span>
             </div>
 
             {/* Premise */}
             <section className="mt-6 rounded-xl border border-hairline bg-white p-5 shadow-card">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Content Premise
-              </h3>
-              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">
-                {premise}
-              </p>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Content Premise</h3>
+              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">{premise}</p>
             </section>
 
-            {/* Moodboard */}
+            {/* Moodboard - MEMAKSA RASIO VIDEO TIKTOK 9:16 */}
             <section className="mt-6">
               <div className="flex items-end justify-between">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Visual Moodboard
-                </h3>
-                <span className="text-[11px] text-muted-foreground">
-                  {moodboardTiles.length} references
-                </span>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Visual Moodboard (9:16 Vertikal)</h3>
+                <span className="text-[11px] text-muted-foreground">{moodboardTiles.length} references</span>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
                 {moodboardTiles.map((src, i) => (
-                  <div
-                    key={i}
-                    className="group relative aspect-[4/5] overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50 transition hover:border-slate-400 hover:bg-slate-100"
-                  >
-                    {src ? (
-                      <img
-                        src={src}
-                        alt={`Moodboard reference ${i + 1}`}
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-slate-400">
-                        <ImageIcon className="h-5 w-5" />
-                        <span className="text-[10px] uppercase tracking-wider">
-                          Ref {i + 1}
-                        </span>
-                      </div>
-                    )}
+                  <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50 transition hover:bg-slate-100">
+                    {src ? <img src={src} alt={`Moodboard reference ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" /> : <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-slate-400"><ImageIcon className="h-5 w-5" /><span className="text-[10px] uppercase tracking-wider">Ref {i + 1}</span></div>}
                   </div>
                 ))}
               </div>
@@ -380,95 +312,50 @@ function VibeShotDashboard() {
             {/* Shotlist */}
             <section className="mt-6 overflow-hidden rounded-xl border border-hairline bg-white shadow-card">
               <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Interactive Shotlist
-                </h3>
-                <button
-                  onClick={addShot}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-hairline bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add row
-                </button>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Interactive Shotlist</h3>
+                <div className="flex items-center gap-2">
+                  {/* TOMBOL EXPORT EXCEL SAKTI */}
+                  <button onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100">
+                    <Copy className="h-3.5 w-3.5" /> Copy for Excel/Slides
+                  </button>
+                  <button onClick={addShot} className="inline-flex items-center gap-1.5 rounded-md border border-hairline bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50">
+                    <Plus className="h-3.5 w-3.5" /> Add row
+                  </button>
+                </div>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[960px] border-collapse text-sm">
+                <table className="w-full min-w-[1000px] border-collapse text-sm">
                   <thead>
                     <tr className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                       <th className="w-14 border-b border-hairline px-4 py-2.5">#</th>
-                      <th className="w-24 border-b border-hairline px-3 py-2.5">Visual</th>
-                      <th className="w-64 border-b border-hairline px-3 py-2.5">AI Image Prompt Text</th> {/* KOLOM BARU */}
-                      <th className="w-40 border-b border-hairline px-3 py-2.5">
-                        Camera Angle
-                      </th>
-                      <th className="w-40 border-b border-hairline px-3 py-2.5">
-                        Location
-                      </th>
-                      <th className="border-b border-hairline px-3 py-2.5">
-                        Action / Visual
-                      </th>
-                      <th className="border-b border-hairline px-3 py-2.5">
-                        Audio / VO
-                      </th>
+                      <th className="w-28 border-b border-hairline px-3 py-2.5">Visual</th>
+                      <th className="w-64 border-b border-hairline px-3 py-2.5">AI Image Prompt Text</th>
+                      <th className="w-40 border-b border-hairline px-3 py-2.5">Camera Angle</th>
+                      <th className="w-40 border-b border-hairline px-3 py-2.5">Location</th>
+                      <th className="border-b border-hairline px-3 py-2.5">Action / Visual</th>
+                      <th className="border-b border-hairline px-3 py-2.5">Audio / VO</th>
                       <th className="w-10 border-b border-hairline px-2 py-2.5" />
                     </tr>
                   </thead>
                   <tbody>
                     {shots.map((s, idx) => (
-                      <tr
-                        key={s.id}
-                        className="group border-b border-hairline last:border-0 hover:bg-slate-50/60"
-                      >
-                        <td className="px-4 py-2 align-top text-xs font-mono font-medium text-slate-400">
-                          {String(idx + 1).padStart(2, "0")}
-                        </td>
+                      <tr key={s.id} className="group border-b border-hairline last:border-0 hover:bg-slate-50/60">
+                        <td className="px-4 py-2 align-top text-xs font-mono font-medium text-slate-400">{String(idx + 1).padStart(2, "0")}</td>
+                        
+                        {/* SKALA THUMBNAIL RESPONSIF */}
                         <td className="px-3 py-2 align-top">
-                          {s.image ? (
-                            <img 
-                              src={s.image} 
-                              alt={`Shot ${idx + 1}`} 
-                              className="h-12 w-20 rounded object-cover border border-hairline bg-slate-100 shadow-sm"
-                            />
-                          ) : (
-                            <div className="h-12 w-20 rounded border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-[10px] text-slate-400">
-                              No Visual
-                            </div>
-                          )}
+                          {s.image ? <img src={s.image} alt={`Shot ${idx + 1}`} className="h-14 w-24 rounded object-cover border border-hairline bg-slate-100 shadow-sm transition-transform duration-200 hover:scale-110 cursor-zoom-in" /> : <div className="h-14 w-24 rounded border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-[10px] text-slate-400">No Visual</div>}
                         </td>
-                        {/* INPUT FIELD BARU UNTUK EDIT/COPY PROMPT GAMBAR AI */}
-                        <Cell
-                          value={s.imagePrompt || ""}
-                          placeholder="AI Image Prompt text will appear here..."
-                          onChange={(v) => updateShot(s.id, "imagePrompt", v)}
-                        />
-                        <Cell
-                          value={s.angle}
-                          placeholder="Close-up"
-                          onChange={(v) => updateShot(s.id, "angle", v)}
-                        />
-                        <Cell
-                          value={s.location}
-                          placeholder="Bedroom"
-                          onChange={(v) => updateShot(s.id, "location", v)}
-                        />
-                        <Cell
-                          value={s.action}
-                          placeholder="Describe the visual…"
-                          onChange={(v) => updateShot(s.id, "action", v)}
-                        />
-                        <Cell
-                          value={s.audio}
-                          placeholder="VO, SFX, music cue…"
-                          onChange={(v) => updateShot(s.id, "audio", v)}
-                        />
+
+                        <Cell value={s.imagePrompt || ""} placeholder="AI Image Prompt text..." onChange={(v) => updateShot(s.id, "imagePrompt", v)} />
+                        <Cell value={s.angle} placeholder="Close-up" onChange={(v) => updateShot(s.id, "angle", v)} />
+                        <Cell value={s.location} placeholder="Bedroom" onChange={(v) => updateShot(s.id, "location", v)} />
+                        <Cell value={s.action} placeholder="Describe the visual…" onChange={(v) => updateShot(s.id, "action", v)} />
+                        <Cell value={s.audio} placeholder="VO, SFX..." onChange={(v) => updateShot(s.id, "audio", v)} />
+                        
                         <td className="px-2 py-2 text-right align-top">
-                          <button
-                            onClick={() => removeShot(s.id)}
-                            className="rounded p-1 text-slate-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"
-                            aria-label="Delete row"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          <button onClick={() => removeShot(s.id)} className="rounded p-1 text-slate-300 opacity-0 transition hover:bg-red-50 hover:text-red-500 group-hover:opacity-100"><Trash2 className="h-3.5 w-3.5" /></button>
                         </td>
                       </tr>
                     ))}
@@ -476,10 +363,7 @@ function VibeShotDashboard() {
                 </table>
               </div>
             </section>
-
-            <div className="mt-6 text-center text-[11px] text-muted-foreground">
-              Auto-saved · last edited just now
-            </div>
+            <div className="mt-6 text-center text-[11px] text-muted-foreground">Auto-saved · last edited just now</div>
           </div>
         </main>
       </div>
@@ -496,23 +380,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Cell({
-  value,
-  placeholder,
-  onChange,
-}: {
-  value: string;
-  placeholder: string;
-  onChange: (v: string) => void;
-}) {
+function Cell({ value, placeholder, onChange }: { value: string; placeholder: string; onChange: (v: string) => void }) {
   return (
     <td className="px-3 py-1 align-top">
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm text-slate-700 placeholder:text-slate-300 focus:border-slate-300 focus:bg-white focus:outline-none"
-      />
+      <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="w-full rounded border border-transparent bg-transparent px-2 py-1.5 text-sm text-slate-700 placeholder:text-slate-300 focus:border-slate-300 focus:bg-white focus:outline-none" />
     </td>
   );
 }
