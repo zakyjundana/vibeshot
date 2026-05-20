@@ -16,8 +16,6 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-type Tone = "Comedic" | "Emotional" | "Educational" | "Dramatic";
-
 interface Shot {
   id: string;
   angle: string;
@@ -28,7 +26,6 @@ interface Shot {
   imagePrompt?: string;
 }
 
-// KOMPONEN ESTAFET GAMBAR (ANTI PARALEL REQUEST - 100% BEBAS DARI RATE LIMIT IP)
 function SafeAIImage({ 
   src, 
   alt, 
@@ -48,7 +45,6 @@ function SafeAIImage({
   const [hasTriggeredNext, setHasTriggeredNext] = useState(false);
 
   useEffect(() => {
-    // Jika giliran globalIndex ini tiba, baru mulai download gambarnya
     if (globalIndex === activeGlobalIndex && !currentSrc) {
       setCurrentSrc(src);
     }
@@ -57,12 +53,11 @@ function SafeAIImage({
   const handleFinish = () => {
     if (!hasTriggeredNext) {
       setHasTriggeredNext(true);
-      onNextQueue(); // Oper tongkat estafet ke gambar berikutnya
+      onNextQueue();
     }
   };
 
   const handleError = () => {
-    // Jika eror karena rate-limit tersisa, tunggu sebentar lalu oper antrean agar tidak nge-stuck
     setTimeout(() => {
       handleFinish();
     }, 1500);
@@ -76,16 +71,7 @@ function SafeAIImage({
     );
   }
 
-  return (
-    <img 
-      src={currentSrc} 
-      alt={alt} 
-      className={className} 
-      onLoad={handleFinish} 
-      onError={handleError} 
-      loading="lazy" 
-    />
-  );
+  return <img src={currentSrc} alt={alt} className={className} onLoad={handleFinish} onError={handleError} loading="lazy" />;
 }
 
 function VibeShotDashboard() {
@@ -112,8 +98,6 @@ function VibeShotDashboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
-
-  // STATE KONTROL ANTREAN GLOBAL
   const [activeGlobalIndex, setActiveGlobalIndex] = useState(-1);
 
   const PRESET_TONES = ["Comedic", "Emotional", "Educational", "Dramatic", "Gen-Z Sarcastic", "Luxury & Elegant"];
@@ -128,11 +112,17 @@ function VibeShotDashboard() {
     return "Premis kreatif buatan AI akan muncul di sini. Isi nama produk dan ide kasar kamu di panel kiri, lalu klik Generate untuk meracik ide menjadi cerita matang.";
   }, [premiseOverride]);
 
+  // REVISI TOTAL: Kotak placeholder abu-abu moodboard sekarang ikut dinamis berlipat ganda sesuai input shotCount
+  const moodboardTiles = useMemo(() => {
+    if (moodboard.length > 0) return moodboard;
+    return Array.from({ length: shotCount }).map(() => null);
+  }, [moodboard, shotCount]);
+
   const handleGenerate = async () => {
     setIsGenerating(true);
     setErrorMsg(null);
     setHasResult(false);
-    setActiveGlobalIndex(-1); // Reset antrean gambar
+    setActiveGlobalIndex(-1);
 
     const payload = {
       product: productName,
@@ -182,10 +172,8 @@ function VibeShotDashboard() {
       setPremiseOverride(data?.premise ?? null);
       setTitleOverride(data?.title ?? null);
       setHasResult(true);
-      
-      // MULAI ANTREAN ESTAFET DARI GAMBAR INDEKS KE-0
       setActiveGlobalIndex(0);
-      toast.success("Brief berhasil diracik! Mengunduh gambar storyboard bergantian...");
+      toast.success("Brief berhasil diracik! Gambar memuat bergantian...");
     } catch (err: any) {
       setErrorMsg(err?.message || "Failed to generate brief.");
       toast.error(err?.message || "Error");
@@ -208,17 +196,14 @@ function VibeShotDashboard() {
                     </tr>`;
     });
     htmlString += `</table>`;
-
     try {
       const ClipboardItemObj = (window as any).ClipboardItem;
       if (ClipboardItemObj) {
         const blob = new Blob([htmlString], { type: "text/html" });
         await navigator.clipboard.write([new ClipboardItemObj({ "text/html": blob })]);
-        toast.success("Tabel disalin! Buka Excel/Slides lalu tekan Ctrl+V.");
+        toast.success("Tabel disalin!");
       }
-    } catch { 
-      toast.error("Gagal menyalin tabel."); 
-    }
+    } catch { toast.error("Gagal menyalin tabel."); }
   };
 
   const updateShot = (id: string, key: keyof Omit<Shot, "id">, value: string) => {
@@ -226,7 +211,6 @@ function VibeShotDashboard() {
   };
   const addShot = () => setShots((prev) => [...prev, { id: crypto.randomUUID(), angle: "", location: "", action: "", audio: "", image: "", imagePrompt: "" }]);
   const removeShot = (id: string) => setShots((prev) => prev.filter((s) => s.id !== id));
-  const moodboardTiles = moodboard.length > 0 ? moodboard : [null, null, null, null];
 
   return (
     <div className="min-h-screen bg-canvas text-foreground">
@@ -248,7 +232,7 @@ function VibeShotDashboard() {
             </Field>
 
             <Field label="Ide Kasar / USP Konten (User Bebas Curhat)">
-              <textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={4} placeholder="Contoh: Bikin video jualan kopi susu tetangga tapi plot twist komedi atau edukasi tipis-tipis..." className="input resize-none" />
+              <textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={4} placeholder="Contoh: Bikin video jualan..." className="input resize-none" />
             </Field>
 
             <Field label="Target Platform">
@@ -277,16 +261,14 @@ function VibeShotDashboard() {
             </Field>
 
             <Field label="Gaya Tren Video (Opsional)">
-              <input value={trend} onChange={(e) => setTrend(e.target.value)} placeholder="Contoh: POV Storytime, Day in the Life, Unboxing ASMR" className="input" />
+              <input value={trend} onChange={(e) => setTrend(e.target.value)} placeholder="Contoh: POV Storytime" className="input" />
             </Field>
 
             <Field label="Content Tone (Bisa Ketik / Pilih Preset)">
-              <input value={tone} onChange={(e) => setTone(e.target.value)} placeholder="Ketik tone kustom brand di sini..." className="input mb-2" />
+              <input value={tone} onChange={(e) => setTone(e.target.value)} placeholder="Ketik tone kustom..." className="input mb-2" />
               <div className="flex flex-wrap gap-1.5">
                 {PRESET_TONES.map((t) => (
-                  <button key={t} type="button" onClick={() => setTone(t)} className={`rounded bg-slate-100 px-2 py-1 text-[10px] font-medium transition hover:bg-slate-200 ${tone === t ? "bg-slate-800 text-white hover:bg-slate-800" : "text-slate-600"}`}>
-                    {t}
-                  </button>
+                  <button key={t} type="button" onClick={() => setTone(t)} className={`rounded bg-slate-100 px-2 py-1 text-[10px] font-medium transition ${tone === t ? "bg-slate-800 text-white" : "text-slate-600"}`}>{t}</button>
                 ))}
               </div>
             </Field>
@@ -310,9 +292,6 @@ function VibeShotDashboard() {
                 <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground"><FileText className="h-3.5 w-3.5" /> Content Plan</div>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight md:text-3xl">{title}</h2>
               </div>
-              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider ${hasResult ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${hasResult ? "bg-emerald-500" : "bg-amber-500"}`} /> {hasResult ? "Generated" : "Draft"}
-              </span>
             </div>
 
             <section className="mt-6 rounded-xl border border-hairline bg-white p-5 shadow-card">
@@ -320,20 +299,14 @@ function VibeShotDashboard() {
               <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-slate-700">{premise}</p>
             </section>
 
+            {/* DYNAMIC MOODBOARD GRID SYSTEM */}
             <section className="mt-6">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Visual Moodboard (Vertikal 9:16)</h3>
-              <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Visual Moodboard (Vertikal 9:16 - Mengikuti Jumlah Shot)</h3>
+              <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
                 {moodboardTiles.map((src, i) => (
                   <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-dashed border-slate-300 bg-slate-50">
                     {src ? (
-                      <SafeAIImage 
-                        src={src} 
-                        alt={`Moodboard ref ${i + 1}`} 
-                        className="absolute inset-0 h-full w-full object-cover" 
-                        globalIndex={i} 
-                        activeGlobalIndex={activeGlobalIndex} 
-                        onNextQueue={() => setActiveGlobalIndex(prev => prev + 1)} 
-                      />
+                      <SafeAIImage src={src} alt={`Moodboard ref ${i + 1}`} className="absolute inset-0 h-full w-full object-cover" globalIndex={i} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(prev => prev + 1)} />
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-slate-400"><ImageIcon className="h-5 w-5" /><span className="text-[10px] uppercase tracking-wider">Ref {i + 1}</span></div>
                     )}
@@ -346,9 +319,7 @@ function VibeShotDashboard() {
               <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Interactive Shotlist</h3>
                 <div className="flex items-center gap-2">
-                  <button onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 shadow-sm">
-                    <Copy className="h-3.5 w-3.5" /> Copy for Excel/Slides
-                  </button>
+                  <button onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 shadow-sm"><Copy className="h-3.5 w-3.5" /> Copy for Excel/Slides</button>
                   <button onClick={addShot} className="inline-flex items-center gap-1.5 rounded-md border border-hairline bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"><Plus className="h-3.5 w-3.5" /> Add row</button>
                 </div>
               </div>
@@ -373,14 +344,7 @@ function VibeShotDashboard() {
                         <td className="px-4 py-2 align-top text-xs font-mono font-medium text-slate-400">{String(idx + 1).padStart(2, "0")}</td>
                         <td className="px-3 py-2 align-top">
                           {s.image ? (
-                            <SafeAIImage 
-                              src={s.image} 
-                              alt={`Shot ${idx + 1}`} 
-                              className="h-14 w-24 rounded object-cover border border-hairline bg-slate-100 shadow-sm transition-transform duration-200 hover:scale-125 hover:z-10 cursor-zoom-in" 
-                              globalIndex={idx + moodboard.length} 
-                              activeGlobalIndex={activeGlobalIndex} 
-                              onNextQueue={() => setActiveGlobalIndex(prev => prev + 1)} 
-                            />
+                            <SafeAIImage src={s.image} alt={`Shot ${idx + 1}`} className="h-14 w-24 rounded object-cover border border-hairline bg-slate-100 shadow-sm transition-transform duration-200 hover:scale-125 hover:z-10 cursor-zoom-in" globalIndex={idx + moodboardTiles.length} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(prev => prev + 1)} />
                           ) : (
                             <div className="h-14 w-24 rounded border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-[10px] text-slate-400">No Visual</div>
                           )}
@@ -408,10 +372,7 @@ function VibeShotDashboard() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-slate-600">{label}</span>
-      {children}
-    </label>
+    <label className="block"><span className="mb-1.5 block text-xs font-medium text-slate-600">{label}</span>{children}</label>
   );
 }
 
