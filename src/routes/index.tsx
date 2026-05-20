@@ -164,10 +164,10 @@ function VibeShotDashboard() {
     }
   };
 
-  // FUNGSI SAKTI UNTUK EXPORT/COPY TABEL KE GOOGLE SLIDES & EXCEL
+  // FUNGSI SAKTI UNTUK COPY TABEL YANG COMPATIBLE LANGSUNG DENGAN EXCEL & GOOGLE SLIDES
   const handleCopyTable = async () => {
     if (shots.length === 0) {
-      toast.error("No data available to copy.");
+      toast.error("Belum ada data untuk disalin.");
       return;
     }
 
@@ -197,7 +197,7 @@ function VibeShotDashboard() {
       const blob = new Blob([htmlString], { type: "text/html" });
       const data = [new ClipboardItem({ "text/html": blob })];
       await navigator.clipboard.write(data);
-      toast.success("Tabel berhasil disalin! Tinggal Paste (Ctrl+V) di Excel, Word, atau Google Slides.");
+      toast.success("Tabel disalin! Buka Excel/Slides lalu tekan Ctrl+V.");
     } catch (err) {
       toast.error("Gagal menyalin tabel otomatis.");
     }
@@ -297,7 +297,7 @@ function VibeShotDashboard() {
             {/* Moodboard - MEMAKSA RASIO VIDEO TIKTOK 9:16 */}
             <section className="mt-6">
               <div className="flex items-end justify-between">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Visual Moodboard (9:16 Vertikal)</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Visual Moodboard (Skala Vertikal 9:16)</h3>
                 <span className="text-[11px] text-muted-foreground">{moodboardTiles.length} references</span>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -314,8 +314,8 @@ function VibeShotDashboard() {
               <div className="flex items-center justify-between border-b border-hairline px-5 py-3">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Interactive Shotlist</h3>
                 <div className="flex items-center gap-2">
-                  {/* TOMBOL EXPORT EXCEL SAKTI */}
-                  <button onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100">
+                  {/* TOMBOL COPY TABEL UNTUK EXCEL / SLIDES */}
+                  <button onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 shadow-sm">
                     <Copy className="h-3.5 w-3.5" /> Copy for Excel/Slides
                   </button>
                   <button onClick={addShot} className="inline-flex items-center gap-1.5 rounded-md border border-hairline bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50">
@@ -325,7 +325,7 @@ function VibeShotDashboard() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1000px] border-collapse text-sm">
+                <table className="w-full min-w-[1100px] border-collapse text-sm">
                   <thead>
                     <tr className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                       <th className="w-14 border-b border-hairline px-4 py-2.5">#</th>
@@ -343,9 +343,17 @@ function VibeShotDashboard() {
                       <tr key={s.id} className="group border-b border-hairline last:border-0 hover:bg-slate-50/60">
                         <td className="px-4 py-2 align-top text-xs font-mono font-medium text-slate-400">{String(idx + 1).padStart(2, "0")}</td>
                         
-                        {/* SKALA THUMBNAIL RESPONSIF */}
+                        {/* VISUAL THUMBNAIL SKALA PAS DENGAN FITUR HOVER ZOOM */}
                         <td className="px-3 py-2 align-top">
-                          {s.image ? <img src={s.image} alt={`Shot ${idx + 1}`} className="h-14 w-24 rounded object-cover border border-hairline bg-slate-100 shadow-sm transition-transform duration-200 hover:scale-110 cursor-zoom-in" /> : <div className="h-14 w-24 rounded border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-[10px] text-slate-400">No Visual</div>}
+                          {s.image ? (
+                            <img 
+                              src={s.image} 
+                              alt={`Shot ${idx + 1}`} 
+                              className="h-14 w-24 rounded object-cover border border-hairline bg-slate-100 shadow-sm transition-transform duration-200 hover:scale-125 hover:z-10 cursor-zoom-in" 
+                            />
+                          ) : (
+                            <div className="h-14 w-24 rounded border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-[10px] text-slate-400">No Visual</div>
+                          )}
                         </td>
 
                         <Cell value={s.imagePrompt || ""} placeholder="AI Image Prompt text..." onChange={(v) => updateShot(s.id, "imagePrompt", v)} />
