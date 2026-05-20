@@ -25,6 +25,7 @@ interface Shot {
   location: string;
   action: string;
   audio: string;
+  image?: string; // Menambahkan penampung gambar storyboard dari AI
 }
 
 const TRENDS = [
@@ -48,6 +49,7 @@ const seedShots = (n: number): Shot[] =>
     location: i === 0 ? "Bedroom" : "Living Room",
     action: "",
     audio: "",
+    image: "",
   }));
 
 function normalizeShots(raw: unknown): Shot[] | null {
@@ -58,6 +60,7 @@ function normalizeShots(raw: unknown): Shot[] | null {
     location: String(r?.location ?? r?.Location ?? ""),
     action: String(r?.action ?? r?.visual ?? r?.actionVisual ?? r?.["Action/Visual"] ?? r?.["Action / Visual"] ?? ""),
     audio: String(r?.audio ?? r?.vo ?? r?.audioVO ?? r?.["Audio/VO"] ?? r?.["Audio / VO"] ?? ""),
+    image: String(r?.image ?? ""), // Sinkronisasi link gambar Unsplash dari Worker
   }));
 }
 
@@ -177,7 +180,7 @@ function VibeShotDashboard() {
   const addShot = () =>
     setShots((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), angle: "", location: "", action: "", audio: "" },
+      { id: crypto.randomUUID(), angle: "", location: "", action: "", audio: "", image: "" },
     ]);
 
   const removeShot = (id: string) =>
@@ -390,6 +393,7 @@ function VibeShotDashboard() {
                   <thead>
                     <tr className="bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                       <th className="w-14 border-b border-hairline px-4 py-2.5">#</th>
+                      <th className="w-24 border-b border-hairline px-3 py-2.5">Visual</th> {/* Header Kolom Baru */}
                       <th className="w-40 border-b border-hairline px-3 py-2.5">
                         Camera Angle
                       </th>
@@ -413,6 +417,20 @@ function VibeShotDashboard() {
                       >
                         <td className="px-4 py-2 align-top text-xs font-mono font-medium text-slate-400">
                           {String(idx + 1).padStart(2, "0")}
+                        </td>
+                        {/* Cell Untuk Merender Thumbnail Gambar Storyboard Dari Worker */}
+                        <td className="px-3 py-2 align-top">
+                          {s.image ? (
+                            <img 
+                              src={s.image} 
+                              alt={`Shot ${idx + 1}`} 
+                              className="h-12 w-20 rounded object-cover border border-hairline bg-slate-100 shadow-sm"
+                            />
+                          ) : (
+                            <div className="h-12 w-20 rounded border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-[10px] text-slate-400">
+                              No Visual
+                            </div>
+                          )}
                         </td>
                         <Cell
                           value={s.angle}
