@@ -17,7 +17,101 @@ interface Shot {
   imagePrompt?: string;
 }
 
-function SafeAIImage({ src, alt, className, globalIndex, activeGlobalIndex, onNextQueue }: { src: string; alt: string; className: string; globalIndex: number; activeGlobalIndex: number; onNextQueue: () => void; }) {
+// ==========================================
+// DICTIONARY MULTI-BAHASA (i18n)
+// ==========================================
+const translations = {
+  id: {
+    backToHome: "← Kembali ke Home",
+    resetProject: "Reset Project",
+    briefComposer: "Brief Composer (Peracik Konten)",
+    paramUtama: "1. Parameter Utama Brief",
+    namaBrand: "Nama Brand / Produk",
+    ideKasar: "Ide Kasar / USP Utama Konten (Tumpahkan semua di sini)",
+    placeholderIde: "Tulis plot kasar, poin jualan, atau arahan revisi reviewer agensi di sini...",
+    arsitekturVibe: "2. Arsitektur & Vibe Konten",
+    targetPlatform: "Target Platform Konten",
+    pillarKonten: "Pillar / Kategori Konten",
+    pillarOption1: "Hiburan / Komedi Skit / Entertainment",
+    pillarOption2: "Hard Sell / Promosi Produk Langsung",
+    pendekatanTalent: "Pendekatan Talent (Approach)",
+    talentOption1: "Creator-Led (Talent bicara depan kamera)",
+    talentOption2: "Voice Over Only (Potongan visual + VO narator)",
+    moodTone: "Mood & Tone Konten (Gaya Penyampaian)",
+    jumlahShot: "Jumlah Shot Awal Yang Diminta",
+    refMultimodal: "3. Referensi Multimodal (Aset Tambahan)",
+    tipeAset: "Tipe Aset Referensi",
+    noRef: "Tanpa referensi (Andalkan Teks Murni)",
+    uploadPhoto: "Upload Foto Moodboard / Screenshot",
+    pasteLink: "Paste Link Video Referensi (TikTok/YouTube)",
+    clickUpload: "Klik untuk pilih gambar/screenshot",
+    payloadLocked: "✓ payload aset visual terkunci",
+    pastePlaceholder: "Paste link video TikTok atau YouTube...",
+    btnCompile: "Susun Cetak Biru Brief Produksi",
+    btnCompiling: "Meracik Kombinasi AI...",
+    specSheet: "Lembar Spesifikasi Produksi",
+    papanStrategi: "Papan Strategi Konten",
+    premisNaratif: "Premis Naratif Konsep (Alur Logika AI)",
+    premisPlaceholder: "Hasil racikan narasi konsep komparasi teks & aset gambar akan mendarat di sini secara terstruktur.",
+    panelKontinuitas: "Panel Kontinuitas Visual Storyboard (Master Frame 9:16)",
+    garisWaktu: "Garis Waktu Shotlist Stack",
+    salinTabel: "Salin Struktur Tabel (Buat Excel)",
+    belumAda: "Belum ada runtutan adegan yang dieksekusi.",
+    cameraSpecs: "Spesifikasi Kamera / Angle",
+    locationEnv: "Lingkungan Adegan / Lokasi",
+    visualScene: "Deskripsi Aksi Visual Adegan",
+    audioScript: "Naskah Copywriting Audio (VO / Dialog / SFX)",
+    btnExtend: "Lanjutkan Alur Cerita (Otomatis Bikin Shot 7-12)",
+    btnExtending: "Melakukan Rantai Sambungan Adegan...",
+    queue: "antrean adegan"
+  },
+  en: {
+    backToHome: "← Back to Home",
+    resetProject: "Reset Workspace",
+    briefComposer: "Brief Composer",
+    paramUtama: "1. Core Brief Parameters",
+    namaBrand: "Brand / Product Name",
+    ideKasar: "Raw Idea / Main USP (Talk freely here)",
+    placeholderIde: "Write rough plot, selling points, or reviewer feedback here...",
+    arsitekturVibe: "2. Content Architecture",
+    targetPlatform: "Target Platform",
+    pillarKonten: "Content Pillar",
+    pillarOption1: "Entertainment / Comedy Skit",
+    pillarOption2: "Hard Sell / Direct Product Promotion",
+    pendekatanTalent: "Talent Approach",
+    talentOption1: "Creator-Led (Talent talking to camera)",
+    talentOption2: "Voice Over Only (Visual clips + VO narrator)",
+    moodTone: "Content Mood & Tone",
+    jumlahShot: "Initial Shots Count",
+    refMultimodal: "3. Multimodal References",
+    tipeAset: "Reference Asset Type",
+    noRef: "No reference (Text only)",
+    uploadPhoto: "Upload Moodboard / Screenshot Photo",
+    pasteLink: "Paste Reference Video Link (TikTok/YouTube)",
+    clickUpload: "Click to select image/screenshot",
+    payloadLocked: "✓ visual asset payload cached",
+    pastePlaceholder: "Paste TikTok or YouTube video link...",
+    btnCompile: "Compile Production Brief",
+    btnCompiling: "Compiling AI Engine...",
+    specSheet: "Production Spec Sheet",
+    papanStrategi: "Untitled Strategy Board",
+    premisNaratif: "Concept Narrative Premise (AI Logic Flow)",
+    premisPlaceholder: "The AI-generated concept narrative matching text and visual assets will land here structured.",
+    panelKontinuitas: "Visual Storyboard Continuity Panel (Master Frame 9:16)",
+    garisWaktu: "Storyboard Timeline Stack",
+    salinTabel: "Copy Table Structure (For Excel)",
+    belumAda: "No execution sequences generated yet.",
+    cameraSpecs: "Camera Specs / Angle",
+    locationEnv: "Scene Environment / Location",
+    visualScene: "Visual Scene Action Description",
+    audioScript: "Audio Copywriting Script (VO / Dialog / SFX)",
+    btnExtend: "Extend Storyline Layout (Create Shots 7-12)",
+    btnExtending: "Chaining Sequence Extensions...",
+    queue: "loading queue"
+  }
+};
+
+function SafeAIImage({ src, alt, className, globalIndex, activeGlobalIndex, onNextQueue, langLabel }: { src: string; alt: string; className: string; globalIndex: number; activeGlobalIndex: number; onNextQueue: () => void; langLabel: string; }) {
   const [currentSrc, setCurrentSrc] = useState("");
   const [hasTriggeredNext, setHasTriggeredNext] = useState(false);
 
@@ -37,7 +131,7 @@ function SafeAIImage({ src, alt, className, globalIndex, activeGlobalIndex, onNe
   if (globalIndex > activeGlobalIndex || !currentSrc) {
     return (
       <div className={`${className} flex flex-col items-center justify-center bg-zinc-50 border border-dashed border-zinc-200 text-[10px] text-zinc-400 font-mono`}>
-        <span>antrean adegan #{globalIndex + 1}</span>
+        <span>{langLabel} #{globalIndex + 1}</span>
       </div>
     );
   }
@@ -47,6 +141,8 @@ function SafeAIImage({ src, alt, className, globalIndex, activeGlobalIndex, onNe
 
 function VibeShotPlatform() {
   const [view, setView] = useState<"landing" | "app">("landing");
+  const [lang, setLang] = useState<"id" | "en">("en"); // Default English
+  
   const workerUrl = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
   
   const [productName, setProductName] = useState("");
@@ -73,7 +169,17 @@ function VibeShotPlatform() {
   const [hasResult, setHasResult] = useState(false);
   const [activeGlobalIndex, setActiveGlobalIndex] = useState(-1);
 
+  // LOGIKA DETEKSI LOG-IN DAN DETEKSI NEGARA/BAHASA BROWSER
   useEffect(() => {
+    // 1. Cek Bahasa Browser User
+    const browserLang = navigator.language || (navigator as any).userLanguage || "en";
+    if (browserLang.startsWith("id")) {
+      setLang("id"); // Set otomatis ke Indonesia jika terdeteksi id-ID / id
+    } else {
+      setLang("en"); // Set luar negeri
+    }
+
+    // 2. Auto-Redirect data lama
     const savedShots = localStorage.getItem("vibeshot_shots");
     const savedMoodboard = localStorage.getItem("vibeshot_moodboard");
     const savedPremise = localStorage.getItem("vibeshot_premise");
@@ -89,6 +195,8 @@ function VibeShotPlatform() {
       setView("app");
     }
   }, []);
+
+  const t = translations[lang]; // Ambil data kamus yang aktif
 
   const saveToLocalStorage = (newShots: Shot[], newMood: string[], newPremise: string | null, newTitle: string | null) => {
     localStorage.setItem("vibeshot_shots", JSON.stringify(newShots));
@@ -109,20 +217,20 @@ function VibeShotPlatform() {
     setRefImageBase64("");
     setActiveGlobalIndex(-1);
     setView("landing");
-    toast.success("Workspace berhasil dikosongkan.");
+    toast.success(lang === "id" ? "Workspace dibersihkan." : "Workspace cleared.");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 4 * 1024 * 1024) {
-      toast.error("Ukuran file maksimal 4MB.");
+      toast.error(lang === "id" ? "File maksimal 4MB." : "Max file size is 4MB.");
       return;
     }
     const reader = new FileReader();
     reader.onloadend = () => {
       setRefImageBase64(reader.result as string);
-      toast.success("Gambar referensi terkunci di memori browser.");
+      toast.success(lang === "id" ? "Aset visual terkunci." : "Visual asset cached.");
     };
     reader.readAsDataURL(file);
   };
@@ -140,7 +248,7 @@ function VibeShotPlatform() {
         body: JSON.stringify({ product: productName, usp, trend, tone, shotCount, platform, pillar, talent, refType, refUrl, refImageBase64 }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Gagal memproses brief.");
+      if (!res.ok) throw new Error(data?.error || "Error compiling.");
 
       const normalized = (data.shotlist || []).map((r: any) => ({
         id: crypto.randomUUID(),
@@ -160,7 +268,7 @@ function VibeShotPlatform() {
       setActiveGlobalIndex(0);
       
       saveToLocalStorage(normalized, data.moodboard || [], data.premise, data.title);
-      toast.success("Brief cetak biru berhasil diracik!");
+      toast.success(lang === "id" ? "Brief berhasil diracik!" : "Brief successfully compiled!");
     } catch (err: any) {
       setErrorMsg(err.message);
     } finally {
@@ -185,7 +293,7 @@ function VibeShotPlatform() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Gagal menyambung alur.");
+      if (!res.ok) throw new Error(data?.error || "Error chaining.");
 
       const normalizedNewShots = (data.shotlist || []).map((r: any) => ({
         id: crypto.randomUUID(),
@@ -199,7 +307,7 @@ function VibeShotPlatform() {
 
       const finalShots = [...shots, ...normalizedNewShots];
       const finalMood = [...moodboard, ...(data.moodboard || [])];
-      const finalPremise = `${premiseOverride}\n\n[Kelanjutan Part 2 Continuous]:\n${data.premise}`;
+      const finalPremise = `${premiseOverride}\n\n[Continuous Sequence]:\n${data.premise}`;
 
       setShots(finalShots);
       setMoodboard(finalMood);
@@ -207,7 +315,7 @@ function VibeShotPlatform() {
       
       saveToLocalStorage(finalShots, finalMood, finalPremise, titleOverride);
       setActiveGlobalIndex(currentImagesCount);
-      toast.success("Shot 7-12 berhasil disambung ke bawah.");
+      toast.success(lang === "id" ? "Alur berhasil disambung!" : "Timeline extended successfully!");
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -226,8 +334,8 @@ function VibeShotPlatform() {
     try {
       const blob = new Blob([htmlString], { type: "text/html" });
       await navigator.clipboard.write([new ClipboardItem({ "text/html": blob })]);
-      toast.success("Struktur tabel disalin! Siap dipaste ke Excel / Google Slides.");
-    } catch { toast.error("Gagal menyalin."); }
+      toast.success(lang === "id" ? "Struktur tabel berhasil disalin!" : "Table layout copied!");
+    } catch { toast.error("Copy failed."); }
   };
 
   const updateShot = (id: string, key: keyof Omit<Shot, "id">, value: string) => {
@@ -240,8 +348,9 @@ function VibeShotPlatform() {
     return Array.from({ length: shotCount }).map(() => null);
   }, [moodboard, shotCount]);
 
-  const inputStyle = "w-full rounded border border-zinc-200 bg-white px-2.5 py-1.5 text-xs text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none transition-colors";
-
+  // ==========================================
+  // VIEW RENDERER 1: LANDING PAGE (STAYS PROFESSIONAL ENGLISH)
+  // ==========================================
   if (view === "landing") {
     return (
       <div className="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-zinc-100">
@@ -251,23 +360,23 @@ function VibeShotPlatform() {
             <span className="text-xs font-semibold tracking-tight text-zinc-800">vibeshot.studio</span>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={() => setView("app")} className="text-xs font-medium bg-zinc-950 text-white px-3 py-1.5 rounded-md hover:bg-zinc-800 transition-colors shadow-sm">Masuk Studio →</button>
+            <button onClick={() => setView("app")} className="text-xs font-medium bg-zinc-950 text-white px-3 py-1.5 rounded-md hover:bg-zinc-800 transition-colors shadow-sm">Launch Studio →</button>
           </div>
         </nav>
 
         <header className="mx-auto max-w-3xl text-center px-6 pt-20 pb-16 space-y-6">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 border border-zinc-200/60 px-3 py-1 text-[11px] text-zinc-500 font-mono">
-            <Sparkles className="h-3 w-3 text-zinc-400" /> Private Beta Engine v2.0 Aktif
+            <Sparkles className="h-3 w-3 text-zinc-400" /> Private Beta Engine Active
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 leading-[1.1]">
-            Ubah ide coretan kasar jadi brief produksi video sekelas agensi.
+            Turn messy script ideas into crystal-clear production briefs.
           </h1>
           <p className="text-zinc-500 text-sm max-w-xl mx-auto leading-relaxed">
-            Workspace otomatis untuk Creative Strategist, Produser, dan Kreator Konten. Sulap input mentah dan link referensi menjadi skrip kata-demi-kata, moodboard, serta storyboard sinematik interaktif dalam 60 detik.
+            The automated workspace built for Creative Strategists and Agency Workers. Translate loose briefs and visual references into word-for-word scripts, moodboards, and interactive storyboards in 60 seconds.
           </p>
           <div className="pt-2">
             <button onClick={() => setView("app")} className="inline-flex items-center gap-2 bg-zinc-900 text-white font-medium text-xs px-5 py-3 rounded-lg shadow hover:bg-zinc-800 transition-all transform hover:-translate-y-0.5">
-              Mulai Meracik Gratis <ArrowRight className="h-3.5 w-3.5" />
+              Get Started for Free <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
         </header>
@@ -283,8 +392,8 @@ function VibeShotPlatform() {
             <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] bg-white border border-zinc-200/80 rounded-lg overflow-hidden mt-4 min-h-[300px]">
               <div className="border-r border-zinc-100 p-3 bg-zinc-50/50 space-y-3 font-mono text-[9px] text-zinc-400">
                 <div className="h-3 bg-zinc-200 rounded w-1/2" />
-                <div className="h-14 bg-zinc-200/60 rounded border border-dashed border-zinc-300 flex items-center justify-center p-2 text-center text-zinc-400">"Suzuki Carry — Angkat keunggulan radius putar lincah di tikungan sempit..."</div>
-                <div className="h-6 bg-zinc-950 rounded flex items-center justify-center text-white font-sans font-bold">Racik Brief Konten ✨</div>
+                <div className="h-14 bg-zinc-200/60 rounded border border-dashed border-zinc-300 flex items-center justify-center p-2 text-center text-zinc-400">"Suzuki Carry — Highlight tighter turning radius advantages for compact alley deliveries..."</div>
+                <div className="h-6 bg-zinc-950 rounded flex items-center justify-center text-white font-sans font-bold">Compile Brief ✨</div>
               </div>
               <div className="p-4 space-y-4">
                 <div className="flex justify-between items-center pb-2 border-b border-zinc-100">
@@ -306,29 +415,32 @@ function VibeShotPlatform() {
             <div className="space-y-2">
               <div className="h-7 w-7 rounded bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-700 font-bold text-xs">01</div>
               <h3 className="text-xs font-semibold text-zinc-900 uppercase font-mono tracking-wider">Multimodal Sandbox</h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">Masukkan link video TikTok/YouTube referensi kompetitor atau unggah screenshot moodboard mentah. AI membaca aset visual secara real-time.</p>
+              <p className="text-zinc-500 text-xs leading-relaxed">Drop competitor video links or upload raw moodboard screenshots directly. The engine analyzes spatial aesthetics in real-time.</p>
             </div>
             <div className="space-y-2">
               <div className="h-7 w-7 rounded bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-700 font-bold text-xs">02</div>
               <h3 className="text-xs font-semibold text-zinc-900 uppercase font-mono tracking-wider">Timeline Stacks Card</h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">Lupakan baris tabel Excel horizontal yang memusingkan mata. Struktur adegan dibentuk vertikal berurutan layaknya layer timeline di CapCut.</p>
+              <p className="text-zinc-500 text-xs leading-relaxed">Ditch the friction of horizontal spreadsheet grids. Story structure is stacked vertically, mirroring professional timeline editing layers.</p>
             </div>
             <div className="space-y-2">
               <div className="h-7 w-7 rounded bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-700 font-bold text-xs">03</div>
               <h3 className="text-xs font-semibold text-zinc-900 uppercase font-mono tracking-wider">Sequential Continuity</h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">Takut batasan token macet tengah jalan? Struktur estafet pintar kami mengizinkan perluasan rantai adegan dari 6 shot awal menyambung ke shot 7-12 secara organik.</p>
+              <p className="text-zinc-500 text-xs leading-relaxed">Bypass token ceiling bottlenecks. Our smart daisy-chain stitching seamlessly links your initial 6 shots into shots 7-12 organically.</p>
             </div>
           </div>
         </section>
 
         <footer className="mx-auto max-w-5xl px-6 py-8 flex justify-between text-[11px] font-mono text-zinc-400">
-          <span>© 2026 VibeShot AI. Hak Cipta Dilindungi.</span>
+          <span>© 2026 VibeShot AI. All rights reserved.</span>
           <span>Zero Server Storage Architecture</span>
         </footer>
       </div>
     );
   }
 
+  // ==========================================
+  // VIEW RENDERER 2: APPLIKASI STUDIO (AUTO-DYNAMIC LANGUAGE)
+  // ==========================================
   return (
     <div className="min-h-screen bg-[#fafafa] font-sans text-zinc-900 antialiased selection:bg-zinc-200">
       <header className="flex items-center justify-between border-b border-zinc-200/80 bg-white px-6 py-2.5">
@@ -336,84 +448,85 @@ function VibeShotPlatform() {
           <button onClick={() => setView("landing")} className="flex h-5 w-5 items-center justify-center rounded bg-zinc-900 text-white font-mono text-[10px] font-bold hover:bg-zinc-700 transition-colors">V</button>
           <span className="text-xs text-zinc-400 font-mono">/</span>
           <span className="text-xs font-medium tracking-tight text-zinc-800">vibeshot.studio/workspace</span>
+          <span className="text-[10px] font-mono font-bold uppercase bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded ml-1">{lang} mode</span>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setView("landing")} className="text-[11px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors">← Kembali ke Home</button>
+          <button onClick={() => setView("landing")} className="text-[11px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors">{t.backToHome}</button>
           {hasResult && <span className="text-zinc-200 font-mono text-xs">|</span>}
-          {hasResult && <button onClick={handleClearAll} className="text-[11px] font-medium text-zinc-400 hover:text-red-500 transition-colors">Reset Project</button>}
+          {hasResult && <button onClick={handleClearAll} className="text-[11px] font-medium text-zinc-400 hover:text-red-500 transition-colors">{t.resetProject}</button>}
         </div>
       </header>
 
       <div className="grid min-h-[calc(100vh-42px)] grid-cols-1 lg:grid-cols-[380px_1fr]">
         <aside className="border-r border-zinc-200/70 bg-white p-5 lg:sticky lg:top-[42px] lg:h-[calc(100vh-42px)] lg:overflow-y-auto space-y-4 shadow-sm">
           <div className="pb-2 border-b border-zinc-100">
-            <h1 className="text-xs font-semibold tracking-tight uppercase text-zinc-400">Brief Composer (Peracik Konten)</h1>
+            <h1 className="text-xs font-semibold tracking-tight uppercase text-zinc-400">{t.briefComposer}</h1>
           </div>
 
           <div className="rounded-lg border border-zinc-200/60 overflow-hidden bg-zinc-50/30">
             <button onClick={() => setOpenSection(openSection === "core" ? "none" : "core")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
-              <span className="flex items-center gap-2"><Film className="h-3.5 w-3.5 text-zinc-500" /> 1. Parameter Utama Brief</span>
+              <span className="flex items-center gap-2"><Film className="h-3.5 w-3.5 text-zinc-500" /> {t.paramUtama}</span>
               {openSection === "core" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
             </button>
             {openSection === "core" && (
               <div className="p-4 space-y-4 bg-white">
-                <Field label="Nama Brand / Produk"><input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="Contoh: Suzuki Carry, Wardah, Gojek" className={inputStyle} /></Field>
-                <Field label="Ide Kasar / USP Utama Konten (Tumpahkan semua di sini)"><textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={4} placeholder="Tulis plot kasar, poin jualan, atau arahan revisi reviewer agensi di sini..." className={inputStyle + " resize-none"} /></Field>
+                <Field label={t.namaBrand}><input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Suzuki Carry, Wardah, Gojek" className={inputStyle} /></Field>
+                <Field label={t.ideKasar}><textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={4} placeholder={t.placeholderIde} className={inputStyle + " resize-none"} /></Field>
               </div>
             )}
           </div>
 
           <div className="rounded-lg border border-zinc-200/60 overflow-hidden bg-zinc-50/30">
             <button onClick={() => setOpenSection(openSection === "vibe" ? "none" : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
-              <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5 text-zinc-500" /> 2. Arsitektur & Vibe Konten</span>
+              <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5 text-zinc-500" /> {t.arsitekturVibe}</span>
               {openSection === "vibe" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
             </button>
             {openSection === "vibe" && (
               <div className="p-4 space-y-4 bg-white">
-                <Field label="Target Platform Konten">
+                <Field label={t.targetPlatform}>
                   <select value={platform} onChange={(e) => setPlatform(e.target.value)} className={inputStyle + " bg-zinc-50/50"}>
                     <option value="TikTok">TikTok (Organic & Raw Concept)</option><option value="Instagram Reels">Instagram Reels (Aesthetic & Trendy)</option>
                   </select>
                 </Field>
-                <Field label="Pillar / Kategori Konten">
+                <Field label={t.pillarKonten}>
                   <select value={pillar} onChange={(e) => setPillar(e.target.value)} className={inputStyle + " bg-zinc-50/50"}>
-                    <option value="Hiburan / Entertainment">Hiburan / Komedi Skit / Entertainment</option><option value="Hard Sell / Promosi Langsung">Hard Sell / Promosi Produk Langsung</option>
+                    <option value="Hiburan / Entertainment">{t.pillarOption1}</option><option value="Hard Sell / Promosi Langsung">{t.pillarOption2}</option>
                   </select>
                 </Field>
-                <Field label="Pendekatan Talent (Approach)">
+                <Field label={t.pendekatanTalent}>
                   <select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50"}>
-                    <option value="Creator-Led (Ada talent berbicara ke kamera)">Creator-Led (Talent bicara depan kamera)</option><option value="Voice Over Only (Kombinasi cuplikan + VO)">Voice Over Only (Potongan visual + VO narator)</option>
+                    <option value="Creator-Led (Ada talent berbicara ke kamera)">{t.talentOption1}</option><option value="Voice Over Only (Kombinasi cuplikan + VO)">{t.talentOption2}</option>
                   </select>
                 </Field>
-                <Field label="Mood & Tone Konten (Gaya Penyampaian)"><input value={tone} onChange={(e) => setTone(e.target.value)} className={inputStyle} /></Field>
-                <Field label="Jumlah Shot Awal Yang Diminta"><input type="number" min={1} max={12} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "6", 10))} className={inputStyle + " w-24"} /></Field>
+                <Field label={t.moodTone}><input value={tone} onChange={(e) => setTone(e.target.value)} className={inputStyle} /></Field>
+                <Field label={t.jumlahShot}><input type="number" min={1} max={12} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "6", 10))} className={inputStyle + " w-24"} /></Field>
               </div>
             )}
           </div>
 
           <div className="rounded-lg border border-zinc-200/60 overflow-hidden bg-zinc-50/30">
             <button onClick={() => setOpenSection(openSection === "ref" ? "none" : "ref")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
-              <span className="flex items-center gap-2"><LayoutGrid className="h-3.5 w-3.5 text-zinc-500" /> 3. Referensi Multimodal (Aset Tambahan)</span>
+              <span className="flex items-center gap-2"><LayoutGrid className="h-3.5 w-3.5 text-zinc-500" /> {t.refMultimodal}</span>
               {openSection === "ref" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
             </button>
             {openSection === "ref" && (
               <div className="p-4 space-y-4 bg-white">
-                <Field label="Tipe Aset Referensi">
+                <Field label={t.tipeAset}>
                   <select value={refType} onChange={(e) => setRefType(e.target.value)} className={inputStyle + " bg-zinc-50/50"}>
-                    <option value="none">Tanpa referensi (Andalkan Teks Murni)</option><option value="image">Upload Foto Moodboard / Screenshot</option><option value="url">Paste Link Video Referensi (TikTok/YouTube)</option>
+                    <option value="none">{t.noRef}</option><option value="image">{t.uploadPhoto}</option><option value="url">{t.pasteLink}</option>
                   </select>
                 </Field>
                 {refType === "image" && (
                   <div className="rounded-lg border border-dashed border-zinc-200 p-4 bg-zinc-50/50 text-center transition hover:bg-zinc-50">
                     <label className="cursor-pointer flex flex-col items-center justify-center gap-1.5 text-zinc-500">
-                      <Upload className="h-4 w-4 text-zinc-400" /><span className="text-xs">Klik untuk pilih gambar/screenshot</span><input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                      <Upload className="h-4 w-4 text-zinc-400" /><span className="text-xs">{t.clickUpload}</span><input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
                     </label>
-                    {refImageBase64 && <p className="mt-2 text-[10px] text-emerald-600 font-mono">✓ payload aset visual terkunci</p>}
+                    {refImageBase64 && <p className="mt-2 text-[10px] text-emerald-600 font-mono">{t.payloadLocked}</p>}
                   </div>
                 )}
                 {refType === "url" && (
                   <div className="flex items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50/30 px-3 py-2">
-                    <Link className="h-3.5 w-3.5 text-zinc-400 shrink-0" /><input type="text" value={refUrl} onChange={(e) => setRefUrl(e.target.value)} placeholder="Paste link video TikTok atau YouTube..." className="w-full text-xs outline-none bg-transparent text-zinc-700" />
+                    <Link className="h-3.5 w-3.5 text-zinc-400 shrink-0" /><input type="text" value={refUrl} onChange={(e) => setRefUrl(e.target.value)} placeholder={t.pastePlaceholder} className="w-full text-xs outline-none bg-transparent text-zinc-700" />
                   </div>
                 )}
               </div>
@@ -421,7 +534,7 @@ function VibeShotPlatform() {
           </div>
 
           <button onClick={handleGenerate} disabled={isGenerating || isContinuing} className="flex w-full items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-50">
-            {isGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Meracik Kombinasi AI...</> : <><Sparkles className="h-3.5 w-3.5" /> Susun Cetak Biru Brief Produksi</>}
+            {isGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnCompiling}</> : <><Sparkles className="h-3.5 w-3.5" /> {t.btnCompile}</>}
           </button>
           {errorMsg && <p className="text-[11px] text-red-600 bg-red-50/80 p-2.5 rounded border border-red-100">{errorMsg}</p>}
         </aside>
@@ -429,24 +542,24 @@ function VibeShotPlatform() {
         <main className="p-6 lg:p-10 overflow-y-auto max-h-[calc(100vh-42px)]">
           <div className="mx-auto max-w-4xl space-y-8">
             <div className="pb-4 border-b border-zinc-200/60">
-              <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-zinc-400"><FileText className="h-3.5 w-3.5" /> Lembar Spesifikasi Produksi</div>
-              <h2 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 md:text-3xl">{titleOverride || "Papan Strategi Konten"}</h2>
+              <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-zinc-400"><FileText className="h-3.5 w-3.5" /> {t.specSheet}</div>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 md:text-3xl">{titleOverride || t.papanStrategi}</h2>
             </div>
 
             <div className="rounded-xl border border-zinc-200/80 bg-white p-5 shadow-sm space-y-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">Premis Naratif Konsep (Alur Logika AI)</span>
-              <p className="whitespace-pre-line text-sm leading-relaxed text-zinc-700 font-sans">{premiseOverride || "Hasil racikan narasi konsep komparasi teks & aset gambar akan mendarat di sini secara terstruktur."}</p>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">{t.premisNaratif}</span>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-zinc-700 font-sans">{premiseOverride || t.premisPlaceholder}</p>
             </div>
 
             <div className="space-y-3">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">Panel Kontinuitas Visual Storyboard (Master Frame 9:16)</span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">{t.panelKontinuitas}</span>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
                 {moodboardTiles.map((src, i) => (
                   <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
                     {src ? (
-                      <SafeAIImage src={src} alt={`Storyboard Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" globalIndex={i} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} />
+                      <SafeAIImage src={src} alt={`Storyboard Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" globalIndex={i} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} langLabel={lang === "id" ? "shot" : "shot block"} />
                     ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 text-zinc-300"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">Shot {i + 1}</span></div>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 text-zinc-300"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">{lang === "id" ? "Shot" : "Shot"} {i + 1}</span></div>
                     )}
                   </div>
                 ))}
@@ -455,12 +568,12 @@ function VibeShotPlatform() {
 
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">Garis Waktu Shotlist Stack ({shots.length} Sequence)</span>
-                {hasResult && <button onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600 transition hover:bg-zinc-50 shadow-sm"><Copy className="h-3 w-3" /> Salin Struktur Tabel (Buat Excel)</button>}
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">{t.garisWaktu} ({shots.length} Sequence)</span>
+                {hasResult && <button onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded border border-zinc-200 bg-white px-2.5 py-1 text-[11px] font-medium text-zinc-600 transition hover:bg-zinc-50 shadow-sm"><Copy className="h-3 w-3" /> {t.salinTabel}</button>}
               </div>
 
               {shots.length === 0 ? (
-                <div className="py-12 border border-dashed border-zinc-200 bg-white text-center rounded-xl text-xs text-zinc-400 font-mono">Belum ada runtutan adegan yang dieksekusi.</div>
+                <div className="py-12 border border-dashed border-zinc-200 bg-white text-center rounded-xl text-xs text-zinc-400 font-mono">{t.belumAda}</div>
               ) : (
                 <div className="space-y-4">
                   {shots.map((s, idx) => (
@@ -468,29 +581,29 @@ function VibeShotPlatform() {
                       <div className="flex items-start gap-3 shrink-0">
                         <div className="text-xs font-mono font-semibold text-zinc-300 pt-1">{String(idx + 1).padStart(2, "0")}</div>
                         <div className="relative aspect-[16/9] w-full md:w-36 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50 shrink-0 shadow-inner">
-                          {s.image ? <SafeAIImage src={s.image} alt="Visual sequence" className="h-full w-full object-cover object-center cursor-zoom-in" globalIndex={idx + moodboard.length} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 font-mono">loading block</div>}
+                          {s.image ? <SafeAIImage src={s.image} alt="Visual sequence" className="h-full w-full object-cover object-center cursor-zoom-in" globalIndex={idx + moodboard.length} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} langLabel={lang === "id" ? "adegan" : "block queue"} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 font-mono">loading block</div>}
                         </div>
                       </div>
 
                       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                         <div className="space-y-2.5 border-r border-zinc-100/80 pr-2">
                           <div>
-                            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider block mb-0.5">Spesifikasi Kamera / Angle</span>
+                            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider block mb-0.5">{t.cameraSpecs}</span>
                             <input value={s.angle} onChange={(e) => updateShot(s.id, "angle", e.target.value)} className="w-full bg-zinc-50/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-800 font-medium focus:border-zinc-200 focus:bg-white focus:outline-none" />
                           </div>
                           <div>
-                            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider block mb-0.5">Lingkungan Adegan / Lokasi</span>
+                            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider block mb-0.5">{t.locationEnv}</span>
                             <input value={s.location} onChange={(e) => updateShot(s.id, "location", e.target.value)} className="w-full bg-zinc-50/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-700 focus:border-zinc-200 focus:bg-white focus:outline-none" />
                           </div>
                         </div>
 
                         <div className="space-y-2.5">
                           <div>
-                            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider block mb-0.5">Deskripsi Aksi Visual Adegan</span>
+                            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider block mb-0.5">{t.visualScene}</span>
                             <textarea rows={2} value={s.action} onChange={(e) => updateShot(s.id, "action", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-700 leading-relaxed resize-none focus:border-zinc-200 focus:bg-white focus:outline-none" />
                           </div>
                           <div>
-                            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider block mb-0.5">Naskah Copywriting Audio (VO / Dialog / SFX)</span>
+                            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-wider block mb-0.5">{t.audioScript}</span>
                             <textarea rows={2} value={s.audio} onChange={(e) => updateShot(s.id, "audio", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-800 font-medium leading-relaxed resize-none focus:border-zinc-200 focus:bg-white focus:outline-none" />
                           </div>
                         </div>
@@ -505,7 +618,7 @@ function VibeShotPlatform() {
               {hasResult && shots.length < 12 && (
                 <div className="pt-2 text-center">
                   <button onClick={handleLanjutkanCerita} disabled={isContinuing} className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-50">
-                    {isContinuing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Melakukan Rantai Sambungan Adegan...</> : <><ArrowDownRight className="h-3.5 w-3.5" /> Lanjutkan Alur Cerita (Otomatis Bikin Shot 7-12)</>}
+                    {isContinuing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnExtending}</> : <><ArrowDownRight className="h-3.5 w-3.5" /> {t.btnExtend}</>}
                   </button>
                 </div>
               )}
