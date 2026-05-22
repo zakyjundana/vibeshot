@@ -73,14 +73,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      
+      // SEO DASAR & BRADING UTAMA VIBESHOT
+      { title: "VibeShot AI — AI Production Brief & Storyboard Generator" },
+      { name: "description", content: "Turn messy script ideas into crystal-clear production briefs, moodboards, and interactive storyboards in 60 seconds. Built for creative agencies & content creators." },
+      { name: "author", content: "Zaky Jundana" },
+      
+      // PREVIEW LINKEDIN / WHATSAPP / FACEBOOK
+      { property: "og:title", content: "VibeShot AI — AI Production Brief & Storyboard Generator" },
+      { property: "og:description", content: "Turn messy script ideas into crystal-clear production briefs, moodboards, and interactive storyboards in 60 seconds." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { property: "og:url", content: "https://vibeshot-creative-hub.zakyjundana.workers.dev/" },
+      { property: "og:image", content: "https://images.pollinations.ai/p/cinematic%20minimalist%20saas%20dashboard%20mockup%20on%20tablet%20screen%2C%20dark%20ui%2C%20creative%20agency%20vibe?width=1200&height=630&seed=12345" },
+      
+      // PREVIEW TWITTER / X CARD (Format Banner Gede Premium)
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "VibeShot AI — AI Production Brief & Storyboard Generator" },
+      { name: "twitter:description", content: "Turn messy script ideas into crystal-clear production briefs, moodboards, and interactive storyboards in 60 seconds." },
+      { name: "twitter:image", content: "https://images.pollinations.ai/p/cinematic%20minimalist%20saas%20dashboard%20mockup%20on%20tablet%20screen%2C%20dark%20ui%2C%20creative%20agency%20vibe?width=1200&height=630&seed=12345" },
     ],
     links: [
       {
@@ -113,9 +123,11 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <Outlet />
-      <Toaster />
-    </QueryClientProvider>
+    <div id="vibeshot-root">
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+        <Toaster />
+      </QueryClientProvider>
+    </div>
   );
 }
