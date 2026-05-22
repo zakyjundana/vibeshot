@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, CheckCircle2, ChevronRight, HelpCircle } from "lucide-react";
+import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -46,12 +46,9 @@ function SafeAIImage({ src, alt, className, globalIndex, activeGlobalIndex, onNe
 }
 
 function VibeShotPlatform() {
-  // Navigation State: "landing" atau "app"
   const [view, setView] = useState<"landing" | "app">("landing");
-  
   const workerUrl = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
   
-  // Dashboard Core State
   const [productName, setProductName] = useState("");
   const [usp, setUsp] = useState("");
   const [trend, setTrend] = useState("");
@@ -61,12 +58,10 @@ function VibeShotPlatform() {
   const [talent, setTalent] = useState("Creator-Led");
   const [shotCount, setShotCount] = useState(6);
 
-  // Multimodal parameters
-  const [refType, setRefType] = useState<"none" | "image" | "url">("none");
+  const [refType, setRefType] = useState<string>("none");
   const [refUrl, setRefUrl] = useState("");
   const [refImageBase64, setRefImageBase64] = useState("");
-  
-  const [openSection, setOpenSection] = useState<"core" | "vibe" | "ref">("core");
+  const [openSection, setOpenSection] = useState<string>("core");
 
   const [shots, setShots] = useState<Shot[]>([]);
   const [moodboard, setMoodboard] = useState<string[]>([]);
@@ -243,14 +238,11 @@ function VibeShotPlatform() {
     return Array.from({ length: shotCount }).map(() => null);
   }, [moodboard, shotCount]);
 
-  // ==========================================
-  // VIEW RENDERER CONTROLLER
-  // ==========================================
-  
+  const inputStyle = "w-full rounded border border-zinc-200 bg-white px-2.5 py-1.5 text-xs text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none transition-colors";
+
   if (view === "landing") {
     return (
       <div className="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-zinc-100">
-        {/* Navigation Bar Minimalis */}
         <nav className="mx-auto max-w-5xl flex items-center justify-between px-6 py-4 border-b border-zinc-100">
           <div className="flex items-center gap-2">
             <div className="flex h-5 w-5 items-center justify-center rounded bg-zinc-900 text-white font-mono text-[10px] font-bold">V</div>
@@ -261,10 +253,9 @@ function VibeShotPlatform() {
           </div>
         </nav>
 
-        {/* HERO AREA (Notion meets Cinematic Minimalism) */}
         <header className="mx-auto max-w-3xl text-center px-6 pt-20 pb-16 space-y-6">
           <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 border border-zinc-200/60 px-3 py-1 text-[11px] text-zinc-500 font-mono">
-            <Sparkles className="h-3 w-3 text-zinc-400" /> Private Beta Engine v2.0 Active
+            <Sparkles className="h-3 w-3 text-zinc-400" /> Private Beta Engine Active
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 leading-[1.1]">
             Turn messy script ideas into crystal-clear production briefs.
@@ -279,7 +270,6 @@ function VibeShotPlatform() {
           </div>
         </header>
 
-        {/* INTERACTIVE THUMBNAIL MOCKUP (Sihir Visual Promo Website) */}
         <section className="mx-auto max-w-4xl px-6 pb-20">
           <div className="rounded-xl border border-zinc-200 bg-[#fafafa] p-4 shadow-xl relative overflow-hidden group">
             <div className="absolute top-2 left-4 flex gap-1.5">
@@ -288,7 +278,6 @@ function VibeShotPlatform() {
               <span className="w-2.5 h-2.5 rounded-full bg-zinc-200 block" />
             </div>
             
-            {/* Split Screen Mockup Tampilan */}
             <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] bg-white border border-zinc-200/80 rounded-lg overflow-hidden mt-4 min-h-[300px]">
               <div className="border-r border-zinc-100 p-3 bg-zinc-50/50 space-y-3 font-mono text-[9px] text-zinc-400">
                 <div className="h-3 bg-zinc-200 rounded w-1/2" />
@@ -310,7 +299,6 @@ function VibeShotPlatform() {
           </div>
         </section>
 
-        {/* CORE BENEFIT GRID (Value Proposition) */}
         <section className="bg-zinc-50 border-t border-b border-zinc-200/60 py-16 px-6">
           <div className="mx-auto max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-2">
@@ -321,17 +309,16 @@ function VibeShotPlatform() {
             <div className="space-y-2">
               <div className="h-7 w-7 rounded bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-700 font-bold text-xs">02</div>
               <h3 className="text-xs font-semibold text-zinc-900 uppercase font-mono tracking-wider">Timeline Stacks Card</h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">Ucapkan selamat tinggal pada kerumitan baris tabel Excel horizontal. Struktur adegan dibentuk vertikal layaknya lembar kerja timeline CapCut.</p>
+              <p className="text-zinc-500 text-xs leading-relaxed">Ucapkan selamat goodbye pada kerumitan baris tabel Excel horizontal. Struktur adegan dibentuk vertikal layaknya lembar kerja timeline CapCut.</p>
             </div>
             <div className="space-y-2">
               <div className="h-7 w-7 rounded bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-700 font-bold text-xs">03</div>
               <h3 className="text-xs font-semibold text-zinc-900 uppercase font-mono tracking-wider">Sequential Continuity</h3>
-              <p className="text-zinc-500 text-xs leading-relaxed">Takut batasan token macet atau failed to fetch? Struktur estafet pintar kami mengizinkan pemrosesan rantai cerita dari 6 shot awal menyambung ke shot 7-12 dengan mulus.</p>
+              <p className="text-zinc-500 text-xs leading-relaxed">Takut batasan token macet? Struktur estafet pintar kami mengizinkan pemrosesan rantai cerita dari 6 shot awal menyambung ke shot 7-12 dengan mulus.</p>
             </div>
           </div>
         </section>
 
-        {/* MINIMAL FOOTER */}
         <footer className="mx-auto max-w-5xl px-6 py-8 flex justify-between text-[11px] font-mono text-zinc-400">
           <span>© 2026 VibeShot AI. All rights reserved.</span>
           <span>Zero Server Storage Architecture</span>
@@ -340,9 +327,6 @@ function VibeShotPlatform() {
     );
   }
 
-  // ==========================================
-  // DASHBOARD STUDIO VIEW RENDERER
-  // ==========================================
   return (
     <div className="min-h-screen bg-[#fafafa] font-sans text-zinc-900 antialiased selection:bg-zinc-200">
       <header className="flex items-center justify-between border-b border-zinc-200/80 bg-white px-6 py-2.5">
@@ -365,55 +349,55 @@ function VibeShotPlatform() {
           </div>
 
           <div className="rounded-lg border border-zinc-200/60 overflow-hidden bg-zinc-50/30">
-            <button onClick={() => setOpenSection(openSection === "core" ? "none" as any : "core")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
+            <button onClick={() => setOpenSection(openSection === "core" ? "none" : "core")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
               <span className="flex items-center gap-2"><Film className="h-3.5 w-3.5 text-zinc-500" /> 1. Core Brief Parameters</span>
               {openSection === "core" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
             </button>
             {openSection === "core" && (
               <div className="p-4 space-y-4 bg-white">
-                <Field label="Brand / Product Name"><input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Suzuki Carry" className="notion-input" /></Field>
-                <Field label="Raw Idea / Main USP (Talk freely here)"><textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={4} placeholder="Tulis ide kasar atau target revisi reviewer di sini..." className="notion-input resize-none" /></Field>
+                <Field label="Brand / Product Name"><input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Suzuki Carry" className={inputStyle} /></Field>
+                <Field label="Raw Idea / Main USP (Talk freely here)"><textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={4} placeholder="Tulis ide kasar atau target revisi di sini..." className={inputStyle + " resize-none"} /></Field>
               </div>
             )}
           </div>
 
           <div className="rounded-lg border border-zinc-200/60 overflow-hidden bg-zinc-50/30">
-            <button onClick={() => setOpenSection(openSection === "vibe" ? "none" as any : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
+            <button onClick={() => setOpenSection(openSection === "vibe" ? "none" : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
               <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5 text-zinc-500" /> 2. Content Architecture</span>
               {openSection === "vibe" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
             </button>
             {openSection === "vibe" && (
               <div className="p-4 space-y-4 bg-white">
                 <Field label="Target Platform">
-                  <select value={platform} onChange={(e) => setPlatform(e.target.value)} className="notion-input bg-zinc-50/50">
+                  <select value={platform} onChange={(e) => setPlatform(e.target.value)} className={inputStyle + " bg-zinc-50/50"}>
                     <option value="TikTok">TikTok (Organic & Raw)</option><option value="Instagram Reels">Instagram Reels (Aesthetic)</option>
                   </select>
                 </Field>
                 <Field label="Content Pillar">
-                  <select value={pillar} onChange={(e) => setPillar(e.target.value)} className="notion-input bg-zinc-50/50">
+                  <select value={pillar} onChange={(e) => setPillar(e.target.value)} className={inputStyle + " bg-zinc-50/50"}>
                     <option value="Hiburan / Entertainment">Hiburan / Entertainment</option><option value="Hard Sell / Promosi Langsung">Hard Sell / Promosi Langsung</option>
                   </select>
                 </Field>
                 <Field label="Talent Approach">
-                  <select value={talent} onChange={(e) => setTalent(e.target.value)} className="notion-input bg-zinc-50/50">
+                  <select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50"}>
                     <option value="Creator-Led (Ada talent berbicara ke kamera)">Creator-Led</option><option value="Voice Over Only (Kombinasi cuplikan + VO)">Voice Over Only</option>
                   </select>
                 </Field>
-                <Field label="Content Tone Mood"><input value={tone} onChange={(e) => setTone(e.target.value)} className="notion-input" /></Field>
-                <Field label="Initial Shots"><input type="number" min={1} max={12} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "6", 10))} className="notion-input w-24" /></Field>
+                <Field label="Content Tone Mood"><input value={tone} onChange={(e) => setTone(e.target.value)} className={inputStyle} /></Field>
+                <Field label="Initial Shots"><input type="number" min={1} max={12} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "6", 10))} className={inputStyle + " w-24"} /></Field>
               </div>
             )}
           </div>
 
           <div className="rounded-lg border border-zinc-200/60 overflow-hidden bg-zinc-50/30">
-            <button onClick={() => setOpenSection(openSection === "ref" ? "none" as any : "ref")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
+            <button onClick={() => setOpenSection(openSection === "ref" ? "none" : "ref")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
               <span className="flex items-center gap-2"><LayoutGrid className="h-3.5 w-3.5 text-zinc-500" /> 3. Multimodal References</span>
               {openSection === "ref" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
             </button>
             {openSection === "ref" && (
               <div className="p-4 space-y-4 bg-white">
                 <Field label="Reference Type">
-                  <select value={refType} onChange={(e) => setRefType(e.target.value as any)} className="notion-input bg-zinc-50/50">
+                  <select value={refType} onChange={(e) => setRefType(e.target.value)} className={inputStyle + " bg-zinc-50/50"}>
                     <option value="none">No reference (Text only)</option><option value="image">Upload Reference Image / Screen</option><option value="url">Paste Link Video (TikTok/YouTube)</option>
                   </select>
                 </Field>
