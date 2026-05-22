@@ -141,7 +141,7 @@ function SafeAIImage({ src, alt, className, globalIndex, activeGlobalIndex, onNe
 
 function VibeShotPlatform() {
   const [view, setView] = useState<"landing" | "app">("landing");
-  const [lang, setLang] = useState<"id" | "en">("en"); // Default English
+  const [lang, setLang] = useState<"id" | "en">("en");
   
   const workerUrl = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
   
@@ -169,34 +169,46 @@ function VibeShotPlatform() {
   const [hasResult, setHasResult] = useState(false);
   const [activeGlobalIndex, setActiveGlobalIndex] = useState(-1);
 
-  // LOGIKA DETEKSI LOG-IN DAN DETEKSI NEGARA/BAHASA BROWSER
+  // UPGRADE SAKTI: PROTEKSI AUTO-READ LOCAL STORAGE DARI GEJALA CRASH DATA CORRUPT
   useEffect(() => {
-    // 1. Cek Bahasa Browser User
-    const browserLang = navigator.language || (navigator as any).userLanguage || "en";
-    if (browserLang.startsWith("id")) {
-      setLang("id"); // Set otomatis ke Indonesia jika terdeteksi id-ID / id
-    } else {
-      setLang("en"); // Set luar negeri
+    try {
+      const browserLang = navigator.language || (navigator as any).userLanguage || "en";
+      if (browserLang.startsWith("id")) {
+        setLang("id");
+      } else {
+        setLang("en");
+      }
+    } catch (e) {
+      setLang("en");
     }
 
-    // 2. Auto-Redirect data lama
-    const savedShots = localStorage.getItem("vibeshot_shots");
-    const savedMoodboard = localStorage.getItem("vibeshot_moodboard");
-    const savedPremise = localStorage.getItem("vibeshot_premise");
-    const savedTitle = localStorage.getItem("vibeshot_title");
+    try {
+      const savedShots = localStorage.getItem("vibeshot_shots");
+      const savedMoodboard = localStorage.getItem("vibeshot_moodboard");
+      const savedPremise = localStorage.getItem("vibeshot_premise");
+      const savedTitle = localStorage.getItem("vibeshot_title");
 
-    if (savedShots && savedMoodboard) {
-      setShots(JSON.parse(savedShots));
-      setMoodboard(JSON.parse(savedMoodboard));
-      setPremiseOverride(savedPremise);
-      setTitleOverride(savedTitle);
-      setHasResult(true);
-      setActiveGlobalIndex(0);
-      setView("app");
+      if (savedShots && savedMoodboard) {
+        const parsedShots = JSON.parse(savedShots);
+        const parsedMoodboard = JSON.parse(savedMoodboard);
+        
+        if (Array.isArray(parsedShots) && Array.isArray(parsedMoodboard)) {
+          setShots(parsedShots);
+          setMoodboard(parsedMoodboard);
+          setPremiseOverride(savedPremise);
+          setTitleOverride(savedTitle);
+          setHasResult(true);
+          setActiveGlobalIndex(0);
+          setView("app");
+        }
+      }
+    } catch (err) {
+      console.error("Data lama corrupt, mereset workspace otomatis:", err);
+      localStorage.clear();
     }
   }, []);
 
-  const t = translations[lang]; // Ambil data kamus yang aktif
+  const t = translations[lang] || translations["en"];
 
   const saveToLocalStorage = (newShots: Shot[], newMood: string[], newPremise: string | null, newTitle: string | null) => {
     localStorage.setItem("vibeshot_shots", JSON.stringify(newShots));
@@ -348,9 +360,8 @@ function VibeShotPlatform() {
     return Array.from({ length: shotCount }).map(() => null);
   }, [moodboard, shotCount]);
 
-  // ==========================================
-  // VIEW RENDERER 1: LANDING PAGE (STAYS PROFESSIONAL ENGLISH)
-  // ==========================================
+  const inputStyle = "w-full rounded border border-zinc-200 bg-white px-2.5 py-1.5 text-xs text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none transition-colors";
+
   if (view === "landing") {
     return (
       <div className="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-zinc-100">
@@ -438,9 +449,6 @@ function VibeShotPlatform() {
     );
   }
 
-  // ==========================================
-  // VIEW RENDERER 2: APPLIKASI STUDIO (AUTO-DYNAMIC LANGUAGE)
-  // ==========================================
   return (
     <div className="min-h-screen bg-[#fafafa] font-sans text-zinc-900 antialiased selection:bg-zinc-200">
       <header className="flex items-center justify-between border-b border-zinc-200/80 bg-white px-6 py-2.5">
@@ -559,7 +567,7 @@ function VibeShotPlatform() {
                     {src ? (
                       <SafeAIImage src={src} alt={`Storyboard Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" globalIndex={i} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} langLabel={lang === "id" ? "shot" : "shot block"} />
                     ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 text-zinc-300"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">{lang === "id" ? "Shot" : "Shot"} {i + 1}</span></div>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 text-zinc-300"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">Shot {i + 1}</span></div>
                     )}
                   </div>
                 ))}
