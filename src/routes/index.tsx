@@ -73,6 +73,7 @@ function VibeShotPlatform() {
   const [hasResult, setHasResult] = useState(false);
   const [activeGlobalIndex, setActiveGlobalIndex] = useState(-1);
 
+  // LOGIKA DETEKSI AUTO-REDIRECT WORKSPACE
   useEffect(() => {
     const savedShots = localStorage.getItem("vibeshot_shots");
     const savedMoodboard = localStorage.getItem("vibeshot_moodboard");
@@ -86,6 +87,7 @@ function VibeShotPlatform() {
       setTitleOverride(savedTitle);
       setHasResult(true);
       setActiveGlobalIndex(0);
+      setView("app"); // <--- Sihir Pemindah Halaman Otomatis Aktif!
     }
   }, []);
 
@@ -107,6 +109,7 @@ function VibeShotPlatform() {
     setRefUrl("");
     setRefImageBase64("");
     setActiveGlobalIndex(-1);
+    setView("landing"); // Balik ke landing page pas di-clear
     toast.success("Workspace reset successfully.");
   };
 
