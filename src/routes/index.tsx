@@ -37,7 +37,7 @@ function SafeAIImage({ src, alt, className, globalIndex, activeGlobalIndex, onNe
   if (globalIndex > activeGlobalIndex || !currentSrc) {
     return (
       <div className={`${className} flex flex-col items-center justify-center bg-zinc-50 border border-dashed border-zinc-200 text-[10px] text-zinc-400 font-mono`}>
-        <span>loading sequence #{globalIndex + 1}</span>
+        <span>loading queue #{globalIndex + 1}</span>
       </div>
     );
   }
@@ -73,7 +73,6 @@ function VibeShotPlatform() {
   const [hasResult, setHasResult] = useState(false);
   const [activeGlobalIndex, setActiveGlobalIndex] = useState(-1);
 
-  // LOGIKA DETEKSI AUTO-REDIRECT WORKSPACE
   useEffect(() => {
     const savedShots = localStorage.getItem("vibeshot_shots");
     const savedMoodboard = localStorage.getItem("vibeshot_moodboard");
@@ -87,7 +86,7 @@ function VibeShotPlatform() {
       setTitleOverride(savedTitle);
       setHasResult(true);
       setActiveGlobalIndex(0);
-      setView("app"); // <--- Sihir Pemindah Halaman Otomatis Aktif!
+      setView("app");
     }
   }, []);
 
@@ -109,7 +108,7 @@ function VibeShotPlatform() {
     setRefUrl("");
     setRefImageBase64("");
     setActiveGlobalIndex(-1);
-    setView("landing"); // Balik ke landing page pas di-clear
+    setView("landing");
     toast.success("Workspace reset successfully.");
   };
 
@@ -439,15 +438,16 @@ function VibeShotPlatform() {
               <p className="whitespace-pre-line text-sm leading-relaxed text-zinc-700 font-sans">{premiseOverride || "Skenario teks hasil ramuan AI akan mendarat di sini secara terstruktur setelah Anda mengisi parameter di bilah kiri."}</p>
             </div>
 
+            {/* BARU: RE-BRANDING MENJADI VISUAL STORYBOARD TIMELINE FLUX 9:16 */}
             <div className="space-y-3">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">Visual Moodboard Direction (9:16)</span>
+              <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">Visual Storyboard Continuity Panel (Master 9:16)</span>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
                 {moodboardTiles.map((src, i) => (
                   <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
                     {src ? (
-                      <SafeAIImage src={src} alt="Moodboard" className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" globalIndex={i} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} />
+                      <SafeAIImage src={src} alt={`Storyboard Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" globalIndex={i} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} />
                     ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 text-zinc-300"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">Ref {i + 1}</span></div>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 text-zinc-300"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">Shot {i + 1}</span></div>
                     )}
                   </div>
                 ))}
@@ -468,8 +468,14 @@ function VibeShotPlatform() {
                     <div key={s.id} className="group relative flex flex-col md:flex-row gap-5 rounded-xl border border-zinc-200/80 bg-white p-4 shadow-sm transition hover:border-zinc-300">
                       <div className="flex items-start gap-3 shrink-0">
                         <div className="text-xs font-mono font-semibold text-zinc-300 pt-1">{String(idx + 1).padStart(2, "0")}</div>
+                        
+                        {/* UPDATE SAKTI: Mengambil file master 9:16 yang sama, lalu di-crop center jadi frame horizontal 16:9 */}
                         <div className="relative aspect-[16/9] w-full md:w-36 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50 shrink-0 shadow-inner">
-                          {s.image ? <SafeAIImage src={s.image} alt="Visual sequence" className="h-full w-full object-cover cursor-zoom-in" globalIndex={idx + moodboard.length} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 font-mono">loading block</div>}
+                          {s.image ? (
+                            <SafeAIImage src={s.image} alt="Visual thumbnail" className="h-full w-full object-cover object-center cursor-zoom-in" globalIndex={idx + moodboard.length} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 font-mono">loading block</div>
+                          )}
                         </div>
                       </div>
 
