@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, X, Moon, Sun } from "lucide-react";
+import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, X, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -62,6 +62,8 @@ const translations = {
     btnExtend: "Lanjutkan Alur Cerita",
     btnExtending: "Melakukan Rantai Sambungan Adegan...",
     aiPromptLabel: "Master AI Image Prompt (Universal)",
+    btnShare: "Bagikan Link Brief 🔗",
+    shareSuccess: "Link brief berhasil disalin ke clipboard!"
   },
   en: {
     backToHome: "← Back to Home",
@@ -106,6 +108,8 @@ const translations = {
     btnExtend: "Extend Storyline Layout",
     btnExtending: "Chaining Sequence Extensions...",
     aiPromptLabel: "Master AI Image Prompt (Universal)",
+    btnShare: "Share Brief Link 🔗",
+    shareSuccess: "Brief link copied to clipboard!"
   }
 };
 
@@ -156,24 +160,17 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
   );
 }
 
-// HIGH-FIDELITY TOGGLE SWITCH (ON / OFF VIBES)
 function CustomSwitch({ isOn, onToggle, labelOff, labelOn, IconOff, IconOn }: any) {
   return (
     <div onClick={onToggle} className="flex items-center gap-2 cursor-pointer select-none group p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-all duration-150">
-      {/* Label Kiri (OFF Status) */}
       {labelOff || IconOff ? (
         <span className={`text-[10px] font-mono font-bold tracking-wider transition-all duration-200 ${!isOn ? 'text-zinc-900 dark:text-zinc-100 scale-105' : 'text-zinc-400 dark:text-zinc-600'}`}>
           {IconOff ? <IconOff className="w-3.5 h-3.5" /> : labelOff}
         </span>
       ) : null}
-      
-      {/* Rumah Saklar */}
       <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ${isOn ? 'bg-zinc-900 dark:bg-zinc-100 border border-zinc-800 dark:border-zinc-300' : 'bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700'}`}>
-        {/* Tombol Bulat Yang Bergeser */}
         <span className={`inline-block h-3.5 w-3.5 transform rounded-full transition-transform duration-300 shadow-sm ${isOn ? 'translate-x-4 bg-white dark:bg-zinc-900' : 'translate-x-0.5 bg-zinc-600 dark:bg-zinc-400'}`} />
       </div>
-
-      {/* Label Kanan (ON Status) */}
       {labelOn || IconOn ? (
         <span className={`text-[10px] font-mono font-bold tracking-wider transition-all duration-200 ${isOn ? 'text-zinc-900 dark:text-zinc-100 scale-105' : 'text-zinc-400 dark:text-zinc-600'}`}>
           {IconOn ? <IconOn className="w-3.5 h-3.5" /> : labelOn}
@@ -209,6 +206,7 @@ function VibeShotPlatform() {
   const [titleOverride, setTitleOverride] = useState<string | null>(null);
   const [visualStyle, setVisualStyle] = useState<string>("real-life");
   const [masterIdentity, setMasterIdentity] = useState<{talent?: string, product?: string} | null>(null);
+  const [cloudBriefId, setCloudBriefId] = useState<string | null>(null); // State ID Baru
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isContinuing, setIsContinuing] = useState(false);
@@ -216,7 +214,6 @@ function VibeShotPlatform() {
   const [hasResult, setHasResult] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // Efek Dark Mode Handler
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -225,51 +222,93 @@ function VibeShotPlatform() {
     }
   }, [isDarkMode]);
 
+  // AUTO-PILOT DETEKSI LINK SHARE DARI CLOUDFLARE KV
   useEffect(() => {
+    const loadSharedOrLocalBrief = async () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedId = urlParams.get("id");
+
+        // Jalur A: Jika ada ID share di URL, sedot langsung dari KV
+        if (sharedId) {
+          setIsGenerating(true);
+          const res = await fetch(`${workerUrl}?id=${sharedId}`);
+          if (res.ok) {
+            const cloudData = await res.json();
+            setShots(cloudData.shotlist || []);
+            setMoodboard(cloudData.moodboard || []);
+            setPremiseOverride(cloudData.premise);
+            setTitleOverride(cloudData.title);
+            setMasterIdentity(cloudData.master_identity);
+            setVisualStyle(cloudData.visual_style || "real-life");
+            setCloudBriefId(sharedId);
+            setHasResult(true);
+            setView("app");
+            toast.success(lang === "id" ? "Brief Cloud berhasil dimuat!" : "Cloud brief loaded successfully!");
+            setIsGenerating(false);
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Gagal menarik data cloud:", e);
+      } finally {
+        setIsGenerating(false);
+      }
+
+      // Jalur B: Fallback ke Local Storage jika tidak ada parameter ID share
+      try {
+        const savedShots = localStorage.getItem("vibeshot_shots");
+        const savedMoodboard = localStorage.getItem("vibeshot_moodboard");
+        const savedPremise = localStorage.getItem("vibeshot_premise");
+        const savedTitle = localStorage.getItem("vibeshot_title");
+        const savedIdentity = localStorage.getItem("vibeshot_identity");
+        const savedStyle = localStorage.getItem("vibeshot_style");
+        const savedCloudId = localStorage.getItem("vibeshot_cloud_id");
+
+        if (savedShots && savedMoodboard) {
+          setShots(JSON.parse(savedShots));
+          setMoodboard(JSON.parse(savedMoodboard));
+          setPremiseOverride(savedPremise);
+          setTitleOverride(savedTitle);
+          if (savedIdentity) setMasterIdentity(JSON.parse(savedIdentity));
+          if (savedStyle) setVisualStyle(savedStyle);
+          if (savedCloudId) setCloudBriefId(savedCloudId);
+          setHasResult(true);
+          setView("app");
+        }
+      } catch { localStorage.clear(); }
+    };
+
+    loadSharedOrLocalBrief();
+
     try {
       const browserLang = navigator.language || (navigator as any).userLanguage || "en";
       setLang(browserLang.startsWith("id") ? "id" : "en");
     } catch { setLang("en"); }
-
-    try {
-      const savedShots = localStorage.getItem("vibeshot_shots");
-      const savedMoodboard = localStorage.getItem("vibeshot_moodboard");
-      const savedPremise = localStorage.getItem("vibeshot_premise");
-      const savedTitle = localStorage.getItem("vibeshot_title");
-      const savedIdentity = localStorage.getItem("vibeshot_identity");
-      const savedStyle = localStorage.getItem("vibeshot_style");
-
-      if (savedShots && savedMoodboard) {
-        setShots(JSON.parse(savedShots));
-        setMoodboard(JSON.parse(savedMoodboard));
-        setPremiseOverride(savedPremise);
-        setTitleOverride(savedTitle);
-        if (savedIdentity) setMasterIdentity(JSON.parse(savedIdentity));
-        if (savedStyle) setVisualStyle(savedStyle);
-        setHasResult(true);
-        setView("app");
-      }
-    } catch { localStorage.clear(); }
   }, []);
 
   const t = translations[lang] || translations["en"];
 
-  const saveToLocalStorage = (newShots: Shot[], newMood: string[], newPremise: string | null, newTitle: string | null, newIdentity: any, newStyle: string) => {
+  const saveToLocalStorage = (newShots: Shot[], newMood: string[], newPremise: string | null, newTitle: string | null, newIdentity: any, newStyle: string, cloudId: string | null) => {
     localStorage.setItem("vibeshot_shots", JSON.stringify(newShots));
     localStorage.setItem("vibeshot_moodboard", JSON.stringify(newMood));
     if (newPremise) localStorage.setItem("vibeshot_premise", newPremise);
     if (newTitle) localStorage.setItem("vibeshot_title", newTitle);
     if (newIdentity) localStorage.setItem("vibeshot_identity", JSON.stringify(newIdentity));
     if (newStyle) localStorage.setItem("vibeshot_style", newStyle);
+    if (cloudId) localStorage.setItem("vibeshot_cloud_id", cloudId);
   };
 
   const handleClearAll = () => {
     localStorage.clear();
+    // Hapus parameter id di URL browser tanpa reload halaman
+    window.history.replaceState({}, document.title, window.location.pathname);
     setShots([]);
     setMoodboard([]);
     setPremiseOverride(null);
     setTitleOverride(null);
     setMasterIdentity(null);
+    setCloudBriefId(null);
     setHasResult(false);
     setRefType("none");
     setRefUrl("");
@@ -309,13 +348,14 @@ function VibeShotPlatform() {
       setTitleOverride(data.title);
       setMasterIdentity(data.master_identity); 
       setVisualStyle(data.visual_style || "real-life"); 
+      setCloudBriefId(data.briefId || null); // Simpan ID dari Cloudflare KV
       setHasResult(true);
       
-      saveToLocalStorage(normalized, data.moodboard || [], data.premise, data.title, data.master_identity, data.visual_style);
+      saveToLocalStorage(normalized, data.moodboard || [], data.premise, data.title, data.master_identity, data.visual_style, data.briefId || null);
       toast.success(lang === "id" ? "Brief berhasil diracik!" : "Brief successfully compiled!");
     } catch (err: any) {
       setErrorMsg(err.message);
-    } finally {
+    } file {
       setIsGenerating(false);
     }
   };
@@ -359,14 +399,26 @@ function VibeShotPlatform() {
       setShots(finalShots);
       setMoodboard(finalMood);
       setPremiseOverride(finalPremise);
+      setCloudBriefId(data.briefId || cloudBriefId); // Update dengan ID KV yang baru jika di-extend
       
-      saveToLocalStorage(finalShots, finalMood, finalPremise, titleOverride, masterIdentity, visualStyle);
+      saveToLocalStorage(finalShots, finalMood, finalPremise, titleOverride, masterIdentity, visualStyle, data.briefId || cloudBriefId);
       toast.success(lang === "id" ? "Alur berhasil disambung!" : "Timeline extended successfully!");
     } catch (err: any) {
       toast.error(err.message);
-    } finally {
+    } final {
       setIsContinuing(false);
     }
+  };
+
+  // LOGIKA AUTO-PILOT BAGI LINK SHARE
+  const handleShareLink = () => {
+    if (!cloudBriefId) {
+      toast.error(lang === "id" ? "ID cloud belum terbuat, silakan compile ulang." : "Cloud ID missing, please re-compile.");
+      return;
+    }
+    const shareUrl = `${window.location.origin}${window.location.pathname}?id=${cloudBriefId}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success(t.shareSuccess);
   };
 
   const handleCopyTable = async () => {
@@ -406,20 +458,9 @@ function VibeShotPlatform() {
           </div>
           
           <div className="flex items-center gap-4">
-            {/* SAKLAR AREA DI LANDING NAV */}
             <div className="flex items-center gap-4 border-r border-zinc-200 dark:border-zinc-700 pr-4">
-              <CustomSwitch 
-                isOn={lang === "id"} 
-                onToggle={() => setLang(lang === "en" ? "id" : "en")} 
-                labelOff="EN" 
-                labelOn="ID" 
-              />
-              <CustomSwitch 
-                isOn={isDarkMode} 
-                onToggle={() => setIsDarkMode(!isDarkMode)} 
-                IconOff={Sun} 
-                IconOn={Moon} 
-              />
+              <CustomSwitch isOn={lang === "id"} onToggle={() => setLang(lang === "en" ? "id" : "en")} labelOff="EN" labelOn="ID" />
+              <CustomSwitch isOn={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} IconOff={Sun} IconOn={Moon} />
             </div>
             <button onClick={() => setView("app")} className="text-xs font-medium bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-colors shadow-sm">Launch Studio →</button>
           </div>
@@ -454,22 +495,10 @@ function VibeShotPlatform() {
             <span className="text-xs font-medium tracking-tight">vibeshot.studio/workspace</span>
           </div>
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-            {/* SAKLAR AREA DI MAIN APP HEADER */}
             <div className="flex items-center gap-4 border-r border-zinc-200 dark:border-zinc-700 pr-3">
-              <CustomSwitch 
-                isOn={lang === "id"} 
-                onToggle={() => setLang(lang === "en" ? "id" : "en")} 
-                labelOff="EN" 
-                labelOn="ID" 
-              />
-              <CustomSwitch 
-                isOn={isDarkMode} 
-                onToggle={() => setIsDarkMode(!isDarkMode)} 
-                IconOff={Sun} 
-                IconOn={Moon} 
-              />
+              <CustomSwitch isOn={lang === "id"} onToggle={() => setLang(lang === "en" ? "id" : "en")} labelOff="EN" labelOn="ID" />
+              <CustomSwitch isOn={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} IconOff={Sun} IconOn={Moon} />
             </div>
-            
             <div className="flex items-center gap-3">
               <button onClick={() => setView("landing")} className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors">{t.backToHome}</button>
               {hasResult && <span className="text-zinc-200 dark:text-zinc-700 font-mono text-xs">|</span>}
@@ -514,7 +543,7 @@ function VibeShotPlatform() {
                       <option value="Hiburan / Entertainment">{t.pillarOption1}</option><option value="Hard Sell / Promosi Langsung">{t.pillarOption2}</option>
                     </select>
                   </Field>
-                  <Field label={lang === "id" ? t.pendekatanTalent : "Talent Approach"}>
+                  <Field label={t.talentApproach}>
                     <select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
                       <option value="Creator-Led (Ada talent berbicara ke kamera)">{t.talentOption1}</option><option value="Voice Over Only (Kombinasi cuplikan + VO)">{t.talentOption2}</option>
                     </select>
@@ -532,8 +561,14 @@ function VibeShotPlatform() {
 
           <main className="p-6 lg:p-10 overflow-y-auto max-h-[calc(100vh-42px)] bg-[#fafafa] dark:bg-[#0a0a0a]">
             <div className="mx-auto max-w-4xl space-y-8">
-              <div className="pb-4 border-b border-zinc-200/60 dark:border-zinc-800/60">
-                <h2 className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">{titleOverride || t.papanStrategi}</h2>
+              <div className="pb-4 border-b border-zinc-200/60 dark:border-zinc-800/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{titleOverride || t.papanStrategi}</h2>
+                {/* TOMBOL BAGIKAN LINK CLOUD BARU */}
+                {hasResult && cloudBriefId && (
+                  <button type="button" onClick={handleShareLink} className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 dark:bg-indigo-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 dark:hover:bg-indigo-600 shadow-sm shrink-0">
+                    <LinkIcon className="w-3.5 h-3.5" /> {t.btnShare}
+                  </button>
+                )}
               </div>
 
               <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] p-5 shadow-sm space-y-2">
@@ -602,7 +637,6 @@ function VibeShotPlatform() {
                           </div>
                         </div>
 
-                        {/* KOTAK TECH & BUDGET HACK */}
                         {s.tech_budget_hack && (
                           <div className="mt-1 p-2.5 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-700/50 rounded-md">
                             <span className="text-[10px] font-bold text-yellow-800 dark:text-yellow-500 flex items-center gap-1.5">
@@ -612,7 +646,6 @@ function VibeShotPlatform() {
                           </div>
                         )}
 
-                        {/* MASTER AI IMAGE PROMPT */}
                         <div className="mt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 pt-3">
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 uppercase tracking-wider font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> {t.aiPromptLabel}</span>
@@ -639,7 +672,6 @@ function VibeShotPlatform() {
                   </div>
                 )}
 
-                {/* TOMBOL EXTEND DENGAN BAHASA DINAMIS */}
                 {hasResult && (
                   <div className="pt-6 pb-2 text-center">
                     <button type="button" onClick={handleLanjutkanCerita} disabled={isContinuing} className="inline-flex items-center gap-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-5 py-2.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 shadow-sm transition hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white disabled:opacity-50">
