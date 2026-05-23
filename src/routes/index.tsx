@@ -11,7 +11,7 @@ interface Shot {
   id: string;
   angle: string;
   location: string;
-  tech_budget_hack?: string; // TAMBAHAN: Untuk trik syuting
+  tech_budget_hack?: string;
   action: string;
   audio: string;
   image?: string;
@@ -59,6 +59,7 @@ const translations = {
     locationEnv: "Lingkungan Adegan / Lokasi",
     visualScene: "Deskripsi Aksi Visual Adegan",
     audioScript: "Naskah Copywriting Audio (VO / Dialog / SFX)",
+    btnExtend: "Lanjutkan Alur Cerita",
     btnExtending: "Melakukan Rantai Sambungan Adegan...",
     aiPromptLabel: "Master AI Image Prompt (Universal)",
   },
@@ -102,6 +103,7 @@ const translations = {
     locationEnv: "Scene Environment / Location",
     visualScene: "Visual Scene Action Description",
     audioScript: "Audio Copywriting Script (VO / Dialog / SFX)",
+    btnExtend: "Extend Storyline Layout",
     btnExtending: "Chaining Sequence Extensions...",
     aiPromptLabel: "Master AI Image Prompt (Universal)",
   }
@@ -151,6 +153,23 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
         />
       )}
     </>
+  );
+}
+
+// KOMPONEN SAKLAR / TOGGLE SWITCH
+function CustomSwitch({ isOn, onToggle, labelOff, labelOn, IconOff, IconOn }: any) {
+  return (
+    <button type="button" onClick={onToggle} className="flex items-center gap-1.5 outline-none cursor-pointer">
+      <span className={`text-[10px] font-bold uppercase transition-colors ${!isOn ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-600'}`}>
+        {IconOff ? <IconOff className="w-3.5 h-3.5" /> : labelOff}
+      </span>
+      <div className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors ${isOn ? 'bg-zinc-800 dark:bg-zinc-200' : 'bg-zinc-300 dark:bg-zinc-700'}`}>
+        <span className={`inline-block h-3 w-3 transform rounded-full bg-white dark:bg-zinc-900 transition-transform ${isOn ? 'translate-x-4' : 'translate-x-1'}`} />
+      </div>
+      <span className={`text-[10px] font-bold uppercase transition-colors ${isOn ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-600'}`}>
+        {IconOn ? <IconOn className="w-3.5 h-3.5" /> : labelOn}
+      </span>
+    </button>
   );
 }
 
@@ -365,7 +384,6 @@ function VibeShotPlatform() {
     return Array.from({ length: shotCount }).map(() => null);
   }, [moodboard, shotCount]);
 
-  // CSS dinamis buat dark mode
   const inputStyle = "w-full rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-zinc-400 dark:focus:border-zinc-500 focus:outline-none transition-colors";
 
   if (view === "landing") {
@@ -376,10 +394,23 @@ function VibeShotPlatform() {
             <div className="flex h-5 w-5 items-center justify-center rounded bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-[10px] font-bold">V</div>
             <span className="text-xs font-semibold tracking-tight">vibeshot.studio</span>
           </div>
+          
           <div className="flex items-center gap-4">
-            <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-              {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
+            {/* TOGGLES AREA */}
+            <div className="flex items-center gap-4 border-r border-zinc-200 dark:border-zinc-700 pr-4">
+              <CustomSwitch 
+                isOn={lang === "id"} 
+                onToggle={() => setLang(lang === "en" ? "id" : "en")} 
+                labelOff="EN" 
+                labelOn="ID" 
+              />
+              <CustomSwitch 
+                isOn={isDarkMode} 
+                onToggle={() => setIsDarkMode(!isDarkMode)} 
+                IconOff={Sun} 
+                IconOn={Moon} 
+              />
+            </div>
             <button onClick={() => setView("app")} className="text-xs font-medium bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-colors shadow-sm">Launch Studio →</button>
           </div>
         </nav>
@@ -406,20 +437,34 @@ function VibeShotPlatform() {
   return (
     <>
       <div className="min-h-screen bg-[#fafafa] dark:bg-[#0a0a0a] font-sans text-zinc-900 dark:text-zinc-100 antialiased transition-colors duration-200">
-        <header className="flex items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] px-6 py-2.5">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] px-6 py-2.5 gap-3 sm:gap-0">
           <div className="flex items-center gap-2">
             <button onClick={() => setView("landing")} className="flex h-5 w-5 items-center justify-center rounded bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-[10px] font-bold transition-colors">V</button>
             <span className="text-xs text-zinc-400 dark:text-zinc-600 font-mono">/</span>
             <span className="text-xs font-medium tracking-tight">vibeshot.studio/workspace</span>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">
-              {isDarkMode ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-            </button>
-            <span className="text-zinc-200 dark:text-zinc-700 font-mono text-xs">|</span>
-            <button onClick={() => setView("landing")} className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors">{t.backToHome}</button>
-            {hasResult && <span className="text-zinc-200 dark:text-zinc-700 font-mono text-xs">|</span>}
-            {hasResult && <button onClick={handleClearAll} className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">{t.resetProject}</button>}
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+            {/* TOGGLES AREA APP */}
+            <div className="flex items-center gap-3 border-r border-zinc-200 dark:border-zinc-700 pr-3">
+              <CustomSwitch 
+                isOn={lang === "id"} 
+                onToggle={() => setLang(lang === "en" ? "id" : "en")} 
+                labelOff="EN" 
+                labelOn="ID" 
+              />
+              <CustomSwitch 
+                isOn={isDarkMode} 
+                onToggle={() => setIsDarkMode(!isDarkMode)} 
+                IconOff={Sun} 
+                IconOn={Moon} 
+              />
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button onClick={() => setView("landing")} className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors">{t.backToHome}</button>
+              {hasResult && <span className="text-zinc-200 dark:text-zinc-700 font-mono text-xs">|</span>}
+              {hasResult && <button onClick={handleClearAll} className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">{t.resetProject}</button>}
+            </div>
           </div>
         </header>
 
@@ -547,7 +592,6 @@ function VibeShotPlatform() {
                           </div>
                         </div>
 
-                        {/* TAMBAHAN BARU: TECH & BUDGET HACK (Titik 2) */}
                         {s.tech_budget_hack && (
                           <div className="mt-1 p-2.5 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-700/50 rounded-md">
                             <span className="text-[10px] font-bold text-yellow-800 dark:text-yellow-500 flex items-center gap-1.5">
@@ -557,7 +601,6 @@ function VibeShotPlatform() {
                           </div>
                         )}
 
-                        {/* KOTAK AI PROMPT MASTER */}
                         <div className="mt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 pt-3">
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 uppercase tracking-wider font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> {t.aiPromptLabel}</span>
@@ -583,19 +626,16 @@ function VibeShotPlatform() {
                   </div>
                 )}
 
-                {/* TOMBOL EXTEND STORYLINE DINAMIS (Titik 3) */}
                 {hasResult && (
                   <div className="pt-6 pb-2 text-center">
                     <button onClick={handleLanjutkanCerita} disabled={isContinuing} className="inline-flex items-center gap-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-5 py-2.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 shadow-sm transition hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white disabled:opacity-50">
                       {isContinuing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnExtending}</> : 
                       <><ArrowDownRight className="h-3.5 w-3.5" /> 
                         <span className="md:hidden">
-                          {lang === 'id' ? 'Lanjutkan Alur Cerita' : 'Extend Storyline'}
+                          {t.btnExtend}
                         </span>
                         <span className="hidden md:inline">
-                          {lang === 'id' 
-                            ? `Lanjutkan Alur Cerita (Shot ${shots.length + 1}-${shots.length + (shotCount || 6)})` 
-                            : `Extend Storyline Layout (Shots ${shots.length + 1}-${shots.length + (shotCount || 6)})`}
+                          {t.btnExtend} (Shots {shots.length + 1}-{shots.length + (shotCount || 6)})
                         </span>
                       </>}
                     </button>
@@ -607,7 +647,6 @@ function VibeShotPlatform() {
         </div>
       </div>
 
-      {/* LIGHTBOX ZOOM */}
       {previewImage && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-6 cursor-zoom-out"
