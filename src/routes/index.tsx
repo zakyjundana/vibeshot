@@ -76,7 +76,7 @@ const translations = {
     pillarKonten: "Content Pillar",
     pillarOption1: "Entertainment / Comedy Skit",
     pillarOption2: "Hard Sell / Direct Product Promotion",
-    pendekatanTalent: "Talent Approach",
+    talentApproach: "Talent Approach",
     talentOption1: "Creator-Led (Talent talking to camera)",
     talentOption2: "Voice Over Only (Visual clips + VO narrator)",
     moodTone: "Content Mood & Tone",
@@ -156,27 +156,37 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
   );
 }
 
-// KOMPONEN SAKLAR / TOGGLE SWITCH
+// HIGH-FIDELITY TOGGLE SWITCH (ON / OFF VIBES)
 function CustomSwitch({ isOn, onToggle, labelOff, labelOn, IconOff, IconOn }: any) {
   return (
-    <button type="button" onClick={onToggle} className="flex items-center gap-1.5 outline-none cursor-pointer">
-      <span className={`text-[10px] font-bold uppercase transition-colors ${!isOn ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-600'}`}>
-        {IconOff ? <IconOff className="w-3.5 h-3.5" /> : labelOff}
-      </span>
-      <div className={`relative inline-flex h-4 w-8 items-center rounded-full transition-colors ${isOn ? 'bg-zinc-800 dark:bg-zinc-200' : 'bg-zinc-300 dark:bg-zinc-700'}`}>
-        <span className={`inline-block h-3 w-3 transform rounded-full bg-white dark:bg-zinc-900 transition-transform ${isOn ? 'translate-x-4' : 'translate-x-1'}`} />
+    <div onClick={onToggle} className="flex items-center gap-2 cursor-pointer select-none group p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-all duration-150">
+      {/* Label Kiri (OFF Status) */}
+      {labelOff || IconOff ? (
+        <span className={`text-[10px] font-mono font-bold tracking-wider transition-all duration-200 ${!isOn ? 'text-zinc-900 dark:text-zinc-100 scale-105' : 'text-zinc-400 dark:text-zinc-600'}`}>
+          {IconOff ? <IconOff className="w-3.5 h-3.5" /> : labelOff}
+        </span>
+      ) : null}
+      
+      {/* Rumah Saklar */}
+      <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ${isOn ? 'bg-zinc-900 dark:bg-zinc-100 border border-zinc-800 dark:border-zinc-300' : 'bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700'}`}>
+        {/* Tombol Bulat Yang Bergeser */}
+        <span className={`inline-block h-3.5 w-3.5 transform rounded-full transition-transform duration-300 shadow-sm ${isOn ? 'translate-x-4 bg-white dark:bg-zinc-900' : 'translate-x-0.5 bg-zinc-600 dark:bg-zinc-400'}`} />
       </div>
-      <span className={`text-[10px] font-bold uppercase transition-colors ${isOn ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400 dark:text-zinc-600'}`}>
-        {IconOn ? <IconOn className="w-3.5 h-3.5" /> : labelOn}
-      </span>
-    </button>
+
+      {/* Label Kanan (ON Status) */}
+      {labelOn || IconOn ? (
+        <span className={`text-[10px] font-mono font-bold tracking-wider transition-all duration-200 ${isOn ? 'text-zinc-900 dark:text-zinc-100 scale-105' : 'text-zinc-400 dark:text-zinc-600'}`}>
+          {IconOn ? <IconOn className="w-3.5 h-3.5" /> : labelOn}
+        </span>
+      ) : null}
+    </div>
   );
 }
 
 function VibeShotPlatform() {
   const [view, setView] = useState<"landing" | "app">("landing");
   const [lang, setLang] = useState<"id" | "en">("en");
-  const [isDarkMode, setIsDarkMode] = useState(true); // DARK MODE DEFAULT
+  const [isDarkMode, setIsDarkMode] = useState(true); 
   const workerUrl = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
   
   const [productName, setProductName] = useState("");
@@ -206,7 +216,7 @@ function VibeShotPlatform() {
   const [hasResult, setHasResult] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  // Efek Dark Mode
+  // Efek Dark Mode Handler
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -286,7 +296,7 @@ function VibeShotPlatform() {
         id: crypto.randomUUID(),
         angle: String(r?.angle || ""),
         location: String(r?.location || ""),
-        tech_budget_hack: String(r?.tech_budget_hack || ""), // Data baru
+        tech_budget_hack: String(r?.tech_budget_hack || ""),
         action: String(r?.action || ""),
         audio: String(r?.audio || ""),
         image: String(r?.image || ""),
@@ -297,8 +307,8 @@ function VibeShotPlatform() {
       setMoodboard(data.moodboard || []);
       setPremiseOverride(data.premise);
       setTitleOverride(data.title);
-      setMasterIdentity(data.master_identity); // Data baru
-      setVisualStyle(data.visual_style || "real-life"); // Data baru
+      setMasterIdentity(data.master_identity); 
+      setVisualStyle(data.visual_style || "real-life"); 
       setHasResult(true);
       
       saveToLocalStorage(normalized, data.moodboard || [], data.premise, data.title, data.master_identity, data.visual_style);
@@ -321,8 +331,8 @@ function VibeShotPlatform() {
         body: JSON.stringify({
           product: productName, usp, trend, tone, shotCount: 6, platform, pillar, talent,
           isContinuation: true,
-          existingShots: shots, // History lama
-          masterIdentity: masterIdentity, // Ngunci Karakter
+          existingShots: shots, 
+          masterIdentity: masterIdentity, 
           title: titleOverride, 
           visual_style: visualStyle,
           refType, refUrl, refImageBase64
@@ -396,7 +406,7 @@ function VibeShotPlatform() {
           </div>
           
           <div className="flex items-center gap-4">
-            {/* TOGGLES AREA */}
+            {/* SAKLAR AREA DI LANDING NAV */}
             <div className="flex items-center gap-4 border-r border-zinc-200 dark:border-zinc-700 pr-4">
               <CustomSwitch 
                 isOn={lang === "id"} 
@@ -444,8 +454,8 @@ function VibeShotPlatform() {
             <span className="text-xs font-medium tracking-tight">vibeshot.studio/workspace</span>
           </div>
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-            {/* TOGGLES AREA APP */}
-            <div className="flex items-center gap-3 border-r border-zinc-200 dark:border-zinc-700 pr-3">
+            {/* SAKLAR AREA DI MAIN APP HEADER */}
+            <div className="flex items-center gap-4 border-r border-zinc-200 dark:border-zinc-700 pr-3">
               <CustomSwitch 
                 isOn={lang === "id"} 
                 onToggle={() => setLang(lang === "en" ? "id" : "en")} 
@@ -475,7 +485,7 @@ function VibeShotPlatform() {
             </div>
 
             <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30">
-              <button onClick={() => setOpenSection(openSection === "core" ? "none" : "core")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <button type="button" onClick={() => setOpenSection(openSection === "core" ? "none" : "core")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                 <span className="flex items-center gap-2"><Film className="h-3.5 w-3.5 text-zinc-500" /> {t.paramUtama}</span>
                 {openSection === "core" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
               </button>
@@ -488,7 +498,7 @@ function VibeShotPlatform() {
             </div>
 
             <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30">
-              <button onClick={() => setOpenSection(openSection === "vibe" ? "none" : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+              <button type="button" onClick={() => setOpenSection(openSection === "vibe" ? "none" : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                 <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5 text-zinc-500" /> {t.arsitekturVibe}</span>
                 {openSection === "vibe" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
               </button>
@@ -504,7 +514,7 @@ function VibeShotPlatform() {
                       <option value="Hiburan / Entertainment">{t.pillarOption1}</option><option value="Hard Sell / Promosi Langsung">{t.pillarOption2}</option>
                     </select>
                   </Field>
-                  <Field label={t.pendekatanTalent}>
+                  <Field label={lang === "id" ? t.pendekatanTalent : "Talent Approach"}>
                     <select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
                       <option value="Creator-Led (Ada talent berbicara ke kamera)">{t.talentOption1}</option><option value="Voice Over Only (Kombinasi cuplikan + VO)">{t.talentOption2}</option>
                     </select>
@@ -515,7 +525,7 @@ function VibeShotPlatform() {
               )}
             </div>
 
-            <button onClick={handleGenerate} disabled={isGenerating || isContinuing} className="flex w-full items-center justify-center gap-2 rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2.5 text-xs font-medium text-white dark:text-zinc-900 shadow-sm transition hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50">
+            <button type="button" onClick={handleGenerate} disabled={isGenerating || isContinuing} className="flex w-full items-center justify-center gap-2 rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2.5 text-xs font-medium text-white dark:text-zinc-900 shadow-sm transition hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50">
               {isGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnCompiling}</> : <><Sparkles className="h-3.5 w-3.5" /> {t.btnCompile}</>}
             </button>
           </aside>
@@ -549,7 +559,7 @@ function VibeShotPlatform() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60 dark:border-zinc-800/60">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{t.garisWaktu} ({shots.length} Sequence)</span>
-                  {hasResult && <button onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm"><Copy className="h-3 w-3" /> {t.salinTabel}</button>}
+                  {hasResult && <button type="button" onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm"><Copy className="h-3 w-3" /> {t.salinTabel}</button>}
                 </div>
 
                 {shots.length === 0 ? (
@@ -592,6 +602,7 @@ function VibeShotPlatform() {
                           </div>
                         </div>
 
+                        {/* KOTAK TECH & BUDGET HACK */}
                         {s.tech_budget_hack && (
                           <div className="mt-1 p-2.5 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-700/50 rounded-md">
                             <span className="text-[10px] font-bold text-yellow-800 dark:text-yellow-500 flex items-center gap-1.5">
@@ -601,10 +612,12 @@ function VibeShotPlatform() {
                           </div>
                         )}
 
+                        {/* MASTER AI IMAGE PROMPT */}
                         <div className="mt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 pt-3">
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 uppercase tracking-wider font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> {t.aiPromptLabel}</span>
                             <button 
+                              type="button"
                               onClick={() => { navigator.clipboard.writeText(s.imagePrompt || ""); toast.success("Prompt disalin!"); }}
                               className="text-[9px] text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center gap-1 font-mono transition-colors"
                             >
@@ -620,15 +633,16 @@ function VibeShotPlatform() {
                           />
                         </div>
 
-                        <button onClick={() => removeShot(s.id)} className="absolute top-3 right-3 rounded p-1 text-zinc-300 dark:text-zinc-600 opacity-0 transition hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-red-500 dark:hover:text-red-400 group-hover:opacity-100"><Trash2 className="h-3.5 w-3.5" /></button>
+                        <button type="button" onClick={() => removeShot(s.id)} className="absolute top-3 right-3 rounded p-1 text-zinc-300 dark:text-zinc-600 opacity-0 transition hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-red-500 dark:hover:text-red-400 group-hover:opacity-100"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
                     ))}
                   </div>
                 )}
 
+                {/* TOMBOL EXTEND DENGAN BAHASA DINAMIS */}
                 {hasResult && (
                   <div className="pt-6 pb-2 text-center">
-                    <button onClick={handleLanjutkanCerita} disabled={isContinuing} className="inline-flex items-center gap-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-5 py-2.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 shadow-sm transition hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white disabled:opacity-50">
+                    <button type="button" onClick={handleLanjutkanCerita} disabled={isContinuing} className="inline-flex items-center gap-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-5 py-2.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 shadow-sm transition hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white disabled:opacity-50">
                       {isContinuing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnExtending}</> : 
                       <><ArrowDownRight className="h-3.5 w-3.5" /> 
                         <span className="md:hidden">
@@ -659,6 +673,7 @@ function VibeShotPlatform() {
               className="h-full w-full object-contain rounded-lg shadow-2xl border border-white/10"
             />
             <button 
+              type="button"
               className="absolute -top-4 -right-4 bg-white text-zinc-900 rounded-full p-1.5 shadow-lg hover:bg-zinc-200 transition-colors"
               onClick={() => setPreviewImage(null)}
             >
