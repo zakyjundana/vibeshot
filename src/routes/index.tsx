@@ -106,31 +106,54 @@ const translations = {
   }
 };
 
-function SimpleAIImage({ src, alt, className, onClick }: { src: string; alt: string; className: string; onClick?: () => void }) {
+// COMPONENT IMAGE BARU: Smart Timed Queue + Auto Retry
+function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; alt: string; className: string; onClick?: () => void; index: number }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    // Delay render 2 detik per gambar supaya server FLUX gratisan gak kaget (Rate Limit protection)
+    const timer = setTimeout(() => {
+      setShouldLoad(true);
+    }, index * 2000); 
+    return () => clearTimeout(timer);
+  }, [index, src]);
 
   return (
     <>
-      {!isLoaded && !hasError && (
-        <div className={`absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 border border-dashed border-zinc-200 text-[10px] text-zinc-400 font-mono animate-pulse`}>
-          <span>loading image...</span>
+      {(!isLoaded && !hasError) && (
+        <div className={`absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 border border-dashed border-zinc-200 text-[10px] text-zinc-400 font-mono ${shouldLoad ? 'animate-pulse' : ''}`}>
+          <span>{shouldLoad ? "rendering..." : `queue #${index + 1}`}</span>
         </div>
       )}
       {hasError && (
-        <div className={`absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 border border-dashed border-zinc-200 text-[10px] text-red-400 font-mono`}>
-          <span>failed to load</span>
+        <div 
+          className={`absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 border border-dashed border-zinc-200 text-[9px] text-zinc-400 font-mono cursor-pointer hover:bg-zinc-100 transition-colors`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setHasError(false);
+            setIsLoaded(false);
+            setShouldLoad(false);
+            // Pancing ulang gambar setelah diklik
+            setTimeout(() => setShouldLoad(true), 100);
+          }}
+        >
+          <span className="text-orange-400 mb-1">timeout</span>
+          <span className="underline">click to retry</span>
         </div>
       )}
-      <img 
-        src={src} 
-        alt={alt} 
-        className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500 ${onClick ? 'cursor-zoom-in hover:opacity-90' : ''}`}
-        onLoad={() => setIsLoaded(true)} 
-        onError={() => setHasError(true)} 
-        loading="lazy" 
-        onClick={onClick}
-      />
+      {shouldLoad && (
+        <img 
+          src={src} 
+          alt={alt} 
+          className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500 ${onClick ? 'cursor-zoom-in hover:opacity-90' : ''}`}
+          onLoad={() => setIsLoaded(true)} 
+          onError={() => setHasError(true)} 
+          loading="lazy" 
+          onClick={onClick}
+        />
+      )}
     </>
   );
 }
@@ -540,7 +563,7 @@ function VibeShotPlatform() {
                   {moodboardTiles.map((src, i) => (
                     <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
                       {src ? (
-                        <SimpleAIImage src={src} alt={`Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" onClick={() => setPreviewImage(src)} />
+                        <SimpleAIImage src={src} index={i} alt={`Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" onClick={() => setPreviewImage(src)} />
                       ) : (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 text-zinc-300"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">Shot {i + 1}</span></div>
                       )}
@@ -565,7 +588,7 @@ function VibeShotPlatform() {
                           <div className="text-xs font-mono font-semibold text-zinc-300 pt-1">{String(idx + 1).padStart(2, "0")}</div>
                           
                           <div className="relative aspect-[9/16] w-24 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50 shrink-0 shadow-inner">
-                            {s.image ? <SimpleAIImage src={s.image} alt="Sequence" className="h-full w-full object-cover object-center" onClick={() => setPreviewImage(s.image!)} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 font-mono">loading...</div>}
+                            {s.image ? <SimpleAIImage src={s.image} index={idx} alt="Sequence" className="h-full w-full object-cover object-center" onClick={() => setPreviewImage(s.image!)} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 font-mono">loading...</div>}
                           </div>
                         </div>
 
