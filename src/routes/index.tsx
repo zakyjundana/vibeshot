@@ -44,7 +44,7 @@ const translations = {
     clickUpload: "Klik untuk pilih gambar/screenshot",
     payloadLocked: "✓ payload aset visual terkunci",
     pastePlaceholder: "Paste link video TikTok atau YouTube...",
-    btnCompile: "Susun Brief Produksi PREMIUM ✨",
+    btnCompile: "Susun Brief Produksi ✨",
     btnCompiling: "Meracik Kombinasi AI...",
     specSheet: "Lembar Spesifikasi Produksi",
     papanStrategi: "Papan Strategi Konten",
@@ -88,7 +88,7 @@ const translations = {
     clickUpload: "Click to select image/screenshot",
     payloadLocked: "✓ visual asset payload cached",
     pastePlaceholder: "Paste TikTok or YouTube video link...",
-    btnCompile: "Compile Production Brief PREMIUM ✨",
+    btnCompile: "Compile Production Brief ✨",
     btnCompiling: "Compiling AI Engine...",
     specSheet: "Production Spec Sheet",
     papanStrategi: "Untitled Strategy Board",
@@ -230,6 +230,21 @@ function VibeShotPlatform() {
     toast.success(lang === "id" ? "Workspace dibersihkan." : "Workspace cleared.");
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error(lang === "id" ? "File maksimal 4MB." : "Max file size is 4MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setRefImageBase64(reader.result as string);
+      toast.success(lang === "id" ? "Aset visual terkunci." : "Visual asset cached.");
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleGenerate = async () => {
     setIsGenerating(true);
     setErrorMsg(null);
@@ -354,6 +369,9 @@ function VibeShotPlatform() {
           </div>
         </nav>
         <header className="mx-auto max-w-3xl text-center px-6 pt-20 pb-16 space-y-6">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 border border-zinc-200/60 px-3 py-1 text-[11px] text-zinc-500 font-mono">
+            <Sparkles className="h-3 w-3 text-zinc-400" /> Private Beta Engine Active
+          </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 leading-[1.1]">
             Turn messy script ideas into crystal-clear production briefs.
           </h1>
@@ -408,6 +426,7 @@ function VibeShotPlatform() {
             <div className="rounded-lg border border-zinc-200/60 overflow-hidden bg-zinc-50/30">
               <button onClick={() => setOpenSection(openSection === "vibe" ? "none" : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
                 <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5 text-zinc-500" /> {t.arsitekturVibe}</span>
+                {openSection === "vibe" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
               </button>
               {openSection === "vibe" && (
                 <div className="p-4 space-y-4 bg-white">
@@ -419,6 +438,11 @@ function VibeShotPlatform() {
                   <Field label={t.pillarKonten}>
                     <select value={pillar} onChange={(e) => setPillar(e.target.value)} className={inputStyle + " bg-zinc-50/50"}>
                       <option value="Hiburan / Entertainment">{t.pillarOption1}</option><option value="Hard Sell / Promosi Langsung">{t.pillarOption2}</option>
+                    </select>
+                  </Field>
+                  <Field label={t.pendekatanTalent}>
+                    <select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50"}>
+                      <option value="Creator-Led (Ada talent berbicara ke kamera)">{t.talentOption1}</option><option value="Voice Over Only (Kombinasi cuplikan + VO)">{t.talentOption2}</option>
                     </select>
                   </Field>
                   <Field label={t.moodTone}><input value={tone} onChange={(e) => setTone(e.target.value)} className={inputStyle} /></Field>
@@ -504,7 +528,7 @@ function VibeShotPlatform() {
                           </div>
                         </div>
 
-                        {/* SECTION BARU: KOTAK AI PROMPT MASTER */}
+                        {/* KOTAK AI PROMPT MASTER */}
                         <div className="mt-2 border-t border-dashed border-zinc-200 pt-3">
                           <div className="flex items-center justify-between mb-1.5">
                             <span className="text-[9px] font-mono text-indigo-500 uppercase tracking-wider font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> {t.aiPromptLabel}</span>
@@ -529,12 +553,22 @@ function VibeShotPlatform() {
                     ))}
                   </div>
                 )}
+
+                {/* TOMBOL EXTEND STORYLINE */}
+                {hasResult && shots.length < 12 && (
+                  <div className="pt-6 pb-2 text-center">
+                    <button onClick={handleLanjutkanCerita} disabled={isContinuing} className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-5 py-2.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 hover:text-zinc-900 disabled:opacity-50">
+                      {isContinuing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnExtending}</> : <><ArrowDownRight className="h-3.5 w-3.5" /> {t.btnExtend}</>}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </main>
         </div>
       </div>
 
+      {/* LIGHTBOX ZOOM */}
       {previewImage && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-6 cursor-zoom-out"
