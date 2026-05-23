@@ -17,9 +17,6 @@ interface Shot {
   imagePrompt?: string;
 }
 
-// ==========================================
-// DICTIONARY MULTI-BAHASA (i18n)
-// ==========================================
 const translations = {
   id: {
     backToHome: "← Kembali ke Home",
@@ -47,7 +44,7 @@ const translations = {
     clickUpload: "Klik untuk pilih gambar/screenshot",
     payloadLocked: "✓ payload aset visual terkunci",
     pastePlaceholder: "Paste link video TikTok atau YouTube...",
-    btnCompile: "Susun Cetak Biru Brief Produksi",
+    btnCompile: "Susun Brief Produksi PREMIUM ✨",
     btnCompiling: "Meracik Kombinasi AI...",
     specSheet: "Lembar Spesifikasi Produksi",
     papanStrategi: "Papan Strategi Konten",
@@ -91,7 +88,7 @@ const translations = {
     clickUpload: "Click to select image/screenshot",
     payloadLocked: "✓ visual asset payload cached",
     pastePlaceholder: "Paste TikTok or YouTube video link...",
-    btnCompile: "Compile Production Brief",
+    btnCompile: "Compile Production Brief PREMIUM ✨",
     btnCompiling: "Compiling AI Engine...",
     specSheet: "Production Spec Sheet",
     papanStrategi: "Untitled Strategy Board",
@@ -142,7 +139,6 @@ function SafeAIImage({ src, alt, className, globalIndex, activeGlobalIndex, onNe
 function VibeShotPlatform() {
   const [view, setView] = useState<"landing" | "app">("landing");
   const [lang, setLang] = useState<"id" | "en">("en");
-  
   const workerUrl = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
   
   const [productName, setProductName] = useState("");
@@ -169,18 +165,11 @@ function VibeShotPlatform() {
   const [hasResult, setHasResult] = useState(false);
   const [activeGlobalIndex, setActiveGlobalIndex] = useState(-1);
 
-  // UPGRADE SAKTI: PROTEKSI AUTO-READ LOCAL STORAGE DARI GEJALA CRASH DATA CORRUPT
   useEffect(() => {
     try {
       const browserLang = navigator.language || (navigator as any).userLanguage || "en";
-      if (browserLang.startsWith("id")) {
-        setLang("id");
-      } else {
-        setLang("en");
-      }
-    } catch (e) {
-      setLang("en");
-    }
+      setLang(browserLang.startsWith("id") ? "id" : "en");
+    } catch { setLang("en"); }
 
     try {
       const savedShots = localStorage.getItem("vibeshot_shots");
@@ -189,23 +178,15 @@ function VibeShotPlatform() {
       const savedTitle = localStorage.getItem("vibeshot_title");
 
       if (savedShots && savedMoodboard) {
-        const parsedShots = JSON.parse(savedShots);
-        const parsedMoodboard = JSON.parse(savedMoodboard);
-        
-        if (Array.isArray(parsedShots) && Array.isArray(parsedMoodboard)) {
-          setShots(parsedShots);
-          setMoodboard(parsedMoodboard);
-          setPremiseOverride(savedPremise);
-          setTitleOverride(savedTitle);
-          setHasResult(true);
-          setActiveGlobalIndex(0);
-          setView("app");
-        }
+        setShots(JSON.parse(savedShots));
+        setMoodboard(JSON.parse(savedMoodboard));
+        setPremiseOverride(savedPremise);
+        setTitleOverride(savedTitle);
+        setHasResult(true);
+        setActiveGlobalIndex(0);
+        setView("app");
       }
-    } catch (err) {
-      console.error("Data lama corrupt, mereset workspace otomatis:", err);
-      localStorage.clear();
-    }
+    } catch { localStorage.clear(); }
   }, []);
 
   const t = translations[lang] || translations["en"];
@@ -441,7 +422,7 @@ function VibeShotPlatform() {
           </div>
         </section>
 
-        <footer className="mx-auto max-w-5xl px-6 py-8 flex justify-between text-[11px] font-mono text-zinc-400">
+        <footer className="mx-auto max-w-5xl px-6 py-8 flex justify-between text-[11px] font-mono text-zinc-400 border-t border-zinc-100">
           <span>© 2026 VibeShot AI. All rights reserved.</span>
           <span>Zero Server Storage Architecture</span>
         </footer>
@@ -478,7 +459,7 @@ function VibeShotPlatform() {
             </button>
             {openSection === "core" && (
               <div className="p-4 space-y-4 bg-white">
-                <Field label={t.namaBrand}><input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Suzuki Carry, Wardah, Gojek" className={inputStyle} /></Field>
+                <Field label={t.namaBrand}><input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Suzuki Carry, Wardah" className={inputStyle} /></Field>
                 <Field label={t.ideKasar}><textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={4} placeholder={t.placeholderIde} className={inputStyle + " resize-none"} /></Field>
               </div>
             )}
@@ -565,7 +546,7 @@ function VibeShotPlatform() {
                 {moodboardTiles.map((src, i) => (
                   <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm">
                     {src ? (
-                      <SafeAIImage src={src} alt={`Storyboard Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" globalIndex={i} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} langLabel={lang === "id" ? "shot" : "shot block"} />
+                      <SafeAIImage src={src} alt={`Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" globalIndex={i} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} langLabel={t.queue} />
                     ) : (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 text-zinc-300"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">Shot {i + 1}</span></div>
                     )}
@@ -589,7 +570,7 @@ function VibeShotPlatform() {
                       <div className="flex items-start gap-3 shrink-0">
                         <div className="text-xs font-mono font-semibold text-zinc-300 pt-1">{String(idx + 1).padStart(2, "0")}</div>
                         <div className="relative aspect-[16/9] w-full md:w-36 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50 shrink-0 shadow-inner">
-                          {s.image ? <SafeAIImage src={s.image} alt="Visual sequence" className="h-full w-full object-cover object-center cursor-zoom-in" globalIndex={idx + moodboard.length} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} langLabel={lang === "id" ? "adegan" : "block queue"} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 font-mono">loading block</div>}
+                          {s.image ? <SafeAIImage src={s.image} alt="Sequence" className="h-full w-full object-cover object-center cursor-zoom-in" globalIndex={idx + moodboard.length} activeGlobalIndex={activeGlobalIndex} onNextQueue={() => setActiveGlobalIndex(p => p + 1)} langLabel={t.queue} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 font-mono">loading block</div>}
                         </div>
                       </div>
 
