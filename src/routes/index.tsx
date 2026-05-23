@@ -162,8 +162,6 @@ function VibeShotPlatform() {
   const [isContinuing, setIsContinuing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
-
-  // STATE BARU BUAT PREVIEW GAMBAR ZOOM-IN
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -339,7 +337,6 @@ function VibeShotPlatform() {
   const inputStyle = "w-full rounded border border-zinc-200 bg-white px-2.5 py-1.5 text-xs text-zinc-800 placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none transition-colors";
 
   if (view === "landing") {
-    // ... landing page ...
     return (
       <div className="min-h-screen bg-white text-zinc-900 font-sans antialiased selection:bg-zinc-100">
         <nav className="mx-auto max-w-5xl flex items-center justify-between px-6 py-4 border-b border-zinc-100">
@@ -351,16 +348,77 @@ function VibeShotPlatform() {
             <button onClick={() => setView("app")} className="text-xs font-medium bg-zinc-950 text-white px-3 py-1.5 rounded-md hover:bg-zinc-800 transition-colors shadow-sm">Launch Studio →</button>
           </div>
         </nav>
+
         <header className="mx-auto max-w-3xl text-center px-6 pt-20 pb-16 space-y-6">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 border border-zinc-200/60 px-3 py-1 text-[11px] text-zinc-500 font-mono">
+            <Sparkles className="h-3 w-3 text-zinc-400" /> Private Beta Engine Active
+          </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-zinc-900 leading-[1.1]">
             Turn messy script ideas into crystal-clear production briefs.
           </h1>
+          <p className="text-zinc-500 text-sm max-w-xl mx-auto leading-relaxed">
+            The automated workspace built for Creative Strategists and Agency Workers. Translate loose briefs and visual references into word-for-word scripts, moodboards, and interactive storyboards in 60 seconds.
+          </p>
           <div className="pt-2">
             <button onClick={() => setView("app")} className="inline-flex items-center gap-2 bg-zinc-900 text-white font-medium text-xs px-5 py-3 rounded-lg shadow hover:bg-zinc-800 transition-all transform hover:-translate-y-0.5">
               Get Started for Free <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
         </header>
+
+        <section className="mx-auto max-w-4xl px-6 pb-20">
+          <div className="rounded-xl border border-zinc-200 bg-[#fafafa] p-4 shadow-xl relative overflow-hidden group">
+            <div className="absolute top-2 left-4 flex gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-zinc-200 block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-zinc-200 block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-zinc-200 block" />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] bg-white border border-zinc-200/80 rounded-lg overflow-hidden mt-4 min-h-[300px]">
+              <div className="border-r border-zinc-100 p-3 bg-zinc-50/50 space-y-3 font-mono text-[9px] text-zinc-400">
+                <div className="h-3 bg-zinc-200 rounded w-1/2" />
+                <div className="h-14 bg-zinc-200/60 rounded border border-dashed border-zinc-300 flex items-center justify-center p-2 text-center text-zinc-400">"Suzuki Carry — Highlight tighter turning radius advantages for compact alley deliveries..."</div>
+                <div className="h-6 bg-zinc-950 rounded flex items-center justify-center text-white font-sans font-bold">Compile Brief ✨</div>
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="flex justify-between items-center pb-2 border-b border-zinc-100">
+                  <div className="h-3 bg-zinc-300 rounded w-1/3" />
+                  <div className="h-4 bg-zinc-100 rounded w-14" />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="aspect-[9/16] rounded bg-zinc-50 border border-zinc-100 flex flex-col items-center justify-center p-2"><ImageIcon className="h-4 w-4 text-zinc-300 mb-1" /><span className="text-[7px] text-zinc-400 font-mono">storyboard 01</span></div>
+                  <div className="aspect-[9/16] rounded bg-zinc-50 border border-zinc-100 flex flex-col items-center justify-center p-2"><ImageIcon className="h-4 w-4 text-zinc-300 mb-1" /><span className="text-[7px] text-zinc-400 font-mono">storyboard 02</span></div>
+                  <div className="aspect-[9/16] rounded bg-zinc-50 border border-zinc-100 flex flex-col items-center justify-center p-2"><ImageIcon className="h-4 w-4 text-zinc-300 mb-1" /><span className="text-[7px] text-zinc-400 font-mono">storyboard 03</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-zinc-50 border-t border-b border-zinc-200/60 py-16 px-6">
+          <div className="mx-auto max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-2">
+              <div className="h-7 w-7 rounded bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-700 font-bold text-xs">01</div>
+              <h3 className="text-xs font-semibold text-zinc-900 uppercase font-mono tracking-wider">Multimodal Sandbox</h3>
+              <p className="text-zinc-500 text-xs leading-relaxed">Drop competitor video links or upload raw moodboard screenshots directly. The engine analyzes spatial aesthetics in real-time.</p>
+            </div>
+            <div className="space-y-2">
+              <div className="h-7 w-7 rounded bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-700 font-bold text-xs">02</div>
+              <h3 className="text-xs font-semibold text-zinc-900 uppercase font-mono tracking-wider">Timeline Stacks Card</h3>
+              <p className="text-zinc-500 text-xs leading-relaxed">Ditch the friction of horizontal spreadsheet grids. Story structure is stacked vertically, mirroring professional timeline editing layers.</p>
+            </div>
+            <div className="space-y-2">
+              <div className="h-7 w-7 rounded bg-white border border-zinc-200 shadow-sm flex items-center justify-center text-zinc-700 font-bold text-xs">03</div>
+              <h3 className="text-xs font-semibold text-zinc-900 uppercase font-mono tracking-wider">Sequential Continuity</h3>
+              <p className="text-zinc-500 text-xs leading-relaxed">Bypass token ceiling bottlenecks. Our smart daisy-chain stitching seamlessly links your initial 6 shots into shots 7-12 organically.</p>
+            </div>
+          </div>
+        </section>
+
+        <footer className="mx-auto max-w-5xl px-6 py-8 flex justify-between text-[11px] font-mono text-zinc-400 border-t border-zinc-100">
+          <span>© 2026 VibeShot AI. All rights reserved.</span>
+          <span>Zero Server Storage Architecture</span>
+        </footer>
       </div>
     );
   }
@@ -373,6 +431,7 @@ function VibeShotPlatform() {
             <button onClick={() => setView("landing")} className="flex h-5 w-5 items-center justify-center rounded bg-zinc-900 text-white font-mono text-[10px] font-bold hover:bg-zinc-700 transition-colors">V</button>
             <span className="text-xs text-zinc-400 font-mono">/</span>
             <span className="text-xs font-medium tracking-tight text-zinc-800">vibeshot.studio/workspace</span>
+            <span className="text-[10px] font-mono font-bold uppercase bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded ml-1">{lang} mode</span>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setView("landing")} className="text-[11px] font-medium text-zinc-500 hover:text-zinc-800 transition-colors">{t.backToHome}</button>
@@ -428,6 +487,35 @@ function VibeShotPlatform() {
               )}
             </div>
 
+            <div className="rounded-lg border border-zinc-200/60 overflow-hidden bg-zinc-50/30">
+              <button onClick={() => setOpenSection(openSection === "ref" ? "none" : "ref")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white border-b border-zinc-100 hover:bg-zinc-50 transition-colors">
+                <span className="flex items-center gap-2"><LayoutGrid className="h-3.5 w-3.5 text-zinc-500" /> {t.refMultimodal}</span>
+                {openSection === "ref" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
+              </button>
+              {openSection === "ref" && (
+                <div className="p-4 space-y-4 bg-white">
+                  <Field label={t.tipeAset}>
+                    <select value={refType} onChange={(e) => setRefType(e.target.value)} className={inputStyle + " bg-zinc-50/50"}>
+                      <option value="none">{t.noRef}</option><option value="image">{t.uploadPhoto}</option><option value="url">{t.pasteLink}</option>
+                    </select>
+                  </Field>
+                  {refType === "image" && (
+                    <div className="rounded-lg border border-dashed border-zinc-200 p-4 bg-zinc-50/50 text-center transition hover:bg-zinc-50">
+                      <label className="cursor-pointer flex flex-col items-center justify-center gap-1.5 text-zinc-500">
+                        <Upload className="h-4 w-4 text-zinc-400" /><span className="text-xs">{t.clickUpload}</span><input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                      </label>
+                      {refImageBase64 && <p className="mt-2 text-[10px] text-emerald-600 font-mono">{t.payloadLocked}</p>}
+                    </div>
+                  )}
+                  {refType === "url" && (
+                    <div className="flex items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50/30 px-3 py-2">
+                      <Link className="h-3.5 w-3.5 text-zinc-400 shrink-0" /><input type="text" value={refUrl} onChange={(e) => setRefUrl(e.target.value)} placeholder={t.pastePlaceholder} className="w-full text-xs outline-none bg-transparent text-zinc-700" />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             <button onClick={handleGenerate} disabled={isGenerating || isContinuing} className="flex w-full items-center justify-center gap-2 rounded-md bg-zinc-900 px-4 py-2.5 text-xs font-medium text-white shadow-sm transition hover:bg-zinc-800 disabled:opacity-50">
               {isGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnCompiling}</> : <><Sparkles className="h-3.5 w-3.5" /> {t.btnCompile}</>}
             </button>
@@ -476,7 +564,6 @@ function VibeShotPlatform() {
                         <div className="flex items-start gap-3 shrink-0">
                           <div className="text-xs font-mono font-semibold text-zinc-300 pt-1">{String(idx + 1).padStart(2, "0")}</div>
                           
-                          {/* CSS BOX TIMELINE SEKARANG PROPORSIONAL 9:16 BIAR GAK KEPOTONG */}
                           <div className="relative aspect-[9/16] w-24 overflow-hidden rounded-lg border border-zinc-100 bg-zinc-50 shrink-0 shadow-inner">
                             {s.image ? <SimpleAIImage src={s.image} alt="Sequence" className="h-full w-full object-cover object-center" onClick={() => setPreviewImage(s.image!)} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 font-mono">loading...</div>}
                           </div>
@@ -505,6 +592,8 @@ function VibeShotPlatform() {
                             </div>
                           </div>
                         </div>
+
+                        <button onClick={() => removeShot(s.id)} className="absolute top-3 right-3 rounded p-1 text-zinc-300 opacity-0 transition hover:bg-zinc-50 hover:text-red-500 group-hover:opacity-100"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
                     ))}
                   </div>
@@ -523,7 +612,6 @@ function VibeShotPlatform() {
         </div>
       </div>
 
-      {/* POP-UP LIGHTBOX PREVIEW GAMBAR ZOOM */}
       {previewImage && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-6 cursor-zoom-out"
