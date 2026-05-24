@@ -142,19 +142,18 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
   return (
     <>
       {(!isLoaded && !hasError) && (
-        <div className={`absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-800 border border-dashed border-zinc-200 dark:border-zinc-700 text-[10px] text-zinc-400 font-mono ${shouldLoad ? 'animate-pulse' : ''}`}>
-          <span>{shouldLoad ? "rendering..." : `queue #${index + 1}`}</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-800 border border-dashed border-zinc-200 dark:border-zinc-700 text-[10px] text-zinc-400 font-mono animate-pulse">
+          <span>rendering...</span>
         </div>
       )}
       {hasError && (
         <div 
-          className={`absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-800 border border-dashed border-zinc-200 dark:border-zinc-700 text-[9px] text-zinc-400 font-mono cursor-pointer hover:bg-zinc-100 transition-colors`}
+          className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-800 border border-dashed border-zinc-200 dark:border-zinc-700 text-[9px] text-zinc-400 font-mono cursor-pointer hover:bg-zinc-100 transition-colors"
           onClick={(e) => {
             e.stopPropagation();
             setHasError(false);
             setIsLoaded(false);
             setShouldLoad(false);
-            setTimeout(() => setShouldLoad(true), 100);
           }}
         >
           <span className="text-orange-400 mb-1">timeout</span>
@@ -177,18 +176,23 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
 }
 
 function CustomSwitch({ isOn, onToggle, labelOff, labelOn, IconOff, IconOn }: any) {
+  const switchOffClass = !isOn ? 'text-zinc-900 dark:text-zinc-100 scale-105' : 'text-zinc-400 dark:text-zinc-600';
+  const switchOnClass = isOn ? 'text-zinc-900 dark:text-zinc-100 scale-105' : 'text-zinc-400 dark:text-zinc-600';
+  const capClass = isOn ? 'bg-zinc-900 dark:bg-zinc-100 border border-zinc-800 dark:border-zinc-300' : 'bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700';
+  const ballClass = isOn ? 'translate-x-4 bg-white dark:bg-zinc-900' : 'translate-x-0.5 bg-zinc-600 dark:bg-zinc-400';
+
   return (
     <div onClick={onToggle} className="flex items-center gap-2 cursor-pointer select-none group p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-all duration-150">
       {labelOff || IconOff ? (
-        <span className={`text-[10px] font-mono font-bold tracking-wider transition-all duration-200 ${!isOn ? 'text-zinc-900 dark:text-zinc-100 scale-105' : 'text-zinc-400 dark:text-zinc-600'}`}>
+        <span className={`text-[10px] font-mono font-bold tracking-wider transition-all duration-200 ${switchOffClass}`}>
           {IconOff ? <IconOff className="w-3.5 h-3.5" /> : labelOff}
         </span>
       ) : null}
-      <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ${isOn ? 'bg-zinc-900 dark:bg-zinc-100 border border-zinc-800 dark:border-zinc-300' : 'bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700'}`}>
-        <span className={`inline-block h-3.5 w-3.5 transform rounded-full transition-transform duration-300 shadow-sm ${isOn ? 'translate-x-4 bg-white dark:bg-zinc-900' : 'translate-x-0.5 bg-zinc-600 dark:bg-zinc-400'}`} />
+      <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-300 ${capClass}`}>
+        <span className={`inline-block h-3.5 w-3.5 transform rounded-full transition-transform duration-300 shadow-sm ${ballClass}`} />
       </div>
       {labelOn || IconOn ? (
-        <span className={`text-[10px] font-mono font-bold tracking-wider transition-all duration-200 ${isOn ? 'text-zinc-900 dark:text-zinc-100 scale-105' : 'text-zinc-400 dark:text-zinc-600'}`}>
+        <span className={`text-[10px] font-mono font-bold tracking-wider transition-all duration-200 ${switchOnClass}`}>
           {IconOn ? <IconOn className="w-3.5 h-3.5" /> : labelOn}
         </span>
       ) : null}
@@ -260,13 +264,12 @@ function VibeShotPlatform() {
             setCloudBriefId(sharedId);
             setHasResult(true);
             setView("app");
-            toast.success(lang === "id" ? "Brief Cloud berhasil dimuat!" : "Cloud brief loaded successfully!");
             setIsGenerating(false);
             return;
           }
         }
       } catch (e) {
-        console.error("Gagal menarik data cloud:", e);
+        console.error("Cloud Error:", e);
       } finally {
         setIsGenerating(false);
       }
@@ -297,11 +300,6 @@ function VibeShotPlatform() {
     };
 
     loadSharedOrLocalBrief();
-
-    try {
-      const browserLang = navigator.language || (navigator as any).userLanguage || "en";
-      setLang(browserLang.startsWith("id") ? "id" : "en");
-    } catch { setLang("en"); }
   }, []);
 
   const t = translations[lang] || translations["en"];
@@ -512,6 +510,16 @@ function VibeShotPlatform() {
     }
   };
 
+  const handleShareLink = () => {
+    if (!cloudBriefId) {
+      toast.error(lang === "id" ? "ID cloud belum terbuat." : "Cloud ID missing.");
+      return;
+    }
+    const shareUrl = `${window.location.origin}${window.location.pathname}?id=${cloudBriefId}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success(t.shareSuccess);
+  };
+
   const handleCopyTable = async () => {
     if (shots.length === 0) return;
     let htmlString = `<table border="1" style="border-collapse: collapse; font-family: Arial, sans-serif; width: 100%;">`;
@@ -527,11 +535,6 @@ function VibeShotPlatform() {
     } catch { toast.error("Copy failed."); }
   };
 
-  const updateShot = (id: string, key: keyof Omit<Shot, "id">, value: string) => {
-    setShots((prev) => prev.map((s) => (s.id === id ? { ...s, [key]: value } : s)));
-  };
-  const removeShot = (id: string) => setShots((prev) => prev.filter((s) => s.id !== id));
-
   const moodboardTiles = useMemo(() => {
     if (moodboard.length > 0) return moodboard;
     return Array.from({ length: shotCount }).map(() => null);
@@ -542,6 +545,10 @@ function VibeShotPlatform() {
   }, [shots]);
 
   const inputStyle = "w-full rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-zinc-400 dark:focus:border-zinc-500 focus:outline-none transition-colors";
+
+  // HOISTING CSS UNTUK SWITCHER BUTTON AGAR COMPILER TANSTACK TIDAK CRASH
+  const hybridActiveStyle = activeEngine === "hybrid" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600";
+  const cloneActiveStyle = activeEngine === "clone" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600";
 
   if (view === "landing") {
     return (
@@ -611,14 +618,14 @@ function VibeShotPlatform() {
                 <button 
                   type="button"
                   onClick={() => setActiveEngine("hybrid")}
-                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "hybrid" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
+                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${hybridActiveStyle}`}
                 >
                   {t.modeHybrid}
                 </button>
                 <button 
                   type="button"
                   onClick={() => { setActiveEngine("clone"); setOpenSection("ref"); }}
-                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "clone" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
+                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${cloneActiveStyle}`}
                 >
                   {t.modeClone}
                 </button>
