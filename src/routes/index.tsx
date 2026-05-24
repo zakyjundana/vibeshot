@@ -130,18 +130,12 @@ const translations = {
 function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; alt: string; className: string; onClick?: () => void; index: number }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [shouldLoad, setShouldLoad] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShouldLoad(true), index * 2000); 
-    return () => clearTimeout(timer);
-  }, [index, src]);
 
   if (!src) return null;
 
   return (
     <>
-      {(!isLoaded && !hasError) && (
+      {!isLoaded && !hasError && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-800 border border-dashed border-zinc-200 dark:border-zinc-700 text-[10px] text-zinc-400 font-mono animate-pulse">
           <span>rendering...</span>
         </div>
@@ -151,26 +145,22 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
           className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-800 border border-dashed border-zinc-200 dark:border-zinc-700 text-[9px] text-zinc-400 font-mono cursor-pointer hover:bg-zinc-100 transition-colors"
           onClick={(e) => {
             e.stopPropagation();
-            setHasError(false);
             setIsLoaded(false);
-            setShouldLoad(false);
           }}
         >
           <span className="text-orange-400 mb-1">timeout</span>
           <span className="underline">click to retry</span>
         </div>
       )}
-      {shouldLoad && (
-        <img 
-          src={src} 
-          alt={alt} 
-          className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500 ${onClick ? 'cursor-zoom-in hover:opacity-90' : ''}`}
-          onLoad={() => setIsLoaded(true)} 
-          onError={() => setHasError(true)} 
-          loading="lazy" 
-          onClick={onClick}
-        />
-      )}
+      <img 
+        src={src} 
+        alt={alt} 
+        className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500 ${onClick ? 'cursor-zoom-in hover:opacity-90' : ''}`}
+        onLoad={() => setIsLoaded(true)} 
+        onError={() => setHasError(true)} 
+        loading="lazy" 
+        onClick={onClick}
+      />
     </>
   );
 }
@@ -546,7 +536,6 @@ function VibeShotPlatform() {
 
   const inputStyle = "w-full rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-zinc-400 dark:focus:border-zinc-500 focus:outline-none transition-colors";
 
-  // HOISTING CSS UNTUK SWITCHER BUTTON AGAR COMPILER TANSTACK TIDAK CRASH
   const hybridActiveStyle = activeEngine === "hybrid" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600";
   const cloneActiveStyle = activeEngine === "clone" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600";
 
