@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, X, Moon, Sun } from "lucide-react";
+import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, X, Moon, Sun, Play } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -47,7 +47,7 @@ const translations = {
     noRef: "Tanpa referensi (Andalkan Teks Murni)",
     uploadPhoto: "Upload Foto Moodboard / Screenshot",
     pasteLink: "Paste Link Video Referensi (TikTok/YouTube)",
-    clickUpload: "Klik untuk pilih gambar/screenshot",
+    clickUpload: "Klik untuk pilih gambar/screenshot/video",
     payloadLocked: "✓ payload aset visual terkunci",
     pastePlaceholder: "Paste link video TikTok atau YouTube di sini untuk direplikasi...",
     btnCompile: "Eksekusi Cetak Biru Konten 🚀",
@@ -68,7 +68,9 @@ const translations = {
     btnExtending: "Melakukan Rantai Sambungan Adegan...",
     aiPromptLabel: "Master AI Image Prompt (Universal)",
     btnShare: "Bagikan Link Brief 🔗",
-    shareSuccess: "Link brief berhasil disalin ke clipboard!"
+    shareSuccess: "Link brief berhasil disalin ke clipboard!",
+    btnRenderVisual: "Fase 2: Hasilkan Frame Storyboard Visual 🎬",
+    btnRenderingVisual: "Mengerjakan Render Gambar FLUX Dev..."
   },
   en: {
     backToHome: "← Back to Home",
@@ -98,7 +100,7 @@ const translations = {
     noRef: "No reference (Text only)",
     uploadPhoto: "Upload Moodboard / Screenshot Photo",
     pasteLink: "Paste Reference Video Link (TikTok/YouTube)",
-    clickUpload: "Click to select image/screenshot",
+    clickUpload: "Click to select image/screenshot/video",
     payloadLocked: "✓ visual asset payload cached",
     pastePlaceholder: "Paste TikTok or YouTube link here to replicate scene structure...",
     btnCompile: "Execute Production Blueprint 🚀",
@@ -119,7 +121,9 @@ const translations = {
     btnExtending: "Chaining Sequence Extensions...",
     aiPromptLabel: "Master AI Image Prompt (Universal)",
     btnShare: "Share Brief Link 🔗",
-    shareSuccess: "Brief link copied to clipboard!"
+    shareSuccess: "Brief link copied to clipboard!",
+    btnRenderVisual: "Phase 2: Generate Visual Storyboard Frames 🎬",
+    btnRenderingVisual: "Rendering frames via FLUX Dev..."
   }
 };
 
@@ -132,6 +136,8 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
     const timer = setTimeout(() => setShouldLoad(true), index * 2000); 
     return () => clearTimeout(timer);
   }, [index, src]);
+
+  if (!src) return null;
 
   return (
     <>
@@ -221,6 +227,7 @@ function VibeShotPlatform() {
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isContinuing, setIsContinuing] = useState(false);
+  const [isRenderingVisuals, setIsRenderingVisuals] = useState(false); // State Loading Baru Untuk Render Gambar
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -327,21 +334,6 @@ function VibeShotPlatform() {
     toast.success(lang === "id" ? "Workspace dibersihkan." : "Workspace cleared.");
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 4 * 1024 * 1024) {
-      toast.error(lang === "id" ? "File maksimal 4MB." : "Max file size is 4MB.");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setRefImageBase64(reader.result as string);
-      toast.success(lang === "id" ? "Aset visual terkunci." : "Visual asset cached.");
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleGenerate = async () => {
     setIsGenerating(true);
     setErrorMsg(null);
@@ -387,6 +379,44 @@ function VibeShotPlatform() {
       toast.error(err.message);
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  // FUNGSI UTK MENGEKSEKUSI FASE 2: RENDER MASSAL GAMBAR DARI PROMPT HASIL EDITAN USER
+  const handleMassExecuteImages = async () => {
+    setIsRenderingVisuals(true);
+    try {
+      const res = await fetch(workerUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "render_images",
+          briefId: cloudBriefId,
+          title: titleOverride,
+          premise: premiseOverride,
+          visual_style: visualStyle,
+          masterIdentity: masterIdentity,
+          shotlist: shots // Mengirim shotlist teks yang sudah diedit user di layar
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Error rendering images.");
+
+      const updatedWithImages = (data.shotlist || []).map((r: any, idx: number) => ({
+        ...shots[idx],
+        image: String(r?.image || ""),
+        imagePrompt: String(r?.imagePrompt || shots[idx].imagePrompt)
+      }));
+
+      setShots(updatedWithImages);
+      setMoodboard(data.moodboard || []);
+      
+      saveToLocalStorage(updatedWithImages, data.moodboard || [], premiseOverride, titleOverride, masterIdentity, visualStyle, cloudBriefId);
+      toast.success(lang === "id" ? "Semua frame visual berhasil dirender!" : "All visual frames rendered!");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setIsRenderingVisuals(false);
     }
   };
 
@@ -440,16 +470,6 @@ function VibeShotPlatform() {
     }
   };
 
-  const handleShareLink = () => {
-    if (!cloudBriefId) {
-      toast.error(lang === "id" ? "ID cloud belum terbuat, silakan compile ulang." : "Cloud ID missing, please re-compile.");
-      return;
-    }
-    const shareUrl = `${window.location.origin}${window.location.pathname}?id=${cloudBriefId}`;
-    navigator.clipboard.writeText(shareUrl);
-    toast.success(t.shareSuccess);
-  };
-
   const handleCopyTable = async () => {
     if (shots.length === 0) return;
     let htmlString = `<table border="1" style="border-collapse: collapse; font-family: Arial, sans-serif; width: 100%;">`;
@@ -474,6 +494,11 @@ function VibeShotPlatform() {
     if (moodboard.length > 0) return moodboard;
     return Array.from({ length: shotCount }).map(() => null);
   }, [moodboard, shotCount]);
+
+  // Cek apakah storyboard saat ini statusnya murni teks (belum ada gambar sama sekali)
+  const isTextOnlyBrief = useMemo(() => {
+    return shots.length > 0 && shots.every(s => !s.image);
+  }, [shots]);
 
   const inputStyle = "w-full rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-zinc-400 dark:focus:border-zinc-500 focus:outline-none transition-colors";
 
@@ -545,14 +570,14 @@ function VibeShotPlatform() {
                 <button 
                   type="button"
                   onClick={() => setActiveEngine("hybrid")}
-                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "hybrid" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
+                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "hybrid" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
                 >
                   {t.modeHybrid}
                 </button>
                 <button 
                   type="button"
                   onClick={() => { setActiveEngine("clone"); setOpenSection("ref"); }}
-                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "clone" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
+                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "clone" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
                 >
                   {t.modeClone}
                 </button>
@@ -665,25 +690,45 @@ function VibeShotPlatform() {
                 )}
               </div>
 
+              {/* 📊 SEPARATOR STEP 2: TOMBOL EMAS APABILA BELUM ADA GAMBAR DI LAYAR */}
+              {isTextOnlyBrief && (
+                <div className="p-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-in">
+                  <div>
+                    <h3 className="text-sm font-bold flex items-center gap-2">💡 Teks Naskah Berhasil Di-sadur!</h3>
+                    <p className="text-xs text-zinc-100 mt-0.5">Silakan periksa, edit camera angle & copywriting audio di bawah terlebih dahulu. Jika sudah mantap, gas render visualnya!</p>
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={handleMassExecuteImages} 
+                    disabled={isRenderingVisuals}
+                    className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2 text-xs rounded-lg transition shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50"
+                  >
+                    {isRenderingVisuals ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t.btnRenderingVisual}</> : <><Sparkles className="w-3.5 h-3.5 text-amber-400" /> {t.btnRenderVisual}</>}
+                  </button>
+                </div>
+              )}
+
               <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] p-5 shadow-sm space-y-2">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">{t.premisNaratif}</span>
                 <p className="whitespace-pre-line text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 font-sans">{premiseOverride || t.premisPlaceholder}</p>
               </div>
 
-              <div className="space-y-3">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">{t.panelKontinuitas}</span>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
-                  {moodboardTiles.map((src, i) => (
-                    <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
-                      {src ? (
-                        <SimpleAIImage src={src} index={i} alt={`Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" onClick={() => setPreviewImage(src)} />
-                      ) : (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 dark:bg-zinc-900 text-zinc-300 dark:text-zinc-600"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">Shot {i + 1}</span></div>
-                      )}
-                    </div>
-                  ))}
+              {!isTextOnlyBrief && (
+                <div className="space-y-3">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">{t.panelKontinuitas}</span>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+                    {moodboardTiles.map((src, i) => (
+                      <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+                        {src ? (
+                          <SimpleAIImage src={src} index={i} alt={`Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" onClick={() => setPreviewImage(src)} />
+                        ) : (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 dark:bg-zinc-900 text-zinc-300 dark:text-zinc-600"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">Shot {i + 1}</span></div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60 dark:border-zinc-800/60">
@@ -702,7 +747,7 @@ function VibeShotPlatform() {
                             <div className="text-xs font-mono font-semibold text-zinc-300 dark:text-zinc-600 pt-1">{String(idx + 1).padStart(2, "0")}</div>
                             
                             <div className="relative aspect-[9/16] w-24 overflow-hidden rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 shrink-0 shadow-inner">
-                              {s.image ? <SimpleAIImage src={s.image} index={idx} alt="Sequence" className="h-full w-full object-cover object-center cursor-zoom-in" onClick={() => setPreviewImage(s.image!)} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 dark:text-zinc-600 font-mono">loading...</div>}
+                              {s.image ? <SimpleAIImage src={s.image} index={idx} alt="Sequence" className="h-full w-full object-cover object-center cursor-zoom-in" onClick={() => setPreviewImage(s.image!)} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 dark:text-zinc-600 font-mono text-center px-1">Teks Ready</div>}
                             </div>
                           </div>
 
@@ -766,7 +811,7 @@ function VibeShotPlatform() {
                   </div>
                 )}
 
-                {hasResult && (
+                {hasResult && !isTextOnlyBrief && (
                   <div className="pt-6 pb-2 text-center">
                     <button type="button" onClick={handleLanjutkanCerita} disabled={isContinuing} className="inline-flex items-center gap-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-5 py-2.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 shadow-sm transition hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white disabled:opacity-50 cursor-pointer">
                       {isContinuing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnExtending}</> : 
