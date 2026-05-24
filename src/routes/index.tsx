@@ -354,7 +354,6 @@ function VibeShotPlatform() {
     setErrorMsg(null);
     setHasResult(false);
 
-    // STRUKTUR DATA BARU: MENGGUNAKAN BLOK IF/ELSE UNTUK MENGHINDARI BUG TANSTACK ROUTER
     let requestPayload;
     if (activeEngine === "clone") {
       requestPayload = { 
