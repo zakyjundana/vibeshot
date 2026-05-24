@@ -374,7 +374,7 @@ export function VibeShotPlatform() {
     setHasResult(false);
 
     const requestPayload = {
-      engineMode: activeEngine, // PEMBAHARUAN SAKTI: Mengirim penanda jenis modul murni ke backend
+      engineMode: activeEngine,
       product: productName || "General Campaign Brand",
       usp: usp || "Buat adegan sekreatif mungkin",
       trend: trend,
@@ -669,7 +669,6 @@ export function VibeShotPlatform() {
             </div>
             <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800 my-2" />
             
-            {/* AMUNISI GLOBAL PARAMETER: Sekarang muncul baik di mode Hybrid maupun Clone untuk penukaran nama produk */}
             <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30 transition-all">
               <button type="button" onClick={() => setOpenSection(openSection === "core" ? "none" : "core")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                 <span className="flex items-center gap-2"><Edit3 className="h-3.5 w-3.5 text-zinc-500" /> {t.paramUtama}</span>
@@ -800,7 +799,8 @@ export function VibeShotPlatform() {
                             </div>
                             <div className="space-y-2.5">
                               <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.visualScene}</span><textarea rows={2} value={s.action} onChange={(e) => updateShot(s.id, "action", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
-                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.audioScript}</span><textarea rows={2} value={s.audio} onChange={(e) => updateShot(s.id, "audio", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-100 font-medium leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
+                              {/* FIX WARNA TEXT-ZINC-100 YANG GHAIB MENJADI SINKRON DI LIGHT & DARK MODE */}
+                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.audioScript}</span><textarea rows={2} value={s.audio} onChange={(e) => updateShot(s.id, "audio", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
                             </div>
                           </div>
                         </div>
