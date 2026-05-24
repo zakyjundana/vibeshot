@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, X, Moon, Sun } from "lucide-react";
+import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, X, Moon, Sun, ToggleLeft, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -22,7 +22,12 @@ const translations = {
   id: {
     backToHome: "← Kembali ke Home",
     resetProject: "Reset Project",
-    briefComposer: "Brief Composer (Peracik Konten)",
+    briefComposer: "Production Engine Room 🛠️",
+    selectMode: "Pilih Mode Amunisi AI",
+    modeHybrid: "Hybrid Strategist",
+    modeHybridDesc: "Gabung Brand/USP manual dengan alur video referensi",
+    modeClone: "Instant Clone Engine",
+    modeCloneDesc: "Hanya tempel link / upload media, AI auto-buat brief & transkrip",
     paramUtama: "1. Parameter Utama Brief",
     namaBrand: "Nama Brand / Produk",
     ideKasar: "Ide Kasar / USP Utama Konten (Tumpahkan semua di sini)",
@@ -37,16 +42,16 @@ const translations = {
     talentOption2: "Voice Over Only (Potongan visual + VO narator)",
     moodTone: "Mood & Tone Konten (Gaya Penyampaian)",
     jumlahShot: "Jumlah Shot Awal Yang Diminta",
-    refMultimodal: "3. Referensi Multimodal (Aset Tambahan)",
+    refMultimodal: "3. Referensi Alur & Visual (Multimodal)",
     tipeAset: "Tipe Aset Referensi",
     noRef: "Tanpa referensi (Andalkan Teks Murni)",
     uploadPhoto: "Upload Foto Moodboard / Screenshot",
     pasteLink: "Paste Link Video Referensi (TikTok/YouTube)",
     clickUpload: "Klik untuk pilih gambar/screenshot",
     payloadLocked: "✓ payload aset visual terkunci",
-    pastePlaceholder: "Paste link video TikTok atau YouTube...",
-    btnCompile: "Susun Brief Produksi ✨",
-    btnCompiling: "Meracik Kombinasi AI...",
+    pastePlaceholder: "Paste link video TikTok atau YouTube di sini untuk direplikasi...",
+    btnCompile: "Eksekusi Cetak Biru Konten 🚀",
+    btnCompiling: "Membongkar Referensi & Meracik AI...",
     specSheet: "Lembar Spesifikasi Produksi",
     papanStrategi: "Papan Strategi Konten",
     premisNaratif: "Premis Naratif Konsep (Alur Logika AI)",
@@ -68,7 +73,12 @@ const translations = {
   en: {
     backToHome: "← Back to Home",
     resetProject: "Reset Workspace",
-    briefComposer: "Brief Composer",
+    briefComposer: "Production Engine Room 🛠️",
+    selectMode: "Select AI Engine Mode",
+    modeHybrid: "Hybrid Strategist",
+    modeHybridDesc: "Blend manual Brand/USP with a reference video's pacing",
+    modeClone: "Instant Clone Engine",
+    modeCloneDesc: "Drop URL / media file, AI auto-creates script & breakdown",
     paramUtama: "1. Core Brief Parameters",
     namaBrand: "Brand / Product Name",
     ideKasar: "Raw Idea / Main USP (Talk freely here)",
@@ -83,16 +93,16 @@ const translations = {
     talentOption2: "Voice Over Only (Visual clips + VO narrator)",
     moodTone: "Content Mood & Tone",
     jumlahShot: "Initial Shots Count",
-    refMultimodal: "3. Multimodal References",
+    refMultimodal: "3. Flow & Visual References (Multimodal)",
     tipeAset: "Reference Asset Type",
     noRef: "No reference (Text only)",
     uploadPhoto: "Upload Moodboard / Screenshot Photo",
     pasteLink: "Paste Reference Video Link (TikTok/YouTube)",
     clickUpload: "Click to select image/screenshot",
     payloadLocked: "✓ visual asset payload cached",
-    pastePlaceholder: "Paste TikTok or YouTube video link...",
-    btnCompile: "Compile Production Brief ✨",
-    btnCompiling: "Compiling AI Engine...",
+    pastePlaceholder: "Paste TikTok or YouTube link here to replicate scene structure...",
+    btnCompile: "Execute Production Blueprint 🚀",
+    btnCompiling: "Dissecting References & Compiling AI...",
     specSheet: "Production Spec Sheet",
     papanStrategi: "Untitled Strategy Board",
     premisNaratif: "Concept Narrative Premise (AI Logic Flow)",
@@ -126,7 +136,7 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
   return (
     <>
       {(!isLoaded && !hasError) && (
-        <div className={`absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-800 border border-dashed border-zinc-200 dark:border-zinc-700 text-[10px] text-zinc-400 font-mono ${shouldLoad ? 'animate-pulse' : ''}`}>
+        <div className={`absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 data-[state=dark]:bg-zinc-800 border border-dashed border-zinc-200 dark:border-zinc-700 text-[10px] text-zinc-400 font-mono ${shouldLoad ? 'animate-pulse' : ''}`}>
           <span>{shouldLoad ? "rendering..." : `queue #${index + 1}`}</span>
         </div>
       )}
@@ -184,6 +194,7 @@ function VibeShotPlatform() {
   const [view, setView] = useState<"landing" | "app">("landing");
   const [lang, setLang] = useState<"id" | "en">("en");
   const [isDarkMode, setIsDarkMode] = useState(true); 
+  const [activeEngine, setActiveEngine] = useState<"hybrid" | "clone">("hybrid"); // STATE MANAGEMENT MODE SAKLAR
   const workerUrl = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
   
   const [productName, setProductName] = useState("");
@@ -206,7 +217,7 @@ function VibeShotPlatform() {
   const [titleOverride, setTitleOverride] = useState<string | null>(null);
   const [visualStyle, setVisualStyle] = useState<string>("real-life");
   const [masterIdentity, setMasterIdentity] = useState<{talent?: string, product?: string} | null>(null);
-  const [cloudBriefId, setCloudBriefId] = useState<string | null>(null); // State ID Baru
+  const [cloudBriefId, setCloudBriefId] = useState<string | null>(null); 
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isContinuing, setIsContinuing] = useState(false);
@@ -222,14 +233,12 @@ function VibeShotPlatform() {
     }
   }, [isDarkMode]);
 
-  // AUTO-PILOT DETEKSI LINK SHARE DARI CLOUDFLARE KV
   useEffect(() => {
     const loadSharedOrLocalBrief = async () => {
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const sharedId = urlParams.get("id");
 
-        // Jalur A: Jika ada ID share di URL, sedot langsung dari KV
         if (sharedId) {
           setIsGenerating(true);
           const res = await fetch(`${workerUrl}?id=${sharedId}`);
@@ -255,7 +264,6 @@ function VibeShotPlatform() {
         setIsGenerating(false);
       }
 
-      // Jalur B: Fallback ke Local Storage jika tidak ada parameter ID share
       try {
         const savedShots = localStorage.getItem("vibeshot_shots");
         const savedMoodboard = localStorage.getItem("vibeshot_moodboard");
@@ -264,6 +272,7 @@ function VibeShotPlatform() {
         const savedIdentity = localStorage.getItem("vibeshot_identity");
         const savedStyle = localStorage.getItem("vibeshot_style");
         const savedCloudId = localStorage.getItem("vibeshot_cloud_id");
+        const savedEngine = localStorage.getItem("vibeshot_active_engine");
 
         if (savedShots && savedMoodboard) {
           setShots(JSON.parse(savedShots));
@@ -273,6 +282,7 @@ function VibeShotPlatform() {
           if (savedIdentity) setMasterIdentity(JSON.parse(savedIdentity));
           if (savedStyle) setVisualStyle(savedStyle);
           if (savedCloudId) setCloudBriefId(savedCloudId);
+          if (savedEngine) setActiveEngine(savedEngine as any);
           setHasResult(true);
           setView("app");
         }
@@ -297,11 +307,11 @@ function VibeShotPlatform() {
     if (newIdentity) localStorage.setItem("vibeshot_identity", JSON.stringify(newIdentity));
     if (newStyle) localStorage.setItem("vibeshot_style", newStyle);
     if (cloudId) localStorage.setItem("vibeshot_cloud_id", cloudId);
+    localStorage.setItem("vibeshot_active_engine", activeEngine);
   };
 
   const handleClearAll = () => {
     localStorage.clear();
-    // Hapus parameter id di URL browser tanpa reload halaman
     window.history.replaceState({}, document.title, window.location.pathname);
     setShots([]);
     setMoodboard([]);
@@ -317,16 +327,36 @@ function VibeShotPlatform() {
     toast.success(lang === "id" ? "Workspace dibersihkan." : "Workspace cleared.");
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error(lang === "id" ? "File maksimal 4MB." : "Max file size is 4MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setRefImageBase64(reader.result as string);
+      toast.success(lang === "id" ? "Aset visual terkunci." : "Visual asset cached.");
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleGenerate = async () => {
     setIsGenerating(true);
     setErrorMsg(null);
     setHasResult(false);
 
+    // LOGIKA PARSING PAYLOAD JIKA USER PAKAI MODE INSTANT CLONE
+    const requestPayload = activeEngine === "clone" 
+      ? { product: "Analyzed Reference Video", usp: "Extracted Blueprint & Transcript", tone: "Matches Reference", shotCount: 6, platform, pillar, talent: "Matches Reference", refType: refType === "none" ? "link" : refType, refUrl, refImageBase64 }
+      : { product: productName, usp, trend, tone, shotCount, platform, pillar, talent, refType, refUrl, refImageBase64 };
+
     try {
       const res = await fetch(workerUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product: productName, usp, trend, tone, shotCount, platform, pillar, talent, refType, refUrl, refImageBase64 }),
+        body: JSON.stringify(requestPayload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Error compiling.");
@@ -348,14 +378,15 @@ function VibeShotPlatform() {
       setTitleOverride(data.title);
       setMasterIdentity(data.master_identity); 
       setVisualStyle(data.visual_style || "real-life"); 
-      setCloudBriefId(data.briefId || null); // Simpan ID dari Cloudflare KV
+      setCloudBriefId(data.briefId || null); 
       setHasResult(true);
       
       saveToLocalStorage(normalized, data.moodboard || [], data.premise, data.title, data.master_identity, data.visual_style, data.briefId || null);
       toast.success(lang === "id" ? "Brief berhasil diracik!" : "Brief successfully compiled!");
     } catch (err: any) {
       setErrorMsg(err.message);
-    } file {
+      toast.error(err.message);
+    } finally {
       setIsGenerating(false);
     }
   };
@@ -399,18 +430,17 @@ function VibeShotPlatform() {
       setShots(finalShots);
       setMoodboard(finalMood);
       setPremiseOverride(finalPremise);
-      setCloudBriefId(data.briefId || cloudBriefId); // Update dengan ID KV yang baru jika di-extend
+      setCloudBriefId(data.briefId || cloudBriefId); 
       
       saveToLocalStorage(finalShots, finalMood, finalPremise, titleOverride, masterIdentity, visualStyle, data.briefId || cloudBriefId);
       toast.success(lang === "id" ? "Alur berhasil disambung!" : "Timeline extended successfully!");
     } catch (err: any) {
       toast.error(err.message);
-    } final {
+    } finally {
       setIsContinuing(false);
     }
   };
 
-  // LOGIKA AUTO-PILOT BAGI LINK SHARE
   const handleShareLink = () => {
     if (!cloudBriefId) {
       toast.error(lang === "id" ? "ID cloud belum terbuat, silakan compile ulang." : "Cloud ID missing, please re-compile.");
@@ -508,53 +538,123 @@ function VibeShotPlatform() {
         </header>
 
         <div className="grid min-h-[calc(100vh-42px)] grid-cols-1 lg:grid-cols-[380px_1fr]">
-          <aside className="border-r border-zinc-200/70 dark:border-zinc-800/80 bg-white dark:bg-[#111111] p-5 lg:sticky lg:top-[42px] lg:h-[calc(100vh-42px)] lg:overflow-y-auto space-y-4 shadow-sm">
-            <div className="pb-2 border-b border-zinc-100 dark:border-zinc-800">
-              <h1 className="text-xs font-semibold tracking-tight uppercase text-zinc-400 dark:text-zinc-500">{t.briefComposer}</h1>
+          <aside className="border-r border-zinc-200/70 dark:border-zinc-800/80 bg-white dark:bg-[#111111] p-5 lg:sticky lg:top-[42px] lg:h-[calc(100vh-42px)] lg:overflow-y-auto space-y-5 shadow-sm">
+            
+            {/* 🎛️ HIGH-END SEGMENTED TOOL SWITCHER (UI MODE SELECTOR) */}
+            <div className="space-y-1.5">
+              <span className="block text-[9px] font-mono font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">{t.selectMode}</span>
+              <div className="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200/40 dark:border-zinc-800">
+                <button 
+                  type="button"
+                  onClick={() => setActiveEngine("hybrid")}
+                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "hybrid" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
+                >
+                  {t.modeHybrid}
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => { setActiveEngine("clone"); setOpenSection("ref"); }}
+                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "clone" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
+                >
+                  {t.modeClone}
+                </button>
+              </div>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 italic leading-snug px-1">
+                {activeEngine === "hybrid" ? t.modeHybridDesc : t.modeCloneDesc}
+              </p>
             </div>
 
+            <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800 my-2" />
+
+            {/* SECTION 1: MANUALLY SHOWN ONLY IN HYBRID MODE */}
+            {activeEngine === "hybrid" && (
+              <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30 transition-all">
+                <button type="button" onClick={() => setOpenSection(openSection === "core" ? "none" : "core")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                  <span className="flex items-center gap-2"><Film className="h-3.5 w-3.5 text-zinc-500" /> {t.paramUtama}</span>
+                  {openSection === "core" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
+                </button>
+                {openSection === "core" && (
+                  <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">
+                    <Field label={t.namaBrand}><input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Suzuki Carry Pick Up 2026" className={inputStyle} /></Field>
+                    <Field label={t.ideKasar}><textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={4} placeholder={t.placeholderIde} className={inputStyle + " resize-none"} /></Field>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* SECTION 2: MANUALLY SHOWN ONLY IN HYBRID MODE */}
+            {activeEngine === "hybrid" && (
+              <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30 transition-all">
+                <button type="button" onClick={() => setOpenSection(openSection === "vibe" ? "none" : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                  <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5 text-zinc-500" /> {t.arsitekturVibe}</span>
+                  {openSection === "vibe" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
+                </button>
+                {openSection === "vibe" && (
+                  <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">
+                    <Field label={t.targetPlatform}>
+                      <select value={platform} onChange={(e) => setPlatform(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
+                        <option value="TikTok">TikTok (Organic & Raw Concept)</option><option value="Instagram Reels">Instagram Reels (Aesthetic & Trendy)</option>
+                      </select>
+                    </Field>
+                    <Field label={t.pillarKonten}>
+                      <select value={pillar} onChange={(e) => setPillar(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
+                        <option value="Hiburan / Entertainment">{t.pillarOption1}</option><option value="Hard Sell / Promosi Langsung">{t.pillarOption2}</option>
+                      </select>
+                    </Field>
+                    <Field label={lang === "id" ? t.pendekatanTalent : "Talent Approach"}>
+                      <select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
+                        <option value="Creator-Led (Ada talent berbicara ke kamera)">{t.talentOption1}</option><option value="Voice Over Only (Kombinasi cuplikan + VO)">{t.talentOption2}</option>
+                      </select>
+                    </Field>
+                    <Field label={t.moodTone}><input value={tone} onChange={(e) => setTone(e.target.value)} className={inputStyle} /></Field>
+                    <Field label={t.jumlahShot}><input type="number" min={1} max={12} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "6", 10))} className={inputStyle + " w-24"} /></Field>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* SECTION 3: MULTIMODAL REFERENCE (ALWAYS OPENED IN CLONE MODE) */}
             <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30">
-              <button type="button" onClick={() => setOpenSection(openSection === "core" ? "none" : "core")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                <span className="flex items-center gap-2"><Film className="h-3.5 w-3.5 text-zinc-500" /> {t.paramUtama}</span>
-                {openSection === "core" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
+              <button type="button" onClick={() => setOpenSection(openSection === "ref" ? "none" : "ref")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                <span className="flex items-center gap-2"><Upload className="h-3.5 w-3.5 text-zinc-500" /> {t.refMultimodal}</span>
+                {openSection === "ref" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
               </button>
-              {openSection === "core" && (
+              {openSection === "ref" && (
                 <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">
-                  <Field label={t.namaBrand}><input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Suzuki Carry, Wardah" className={inputStyle} /></Field>
-                  <Field label={t.ideKasar}><textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={4} placeholder={t.placeholderIde} className={inputStyle + " resize-none"} /></Field>
+                  <Field label={t.tipeAset}>
+                    <select value={activeEngine === "clone" && refType === "none" ? "link" : refType} onChange={(e) => setRefType(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
+                      {activeEngine === "hybrid" && <option value="none">{t.noRef}</option>}
+                      <option value="link">{t.pasteLink}</option>
+                      <option value="photo">{t.uploadPhoto}</option>
+                    </select>
+                  </Field>
+
+                  {((refType === "photo") || (activeEngine === "clone" && refType === "none" && refUrl === "")) && (
+                    <div className="space-y-2">
+                      <label className="flex flex-col items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg p-4 bg-zinc-50/50 dark:bg-zinc-900/50 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors">
+                        <Upload className="h-5 w-5 text-zinc-400 dark:text-zinc-500 mb-1" />
+                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400 text-center">{t.clickUpload}</span>
+                        <input type="file" accept="image/*,video/*" onChange={handleFileChange} className="hidden" />
+                      </label>
+                      {refImageBase64 && (
+                        <span className="text-[10px] font-mono text-emerald-500 block text-center font-medium">{t.payloadLocked}</span>
+                      )}
+                    </div>
+                  )}
+
+                  {((refType === "link") || (activeEngine === "clone" && refType === "none")) && (
+                    <Field label={t.pasteLink}>
+                      <div className="relative flex items-center">
+                        <input value={refUrl} onChange={(e) => setRefUrl(e.target.value)} placeholder={t.pastePlaceholder} className={inputStyle + " pr-8"} />
+                        <LinkIcon className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5" />
+                      </div>
+                    </Field>
+                  )}
                 </div>
               )}
             </div>
 
-            <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30">
-              <button type="button" onClick={() => setOpenSection(openSection === "vibe" ? "none" : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
-                <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5 text-zinc-500" /> {t.arsitekturVibe}</span>
-                {openSection === "vibe" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
-              </button>
-              {openSection === "vibe" && (
-                <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">
-                  <Field label={t.targetPlatform}>
-                    <select value={platform} onChange={(e) => setPlatform(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
-                      <option value="TikTok">TikTok (Organic & Raw Concept)</option><option value="Instagram Reels">Instagram Reels (Aesthetic & Trendy)</option>
-                    </select>
-                  </Field>
-                  <Field label={t.pillarKonten}>
-                    <select value={pillar} onChange={(e) => setPillar(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
-                      <option value="Hiburan / Entertainment">{t.pillarOption1}</option><option value="Hard Sell / Promosi Langsung">{t.pillarOption2}</option>
-                    </select>
-                  </Field>
-                  <Field label={t.talentApproach}>
-                    <select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
-                      <option value="Creator-Led (Ada talent berbicara ke kamera)">{t.talentOption1}</option><option value="Voice Over Only (Kombinasi cuplikan + VO)">{t.talentOption2}</option>
-                    </select>
-                  </Field>
-                  <Field label={t.moodTone}><input value={tone} onChange={(e) => setTone(e.target.value)} className={inputStyle} /></Field>
-                  <Field label={t.jumlahShot}><input type="number" min={1} max={12} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "6", 10))} className={inputStyle + " w-24"} /></Field>
-                </div>
-              )}
-            </div>
-
-            <button type="button" onClick={handleGenerate} disabled={isGenerating || isContinuing} className="flex w-full items-center justify-center gap-2 rounded-md bg-zinc-900 dark:bg-zinc-100 px-4 py-2.5 text-xs font-medium text-white dark:text-zinc-900 shadow-sm transition hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50">
+            <button type="button" onClick={handleGenerate} disabled={isGenerating || isContinuing} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-4 py-3 text-xs font-bold text-white dark:text-zinc-900 shadow-md transition hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50 cursor-pointer transform active:scale-95 duration-100">
               {isGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnCompiling}</> : <><Sparkles className="h-3.5 w-3.5" /> {t.btnCompile}</>}
             </button>
           </aside>
@@ -563,9 +663,8 @@ function VibeShotPlatform() {
             <div className="mx-auto max-w-4xl space-y-8">
               <div className="pb-4 border-b border-zinc-200/60 dark:border-zinc-800/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{titleOverride || t.papanStrategi}</h2>
-                {/* TOMBOL BAGIKAN LINK CLOUD BARU */}
                 {hasResult && cloudBriefId && (
-                  <button type="button" onClick={handleShareLink} className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 dark:bg-indigo-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 dark:hover:bg-indigo-600 shadow-sm shrink-0">
+                  <button type="button" onClick={handleShareLink} className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 dark:bg-indigo-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 dark:hover:bg-indigo-600 shadow-sm shrink-0 cursor-pointer">
                     <LinkIcon className="w-3.5 h-3.5" /> {t.btnShare}
                   </button>
                 )}
@@ -594,11 +693,11 @@ function VibeShotPlatform() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60 dark:border-zinc-800/60">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{t.garisWaktu} ({shots.length} Sequence)</span>
-                  {hasResult && <button type="button" onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm"><Copy className="h-3 w-3" /> {t.salinTabel}</button>}
+                  {hasResult && <button type="button" onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm cursor-pointer"><Copy className="h-3 w-3" /> {t.salinTabel}</button>}
                 </div>
 
                 {shots.length === 0 ? (
-                  <div className="py-12 border border-dashed border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#111111] text-center rounded-xl text-xs text-zinc-400 dark:text-zinc-600 font-mono">{t.belumAda}</div>
+                  <div className="py-12 border border-dashed border-zinc-200 dark:border-dashed dark:border-zinc-800 bg-white dark:bg-[#111111] text-center rounded-xl text-xs text-zinc-400 dark:text-zinc-600 font-mono">{t.belumAda}</div>
                 ) : (
                   <div className="space-y-4">
                     {shots.map((s, idx) => (
@@ -652,7 +751,7 @@ function VibeShotPlatform() {
                             <button 
                               type="button"
                               onClick={() => { navigator.clipboard.writeText(s.imagePrompt || ""); toast.success("Prompt disalin!"); }}
-                              className="text-[9px] text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center gap-1 font-mono transition-colors"
+                              className="text-[9px] text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center gap-1 font-mono transition-colors cursor-pointer"
                             >
                               <Copy className="w-3 h-3" /> copy prompt
                             </button>
@@ -666,7 +765,7 @@ function VibeShotPlatform() {
                           />
                         </div>
 
-                        <button type="button" onClick={() => removeShot(s.id)} className="absolute top-3 right-3 rounded p-1 text-zinc-300 dark:text-zinc-600 opacity-0 transition hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-red-500 dark:hover:text-red-400 group-hover:opacity-100"><Trash2 className="h-3.5 w-3.5" /></button>
+                        <button type="button" onClick={() => removeShot(s.id)} className="absolute top-3 right-3 rounded p-1 text-zinc-300 dark:text-zinc-600 opacity-0 transition hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-red-500 dark:hover:text-red-400 group-hover:opacity-100 cursor-pointer"><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
                     ))}
                   </div>
@@ -674,7 +773,7 @@ function VibeShotPlatform() {
 
                 {hasResult && (
                   <div className="pt-6 pb-2 text-center">
-                    <button type="button" onClick={handleLanjutkanCerita} disabled={isContinuing} className="inline-flex items-center gap-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-5 py-2.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 shadow-sm transition hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white disabled:opacity-50">
+                    <button type="button" onClick={handleLanjutkanCerita} disabled={isContinuing} className="inline-flex items-center gap-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-5 py-2.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 shadow-sm transition hover:bg-zinc-50 dark:hover:bg-zinc-700 hover:text-zinc-900 dark:hover:text-white disabled:opacity-50 cursor-pointer">
                       {isContinuing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnExtending}</> : 
                       <><ArrowDownRight className="h-3.5 w-3.5" /> 
                         <span className="md:hidden">
@@ -706,7 +805,7 @@ function VibeShotPlatform() {
             />
             <button 
               type="button"
-              className="absolute -top-4 -right-4 bg-white text-zinc-900 rounded-full p-1.5 shadow-lg hover:bg-zinc-200 transition-colors"
+              className="absolute -top-4 -right-4 bg-white text-zinc-900 rounded-full p-1.5 shadow-lg hover:bg-zinc-200 transition-colors cursor-pointer"
               onClick={() => setPreviewImage(null)}
             >
               <X className="h-5 w-5" />
