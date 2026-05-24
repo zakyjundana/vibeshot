@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, X, Moon, Sun } from "lucide-react";
+import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, Layers, Film, ArrowRight, X, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -354,35 +354,37 @@ function VibeShotPlatform() {
     setErrorMsg(null);
     setHasResult(false);
 
-    let requestPayload;
+    let productVal = productName;
+    let uspVal = usp;
+    let toneVal = tone;
+    let talentVal = talent;
+    let shotCountVal = shotCount;
+    let refTypeVal = refType;
+
     if (activeEngine === "clone") {
-      requestPayload = { 
-        product: "Analyzed Reference Video", 
-        usp: "Extracted Blueprint & Transcript", 
-        tone: "Matches Reference", 
-        shotCount: 6, 
-        platform, 
-        pillar, 
-        talent: "Matches Reference", 
-        refType: refType === "none" ? "link" : refType, 
-        refUrl, 
-        refImageBase64 
-      };
-    } else {
-      requestPayload = { 
-        product: productName, 
-        usp, 
-        trend, 
-        tone, 
-        shotCount, 
-        platform, 
-        pillar, 
-        talent, 
-        refType, 
-        refUrl, 
-        refImageBase64 
-      };
+      productVal = "Analyzed Reference Video";
+      uspVal = "Extracted Blueprint & Transcript";
+      toneVal = "Matches Reference";
+      talentVal = "Matches Reference";
+      shotCountVal = 6;
+      if (refType === "none") {
+        refTypeVal = "link";
+      }
     }
+
+    const requestPayload = {
+      product: productVal,
+      usp: uspVal,
+      trend: trend,
+      tone: toneVal,
+      shotCount: shotCountVal,
+      platform: platform,
+      pillar: pillar,
+      talent: talentVal,
+      refType: refTypeVal,
+      refUrl: refUrl,
+      refImageBase64: refImageBase64
+    };
 
     try {
       const res = await fetch(workerUrl, {
