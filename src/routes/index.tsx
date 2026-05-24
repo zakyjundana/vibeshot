@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, X, Moon, Sun, Play } from "lucide-react";
+import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, X, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -227,7 +227,7 @@ function VibeShotPlatform() {
   
   const [isGenerating, setIsGenerating] = useState(false);
   const [isContinuing, setIsContinuing] = useState(false);
-  const [isRenderingVisuals, setIsRenderingVisuals] = useState(false); // State Loading Baru Untuk Render Gambar
+  const [isRenderingVisuals, setIsRenderingVisuals] = useState(false); 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -334,14 +334,56 @@ function VibeShotPlatform() {
     toast.success(lang === "id" ? "Workspace dibersihkan." : "Workspace cleared.");
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error(lang === "id" ? "File maksimal 4MB." : "Max file size is 4MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setRefImageBase64(reader.result as string);
+      toast.success(lang === "id" ? "Aset visual terkunci." : "Visual asset cached.");
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleGenerate = async () => {
     setIsGenerating(true);
     setErrorMsg(null);
     setHasResult(false);
 
-    const requestPayload = activeEngine === "clone" 
-      ? { product: "Analyzed Reference Video", usp: "Extracted Blueprint & Transcript", tone: "Matches Reference", shotCount: 6, platform, pillar, talent: "Matches Reference", refType: refType === "none" ? "link" : refType, refUrl, refImageBase64 }
-      : { product: productName, usp, trend, tone, shotCount, platform, pillar, talent, refType, refUrl, refImageBase64 };
+    // STRUKTUR DATA BARU: MENGGUNAKAN BLOK IF/ELSE UNTUK MENGHINDARI BUG TANSTACK ROUTER
+    let requestPayload;
+    if (activeEngine === "clone") {
+      requestPayload = { 
+        product: "Analyzed Reference Video", 
+        usp: "Extracted Blueprint & Transcript", 
+        tone: "Matches Reference", 
+        shotCount: 6, 
+        platform, 
+        pillar, 
+        talent: "Matches Reference", 
+        refType: refType === "none" ? "link" : refType, 
+        refUrl, 
+        refImageBase64 
+      };
+    } else {
+      requestPayload = { 
+        product: productName, 
+        usp, 
+        trend, 
+        tone, 
+        shotCount, 
+        platform, 
+        pillar, 
+        talent, 
+        refType, 
+        refUrl, 
+        refImageBase64 
+      };
+    }
 
     try {
       const res = await fetch(workerUrl, {
@@ -382,7 +424,6 @@ function VibeShotPlatform() {
     }
   };
 
-  // FUNGSI UTK MENGEKSEKUSI FASE 2: RENDER MASSAL GAMBAR DARI PROMPT HASIL EDITAN USER
   const handleMassExecuteImages = async () => {
     setIsRenderingVisuals(true);
     try {
@@ -396,7 +437,7 @@ function VibeShotPlatform() {
           premise: premiseOverride,
           visual_style: visualStyle,
           masterIdentity: masterIdentity,
-          shotlist: shots // Mengirim shotlist teks yang sudah diedit user di layar
+          shotlist: shots 
         })
       });
       const data = await res.json();
@@ -495,7 +536,6 @@ function VibeShotPlatform() {
     return Array.from({ length: shotCount }).map(() => null);
   }, [moodboard, shotCount]);
 
-  // Cek apakah storyboard saat ini statusnya murni teks (belum ada gambar sama sekali)
   const isTextOnlyBrief = useMemo(() => {
     return shots.length > 0 && shots.every(s => !s.image);
   }, [shots]);
@@ -690,7 +730,6 @@ function VibeShotPlatform() {
                 )}
               </div>
 
-              {/* 📊 SEPARATOR STEP 2: TOMBOL EMAS APABILA BELUM ADA GAMBAR DI LAYAR */}
               {isTextOnlyBrief && (
                 <div className="p-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-in">
                   <div>
