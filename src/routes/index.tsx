@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, X, Moon, Sun, ToggleLeft, RefreshCw } from "lucide-react";
+import { Trash2, Sparkles, Image as ImageIcon, FileText, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, LayoutGrid, Layers, Film, ArrowRight, X, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -136,7 +136,7 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
   return (
     <>
       {(!isLoaded && !hasError) && (
-        <div className={`absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 data-[state=dark]:bg-zinc-800 border border-dashed border-zinc-200 dark:border-zinc-700 text-[10px] text-zinc-400 font-mono ${shouldLoad ? 'animate-pulse' : ''}`}>
+        <div className={`absolute inset-0 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-800 border border-dashed border-zinc-200 dark:border-zinc-700 text-[10px] text-zinc-400 font-mono ${shouldLoad ? 'animate-pulse' : ''}`}>
           <span>{shouldLoad ? "rendering..." : `queue #${index + 1}`}</span>
         </div>
       )}
@@ -194,7 +194,7 @@ function VibeShotPlatform() {
   const [view, setView] = useState<"landing" | "app">("landing");
   const [lang, setLang] = useState<"id" | "en">("en");
   const [isDarkMode, setIsDarkMode] = useState(true); 
-  const [activeEngine, setActiveEngine] = useState<"hybrid" | "clone">("hybrid"); // STATE MANAGEMENT MODE SAKLAR
+  const [activeEngine, setActiveEngine] = useState<"hybrid" | "clone">("hybrid"); 
   const workerUrl = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
   
   const [productName, setProductName] = useState("");
@@ -347,7 +347,6 @@ function VibeShotPlatform() {
     setErrorMsg(null);
     setHasResult(false);
 
-    // LOGIKA PARSING PAYLOAD JIKA USER PAKAI MODE INSTANT CLONE
     const requestPayload = activeEngine === "clone" 
       ? { product: "Analyzed Reference Video", usp: "Extracted Blueprint & Transcript", tone: "Matches Reference", shotCount: 6, platform, pillar, talent: "Matches Reference", refType: refType === "none" ? "link" : refType, refUrl, refImageBase64 }
       : { product: productName, usp, trend, tone, shotCount, platform, pillar, talent, refType, refUrl, refImageBase64 };
@@ -540,21 +539,20 @@ function VibeShotPlatform() {
         <div className="grid min-h-[calc(100vh-42px)] grid-cols-1 lg:grid-cols-[380px_1fr]">
           <aside className="border-r border-zinc-200/70 dark:border-zinc-800/80 bg-white dark:bg-[#111111] p-5 lg:sticky lg:top-[42px] lg:h-[calc(100vh-42px)] lg:overflow-y-auto space-y-5 shadow-sm">
             
-            {/* 🎛️ HIGH-END SEGMENTED TOOL SWITCHER (UI MODE SELECTOR) */}
             <div className="space-y-1.5">
               <span className="block text-[9px] font-mono font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">{t.selectMode}</span>
               <div className="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200/40 dark:border-zinc-800">
                 <button 
                   type="button"
                   onClick={() => setActiveEngine("hybrid")}
-                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "hybrid" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
+                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "hybrid" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
                 >
                   {t.modeHybrid}
                 </button>
                 <button 
                   type="button"
                   onClick={() => { setActiveEngine("clone"); setOpenSection("ref"); }}
-                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "clone" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
+                  className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${activeEngine === "clone" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
                 >
                   {t.modeClone}
                 </button>
@@ -566,7 +564,6 @@ function VibeShotPlatform() {
 
             <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800 my-2" />
 
-            {/* SECTION 1: MANUALLY SHOWN ONLY IN HYBRID MODE */}
             {activeEngine === "hybrid" && (
               <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30 transition-all">
                 <button type="button" onClick={() => setOpenSection(openSection === "core" ? "none" : "core")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
@@ -582,7 +579,6 @@ function VibeShotPlatform() {
               </div>
             )}
 
-            {/* SECTION 2: MANUALLY SHOWN ONLY IN HYBRID MODE */}
             {activeEngine === "hybrid" && (
               <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30 transition-all">
                 <button type="button" onClick={() => setOpenSection(openSection === "vibe" ? "none" : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
@@ -613,7 +609,6 @@ function VibeShotPlatform() {
               </div>
             )}
 
-            {/* SECTION 3: MULTIMODAL REFERENCE (ALWAYS OPENED IN CLONE MODE) */}
             <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30">
               <button type="button" onClick={() => setOpenSection(openSection === "ref" ? "none" : "ref")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                 <span className="flex items-center gap-2"><Upload className="h-3.5 w-3.5 text-zinc-500" /> {t.refMultimodal}</span>
@@ -730,7 +725,7 @@ function VibeShotPlatform() {
                               </div>
                               <div>
                                 <span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.audioScript}</span>
-                                <textarea rows={2} value={s.audio} onChange={(e) => updateShot(s.id, "audio", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-800 dark:text-zinc-100 font-medium leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" />
+                                <textarea rows={2} value={s.audio} onChange={(e) => updateShot(s.id, "audio", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-100 font-medium leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" />
                               </div>
                             </div>
                           </div>
