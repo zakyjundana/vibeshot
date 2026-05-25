@@ -228,6 +228,7 @@ export function VibeShotPlatform() {
   const [isContinuing, setIsContinuing] = useState(false);
   const [isRenderingVisuals, setIsRenderingVisuals] = useState(false);
   const [loadingShotsImages, setLoadingShotsImages] = useState<Record<string, boolean>>({});
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -331,6 +332,7 @@ export function VibeShotPlatform() {
     try {
       const res = await fetch(workerUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestPayload), });
       const data = await res.json(); if (!res.ok) throw new Error(data?.error || "Error compiling.");
+
       const normalized = (data.shotlist || []).map((r: any) => ({ id: crypto.randomUUID(), angle: String(r?.angle || ""), location: String(r?.location || ""), tech_budget_hack: String(r?.tech_budget_hack || ""), action: String(r?.action || ""), audio: String(r?.audio || ""), image: String(r?.image || ""), imagePrompt: String(r?.imagePrompt || ""), }));
       setShots(normalized); setMoodboard(data.moodboard || []); setPremiseOverride(data.premise); setTitleOverride(data.title); setMasterIdentity(data.master_identity); setVisualStyle(data.visual_style || "real-life"); setCloudBriefId(data.briefId || null); setHasResult(true);
       saveToLocalStorage( normalized, data.moodboard || [], data.premise, data.title, data.master_identity, data.visual_style, data.briefId || null );
