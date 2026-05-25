@@ -134,7 +134,7 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
   const [shouldLoad, setShouldLoad] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShouldLoad(true), index * 300);
+    const timer = setTimeout(() => setShouldLoad(true), index * 400);
     return () => clearTimeout(timer);
   }, [index, src]);
 
@@ -157,7 +157,7 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
         <img
           src={src}
           alt={alt}
-          className={`${className} ${isLoaded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-500 ${onClick ? 'cursor-zoom-in hover:opacity-90' : ''}`}
+          className={`${className} ${isLoaded ? "opacity-100" : "opacity-0"} transition-opacity duration-500 ${onClick ? "cursor-zoom-in hover:opacity-90" : ""}`}
           onLoad={() => setIsLoaded(true)}
           onError={() => setHasError(true)}
           loading="lazy"
@@ -228,6 +228,10 @@ export function VibeShotPlatform() {
   const [isContinuing, setIsContinuing] = useState(false);
   const [isRenderingVisuals, setIsRenderingVisuals] = useState(false);
   const [loadingShotsImages, setLoadingShotsImages] = useState<Record<string, boolean>>({});
+  
+  // 🔥 FIX SAKTI: Menambahkan deklarasi State errorMsg & setErrorMsg yang ketinggalan!
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
   const [hasResult, setHasResult] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -585,7 +589,6 @@ export function VibeShotPlatform() {
                             </div>
                             <div className="space-y-2.5">
                               <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.visualScene}</span><textarea rows={2} value={s.action} onChange={(e) => updateShot(s.id, "action", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
-                              {/* RESTORED SINKRONISASI WARNA TEKS: Menjamin kontras 100% terbaca di Light Mode maupun Dark Mode */}
                               <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.audioScript}</span><textarea rows={2} value={s.audio} onChange={(e) => updateShot(s.id, "audio", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
                             </div>
                           </div>
@@ -596,7 +599,7 @@ export function VibeShotPlatform() {
                             <p className="text-xs mt-1 text-yellow-900 dark:text-yellow-200/80 leading-relaxed">{s.tech_budget_hack}</p>
                           </div>
                         )}
-                        <div className="mt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 pt-3 flex flex-col md:flex-row md:items-end md:justify-between gap-3 md:gap-0">
+                        <div className="mt-2 border-t border-t border-dashed border-zinc-200 dark:border-zinc-800 pt-3 flex flex-col md:flex-row md:items-end md:justify-between gap-3 md:gap-0">
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-1.5">
                               <span className="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 uppercase tracking-wider font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> {t.aiPromptLabel}</span>
@@ -604,7 +607,6 @@ export function VibeShotPlatform() {
                             </div>
                             <textarea rows={2} value={s.imagePrompt} onChange={(e) => updateShot(s.id, "imagePrompt", e.target.value)} className="w-full bg-zinc-900 text-zinc-300 font-mono text-[10px] rounded-md border border-zinc-800 px-2.5 py-2 leading-relaxed resize-none focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all" placeholder="Prompt generator..." />
                           </div>
-                          {/* GRANULAR SINGLE-SHOT TRIGGER: Tombol generate visual per-adegan orisinil dengan layout super presisi */}
                           <button type="button" onClick={() => handleExecuteSingleImage(s)} disabled={loadingShotsImages[s.id]} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-[11px] font-bold tracking-tight text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 shrink-0 ml-0 md:ml-4 cursor-pointer active:scale-95 duration-100">
                             {loadingShotsImages[s.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Film className="w-3.5 h-3.5 text-indigo-500" />} {t.btnRenderSingle}
                           </button>
