@@ -229,7 +229,7 @@ export function VibeShotPlatform() {
   const [isRenderingVisuals, setIsRenderingVisuals] = useState(false);
   const [loadingShotsImages, setLoadingShotsImages] = useState<Record<string, boolean>>({});
   
-  // 🔥 FIX SAKTI: Menambahkan deklarasi State errorMsg & setErrorMsg yang ketinggalan!
+  // 🔥 FIX SAKTI FRONTEND: State errorMsg & setErrorMsg resmi dideklarasikan berpasangan!
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   const [hasResult, setHasResult] = useState(false);
@@ -584,12 +584,12 @@ export function VibeShotPlatform() {
                           </div>
                           <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                             <div className="space-y-2.5 border-r border-zinc-100/80 dark:border-zinc-800/80 pr-2">
-                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.cameraSpecs}</span><input value={s.angle} onChange={(e) => updateShot(s.id, "angle", e.target.value)} className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-800 dark:text-zinc-200 font-medium focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
-                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.locationEnv}</span><input value={s.location} onChange={(e) => updateShot(s.id, "location", e.target.value)} className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
+                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">{t.cameraSpecs}</span><input value={s.angle} onChange={(e) => updateShot(s.id, "angle", e.target.value)} className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-800 dark:text-zinc-200 font-medium focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
+                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">{t.locationEnv}</span><input value={s.location} onChange={(e) => updateShot(s.id, "location", e.target.value)} className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
                             </div>
                             <div className="space-y-2.5">
-                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.visualScene}</span><textarea rows={2} value={s.action} onChange={(e) => updateShot(s.id, "action", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
-                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.audioScript}</span><textarea rows={2} value={s.audio} onChange={(e) => updateShot(s.id, "audio", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
+                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">{t.visualScene}</span><textarea rows={2} value={s.action} onChange={(e) => updateShot(s.id, "action", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
+                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">{t.audioScript}</span><textarea rows={2} value={s.audio} onChange={(e) => updateShot(s.id, "audio", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
                             </div>
                           </div>
                         </div>
@@ -599,7 +599,7 @@ export function VibeShotPlatform() {
                             <p className="text-xs mt-1 text-yellow-900 dark:text-yellow-200/80 leading-relaxed">{s.tech_budget_hack}</p>
                           </div>
                         )}
-                        <div className="mt-2 border-t border-t border-dashed border-zinc-200 dark:border-zinc-800 pt-3 flex flex-col md:flex-row md:items-end md:justify-between gap-3 md:gap-0">
+                        <div className="mt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 pt-3 flex flex-col md:flex-row md:items-end md:justify-between gap-3 md:gap-0">
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-1.5">
                               <span className="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 uppercase tracking-wider font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> {t.aiPromptLabel}</span>
