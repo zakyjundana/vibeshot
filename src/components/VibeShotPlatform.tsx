@@ -134,7 +134,7 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
   const [shouldLoad, setShouldLoad] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setShouldLoad(true), index * 400);
+    const timer = setTimeout(() => setShouldLoad(true), index * 300);
     return () => clearTimeout(timer);
   }, [index, src]);
 
@@ -148,7 +148,7 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
         </div>
       )}
       {hasError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-[9px] text-zinc-400 font-mono cursor-pointer p-1 text-center" onClick={(e) => { e.stopPropagation(); setHasError(false); setIsLoaded(false); setShouldLoad(false); }}>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-100 dark:bg-zinc-800 text-[9px] text-zinc-400 font-mono cursor-pointer p-2 text-center" onClick={(e) => { e.stopPropagation(); setHasError(false); setIsLoaded(false); setShouldLoad(false); }}>
           <span className="text-orange-400 font-bold mb-0.5">API Error</span>
           <span className="underline scale-90">click to retry</span>
         </div>
@@ -169,10 +169,10 @@ function SimpleAIImage({ src, alt, className, onClick, index }: { src: string; a
 }
 
 function CustomSwitch({ isOn, onToggle, labelOff, labelOn, IconOff, IconOn }: any) {
-  const switchOffClass = !isOn ? 'text-zinc-900 dark:text-zinc-100 scale-105' : 'text-zinc-400 dark:text-zinc-600';
-  const switchOnClass = isOn ? 'text-zinc-900 dark:text-zinc-100 scale-105' : 'text-zinc-400 dark:text-zinc-600';
-  const capClass = isOn ? 'bg-zinc-900 dark:bg-zinc-100 border border-zinc-800 dark:border-zinc-300' : 'bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700';
-  const ballClass = isOn ? 'translate-x-4 bg-white dark:bg-zinc-900' : 'translate-x-0.5 bg-zinc-600 dark:bg-zinc-400';
+  const switchOffClass = !isOn ? "text-zinc-900 dark:text-zinc-100 scale-105" : "text-zinc-400 dark:text-zinc-600";
+  const switchOnClass = isOn ? "text-zinc-900 dark:text-zinc-100 scale-105" : "text-zinc-400 dark:text-zinc-600";
+  const capClass = isOn ? "bg-zinc-900 dark:bg-zinc-100 border border-zinc-800 dark:border-zinc-300" : "bg-zinc-200 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700";
+  const ballClass = isOn ? "translate-x-4 bg-white dark:bg-zinc-900" : "translate-x-0.5 bg-zinc-600 dark:bg-zinc-400";
 
   return (
     <div onClick={onToggle} className="flex items-center gap-2 cursor-pointer select-none group p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-all duration-150">
@@ -228,7 +228,6 @@ export function VibeShotPlatform() {
   const [isContinuing, setIsContinuing] = useState(false);
   const [isRenderingVisuals, setIsRenderingVisuals] = useState(false);
   const [loadingShotsImages, setLoadingShotsImages] = useState<Record<string, boolean>>({});
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [hasResult, setHasResult] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
@@ -241,8 +240,8 @@ export function VibeShotPlatform() {
   };
 
   useEffect(() => {
-    if (isDarkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
+    if (isDarkMode) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
   }, [isDarkMode]);
 
   useEffect(() => {
@@ -315,7 +314,7 @@ export function VibeShotPlatform() {
   const handleClearAll = () => {
     localStorage.clear();
     window.history.replaceState({}, document.title, window.location.pathname);
-    setShots([]); setMoodboard([]); setPremiseOverride(null); setTitleOverride(null); setMasterIdentity(null); setCloudBriefId(null); setHasResult(false); setRefType("link"); setRefUrl(""); setRefTextDescription(""); setRefImageBase64(""); setImageModel("fal-ai/flux/schnell"); setView("landing");
+    setShots([]); setMoodboard([]); setPremiseOverride(null); setTitleOverride(null); setMasterIdentity(null); setCloudBriefId(null); setHasResult(false); setRefType("link"); setRefUrl(""); setRefTextDescription(""); setRefImageBase64(""); setImageModel("fal-ai/flux/schnell"); setView("app");
     toast.success(lang === "id" ? "Workspace dibersihkan." : "Workspace cleared.");
   };
 
@@ -402,7 +401,245 @@ export function VibeShotPlatform() {
 
   if (view === "landing") return ( <div className="min-h-screen bg-white dark:bg-[#0a0a0a] text-zinc-900 dark:text-zinc-100 font-sans antialiased transition-colors duration-200"><nav className="mx-auto max-w-5xl flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800/50"><div className="flex items-center gap-2"><div className="flex h-5 w-5 items-center justify-center rounded bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-[10px] font-bold">V</div><span className="text-xs font-semibold tracking-tight">vibeshot.studio</span></div><div className="flex items-center gap-4"><div className="flex items-center gap-4 border-r border-zinc-200 dark:border-zinc-700 pr-4"><CustomSwitch isOn={lang === "id"} onToggle={() => setLang(lang === "en" ? "id" : "en")} labelOff="EN" labelOn="ID" /><CustomSwitch isOn={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} IconOff={Sun} IconOn={Moon} /></div><button onClick={() => setView("app")} className="text-xs font-medium bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-colors shadow-sm">Launch Studio →</button></div></nav><header className="mx-auto max-w-3xl text-center px-6 pt-20 pb-16 space-y-6"><div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800 px-3 py-1 text-[11px] text-zinc-500 dark:text-zinc-400 font-mono"><Sparkles className="h-3 w-3 text-zinc-400 dark:text-zinc-500" /> Private Beta Engine Active</div><h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.1]">Turn messy script ideas into crystal-clear production briefs.</h1><p className="text-zinc-500 dark:text-zinc-400 text-sm max-w-xl mx-auto leading-relaxed">The automated workspace built for Creative Strategists and Agency Workers. Translate loose briefs and visual references into word-for-word scripts, moodboards, and interactive storyboards in 60 seconds.</p><div className="pt-2"><button onClick={() => setView("app")} className="inline-flex items-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium text-xs px-5 py-3 rounded-lg shadow hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-all transform hover:-translate-y-0.5">Get Started for Free <ArrowRight className="h-3.5 w-3.5" /></button></div></header></div> );
 
-  return ( <> <div className="min-h-screen bg-[#fafafa] dark:bg-[#0a0a0a] font-sans text-zinc-900 dark:text-zinc-100 antialiased transition-colors duration-200"><header className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] px-6 py-2.5 gap-3 sm:gap-0"><div className="flex items-center gap-2"><button onClick={() => setView("landing")} className="flex h-5 w-5 items-center justify-center rounded bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-[10px] font-bold transition-colors">V</button><span className="text-xs text-zinc-400 dark:text-zinc-600 font-mono">/</span><span className="text-xs font-medium tracking-tight">vibeshot.studio/workspace</span></div><div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end"><div className="flex items-center gap-4 border-r border-zinc-200 dark:border-zinc-700 pr-3"><CustomSwitch isOn={lang === "id"} onToggle={() => setLang(lang === "en" ? "id" : "en")} labelOff="EN" labelOn="ID" /><CustomSwitch isOn={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} IconOff={Sun} IconOn={Moon} /></div><div className="flex items-center gap-3"><button onClick={() => setView("landing")} className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors">{t.backToHome}</button>{hasResult && <span className="text-zinc-200 dark:text-zinc-700 font-mono text-xs">|</span>}{hasResult && <button onClick={handleClearAll} className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">{t.resetProject}</button>}</div></div></header><div className="grid min-h-[calc(100vh-42px)] grid-cols-1 lg:grid-cols-[380px_1fr]"><aside className="border-r border-zinc-200/70 dark:border-zinc-800/80 bg-white dark:bg-[#111111] p-5 lg:sticky lg:top-[42px] lg:h-[calc(100vh-42px)] lg:overflow-y-auto space-y-5 shadow-sm"><div className="space-y-1.5"><span className="block text-[9px] font-mono font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">{t.selectMode}</span><div className="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200/40 dark:border-zinc-800"><button type="button" onClick={() => setActiveEngine("hybrid")} className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${hybridActiveStyle}`}>{t.modeHybrid}</button><button type="button" onClick={() => { setActiveEngine("clone"); setOpenSection("core"); }} className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${cloneActiveStyle}`}>{t.modeClone}</button></div><p className="text-[10px] text-zinc-400 dark:text-zinc-500 italic leading-snug px-1">{activeEngine === "hybrid" ? t.modeHybridDesc : t.modeCloneDesc}</p></div><div className="h-[1px] bg-zinc-100 dark:bg-zinc-800 my-2" /><div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30 transition-all"><button type="button" onClick={() => setOpenSection(openSection === "core" ? "none" : "core")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"><span className="flex items-center gap-2"><Edit3 className="h-3.5 w-3.5 text-zinc-500" /> {t.paramUtama}</span>{openSection === "core" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}</button>{openSection === "core" && ( <div className="p-4 space-y-4 bg-white dark:bg-[#111111]"><Field label={t.namaBrand}><input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Kopi Kenangan / Suzuki Carry" className={inputStyle} /></Field><Field label={t.ideKasar}><textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={3} placeholder={t.placeholderIde} className={inputStyle + " resize-none"} /></Field></div> )}</div><div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30 transition-all"><button type="button" onClick={() => setOpenSection(openSection === "vibe" ? "none" : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"><span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5 text-zinc-500" /> {t.arsitekturVibe}</span>{openSection === "vibe" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}</button>{openSection === "vibe" && ( <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">{activeEngine === "hybrid" && ( <><Field label={t.targetPlatform}><select value={platform} onChange={(e) => setPlatform(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="TikTok">TikTok (Organic & Raw Concept)</option><option value="Instagram Reels">Instagram Reels (Aesthetic & Trendy)</option></select></Field><Field label={t.pillarKonten}><select value={pillar} onChange={(e) => setPillar(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="Hiburan / Entertainment">{t.pillarOption1}</option><option value="Hard Sell / Promosi Langsung">{t.pillarOption2}</option></select></Field><Field label={lang === "id" ? t.pendekatanTalent : "Talent Approach"}><select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="Creator-Led">{t.talentOption1}</option><option value="Voice Over Only">{t.talentOption2}</option></select></Field><Field label={t.moodTone}><input value={tone} onChange={(e) => setTone(e.target.value)} className={inputStyle} /></Field></> )} <Field label={t.jumlahShot}><input type="number" min={1} max={24} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "6", 10))} className={inputStyle + " w-24"} /></Field> <Field label="AI Image Model (Fal.ai Weaponry)"><select value={imageModel} onChange={(e) => { setImageModel(e.target.value); localStorage.setItem("vibeshot_image_model", e.target.value); }} className={inputStyle + " bg-gradient-to-r from-indigo-500/10 to-transparent font-medium border-indigo-500/30"}><optgroup label="⚡ KASTA EKONOMIS (Super Fast & Hemat Kredit)"><option value="fal-ai/flux/schnell">FLUX 1 [Schnell] (Rekomendasi Utama - $0.003)</option><option value="fal-ai/flux-2/flash">FLUX 2 [Flash] (Crisper Text, Ultra Speed - $0.004)</option><option value="fal-ai/flux-2/turbo">FLUX 2 [Turbo] (Enhanced Native Editing - $0.004)</option><option value="fal-ai/gemini-3.1-flash-image-preview">Google Nano Banana 2 (State-of-the-art Fast - $0.003)</option><option value="fal-ai/bytedance/seedream/v5/lite/text-to-image">ByteDance Seedream 5.0 Lite (Intelligent Fast - $0.003)</option></optgroup><optgroup label="🎨 KASTA DESIGNER & TYPOGRAPHY (Anti-Typo & Ragam Poster)"><option value="fal-ai/recraft/v4/pro/text-to-image">Recraft V4 Pro (SOTA Design System & Materials - $0.03)</option><option value="fal-ai/ideogram/v3">Ideogram V3 (Exceptional Typography Handling - $0.04)</option><option value="fal-ai/openai/gpt-image-2">OpenAI GPT Image 2 (Extremely Detailed Typography - $0.04)</option><option value="fal-ai/flux-pro/kontext/text-to-image">FLUX Kontext Pro (Flawless Text Following - $0.03)</option></optgroup><optgroup label="👑 KASTA SULTAN (Cinematic Hyper-Realism / Final Presentation)"><option value="fal-ai/flux-2-max">FLUX 2 [Max] (Advanced Realism & Precision - $0.05)</option><option value="fal-ai/flux-pro/v1.1-ultra">FLUX 1.1 Pro Ultra (2K Resolution Photo Realism - $0.05)</option><option value="fal-ai/flux/dev">FLUX 1 [Dev] (Original Classic Cinematic - $0.025)</option><option value="fal-ai/flux-2-flex">FLUX 2 [Flex] (Fine-Tuned Control Guidance - $0.03)</option></optgroup></select></Field></div> )}</div><div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30"><button type="button" onClick={() => setOpenSection(openSection === "ref" ? "none" : "ref")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"><span className="flex items-center gap-2"><Upload className="h-3.5 w-3.5 text-zinc-500" /> {t.refMultimodal}</span>{openSection === "ref" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}</button>{openSection === "ref" && ( <div className="p-4 space-y-4 bg-white dark:bg-[#111111]"><Field label={t.tipeAset}> <select value={refType} onChange={(e) => setRefType(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>{activeEngine === "hybrid" && <option value="none">{t.noRef}</option>}<option value="link">{t.pasteLink}</option><option value="photo">{t.uploadPhoto}</option><option value="text">{t.textBasedRef}</option></select></Field>{refType === "photo" && ( <div className="space-y-2"><label className="flex flex-col items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg p-4 bg-zinc-50/50 dark:bg-zinc-900/50 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors"><Upload className="h-5 w-5 text-zinc-400 dark:text-zinc-500 mb-1" /><span className="text-[11px] text-zinc-500 dark:text-zinc-400 text-center">{t.clickUpload}</span><input type="file" accept="image/*" onChange={handleFileChange} className="hidden" /></label>{refImageBase64 && <span className="text-[10px] font-mono text-emerald-500 block text-center font-medium">{t.payloadLocked}</span>}</div> )}{refType === "link" && ( <Field label={t.pasteLink}><div className="relative flex items-center"><input value={refUrl} onChange={(e) => setRefUrl(e.target.value)} placeholder={t.pastePlaceholder} className={inputStyle + " pr-8"} /><LinkIcon className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5" /></div></Field> )}{refType === "text" && ( <Field label={t.textBasedRef}><textarea rows={4} value={refTextDescription} onChange={(e) => setRefTextDescription(e.target.value)} placeholder={t.textPlaceholder} className={inputStyle + " resize-none"} /></Field> )}</div> )}</div><button type="button" onClick={handleGenerate} disabled={isGenerating || isContinuing} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-4 py-3 text-xs font-bold text-white dark:text-zinc-900 shadow-md transition hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50 cursor-pointer transform active:scale-95 duration-100">{isGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnCompiling}</> : <><Sparkles className="h-3.5 w-3.5" /> {t.btnCompile}</>}</button></aside><main className="p-6 lg:p-10 overflow-y-auto max-h-[calc(100vh-42px)] bg-[#fafafa] dark:bg-[#0a0a0a]"><div className="mx-auto max-w-4xl space-y-8"><div className="pb-4 border-b border-zinc-200/60 dark:border-zinc-800/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"><h2 className="text-2xl font-bold tracking-tight md:text-3xl">{titleOverride || t.papanStrategi}</h2>{hasResult && cloudBriefId && <button type="button" onClick={handleShareLink} className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 dark:bg-indigo-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 dark:hover:bg-indigo-600 shadow-sm shrink-0 cursor-pointer"><LinkIcon className="w-3.5 h-3.5" /> {t.btnShare}</button>}</div>{isTextOnlyBrief && ( <div className="p-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-in"><div><h3 className="text-sm font-bold flex items-center gap-2">💡 Teks Naskah Berhasil Di-sadur!</h3><p className="text-xs text-zinc-100 mt-0.5">Silakan periksa spesifikasi sheets di bawah. Jika mau render visual massal sekaligus, langsung klik tombol kanan.</p></div><button type="button" onClick={handleMassExecuteImages} disabled={isRenderingVisuals} className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2 text-xs rounded-lg transition shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50">{isRenderingVisuals ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t.btnRenderingVisualMassal}</> : <><Sparkles className="w-3.5 h-3.5 text-amber-400" /> {t.btnRenderVisualMassal}</>}</button></div> )} <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] p-5 shadow-sm space-y-2"><span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">{t.premisNaratif}</span><p className="whitespace-pre-line text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 font-sans">{premiseOverride || t.premisPlaceholder}</p></div>{!isTextOnlyBrief && ( <div className="space-y-3"><span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">{t.panelKontinuitas}</span><div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">{moodboardTiles.map((src, i) => ( <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">{src ? <SimpleAIImage src={src} index={i} alt={`Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" onClick={() => setPreviewImage(src)} /> : <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 dark:bg-zinc-900 text-zinc-300 dark:text-zinc-600"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">Shot {i + 1}</span></div>}</div> ))}</div></div> )} <div className="space-y-4"><div className="flex items-center justify-between pb-2 border-b border-zinc-200/60 dark:border-zinc-800/60"><span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{t.garisWaktu} ({shots.length} Sequence)</span>{hasResult && <button type="button" onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm cursor-pointer"><Copy className="h-3 w-3" /> {t.salinTabel}</button>}</div>{shots.length === 0 ? <div className="py-12 border border-dashed border-zinc-200 dark:border-dashed dark:border-zinc-800 bg-white dark:bg-[#111111] text-center rounded-xl text-xs text-zinc-400 dark:text-zinc-600 font-mono">{t.belumAda}</div> : ( <div className="space-y-4">{shots.map((s, idx) => ( <div key={s.id} className="group relative flex flex-col gap-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] p-4 shadow-sm transition hover:border-zinc-300 dark:hover:border-zinc-700"><div className="flex flex-col md:flex-row gap-5"><div className="flex items-start gap-3 shrink-0"><div className="text-xs font-mono font-semibold text-zinc-300 dark:text-zinc-600 pt-1">{String(idx + 1).padStart(2, "0")}</div><div className="relative aspect-[9/16] w-24 overflow-hidden rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 shrink-0 shadow-inner">{s.image ? <SimpleAIImage src={s.image} index={idx} alt="Sequence" className="h-full w-full object-cover object-center cursor-zoom-in" onClick={() => setPreviewImage(s.image!)} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 dark:text-zinc-600 font-mono text-center px-1">Teks Ready</div>}</div></div><div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs"><div className="space-y-2.5 border-r border-zinc-100/80 dark:border-zinc-800/80 pr-2"><div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.cameraSpecs}</span><input value={s.angle} onChange={(e) => updateShot(s.id, "angle", e.target.value)} className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-800 dark:text-zinc-200 font-medium focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div><div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.locationEnv}</span><input value={s.location} onChange={(e) => updateShot(s.id, "location", e.target.value)} className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div></div><div className="space-y-2.5"><div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.visualScene}</span><textarea rows={2} value={s.action} onChange={(e) => updateShot(s.id, "action", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div><div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.audioScript}</span><textarea rows={2} value={s.audio} onChange={(e) => updateShot(s.id, "audio", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div></div></div></div>{s.tech_budget_hack && ( <div className="mt-1 p-2.5 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-700/50 rounded-md"><span className="text-[10px] font-bold text-yellow-800 dark:text-yellow-500 flex items-center gap-1.5"><Sparkles className="w-3 h-3" /> TECH & BUDGET HACK</span><p className="text-xs mt-1 text-yellow-900 dark:text-yellow-200/80 leading-relaxed">{s.tech_budget_hack}</p></div> )} <div className="mt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 pt-3 flex flex-col md:flex-row md:items-end md:justify-between gap-3 md:gap-0"><div className="flex-1"><div className="flex items-center justify-between mb-1.5"><span className="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 uppercase tracking-wider font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> {t.aiPromptLabel}</span><button type="button" onClick={() => { navigator.clipboard.writeText(s.imagePrompt || ""); toast.success("Prompt disalin!"); }} className="text-[9px] text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center gap-1 font-mono transition-colors cursor-pointer"><Copy className="w-3 h-3" /> copy prompt</button></div><textarea rows={2} value={s.imagePrompt} onChange={(e) => updateShot(s.id, "imagePrompt", e.target.value)} className="w-full bg-zinc-900 text-zinc-300 font-mono text-[10px] rounded-md border border-zinc-800 px-2.5 py-2 leading-relaxed resize-none focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all" placeholder="Prompt generator..." /></div> <button type="button" onClick={() => handleExecuteSingleImage(s)} disabled={loadingShotsImages[s.id]} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-[11px] font-bold tracking-tight text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 shrink-0 ml-0 md:ml-4 cursor-pointer active:scale-95 duration-100">{loadingShotsImages[s.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Film className="w-3.5 h-3.5 text-indigo-500" />} {t.btnRenderSingle}</button></div><button type="button" onClick={() => removeShot(s.id)} className="absolute top-3 right-3 rounded p-1 text-zinc-300 dark:text-zinc-600 opacity-0 transition hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-red-500 dark:hover:text-red-400 group-hover:opacity-100 cursor-pointer"><Trash2 className="h-3.5 w-3.5" /></button></div> ))}</div> )} {hasResult && ( <div className="pt-6 pb-2 text-center flex flex-col items-center gap-2"><div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs"><span>{lang === "id" ? "Berapa shot kelanjutan?" : "Extension size:"}</span><input type="number" min={1} max={12} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "3", 10))} className="w-16 bg-white dark:bg-zinc-800 rounded px-1.5 py-0.5 border border-zinc-200 dark:border-zinc-700 text-center font-bold text-zinc-800 dark:text-zinc-100" /></div><button type="button" onClick={handleLanjutkanCerita} disabled={isContinuing} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 px-5 py-3 text-xs font-bold text-white shadow-md transition disabled:opacity-50 cursor-pointer transform active:scale-95 duration-100">{isContinuing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnExtending}</> : <><ArrowDownRight className="h-3.5 w-3.5" /> <span>{t.btnExtend} (+{shotCount} Shots)</span></>}</button></div> )}</div></main></div></div>{previewImage && ( <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-6 cursor-zoom-out" onClick={() => setPreviewImage(null)}><div className="relative max-h-[90vh] max-w-[90vw]"><img src={previewImage} alt="Preview Full Size" className="h-full w-full object-contain rounded-lg shadow-2xl border border-white/10" /><button type="button" className="absolute -top-4 -right-4 bg-white text-zinc-900 rounded-full p-1.5 shadow-lg hover:bg-zinc-200 transition-colors cursor-pointer" onClick={() => setPreviewImage(null)}><X className="h-5 w-5" /></button></div></div> )} </> );
+  return (
+    <>
+      <div className="min-h-screen bg-[#fafafa] dark:bg-[#0a0a0a] font-sans text-zinc-900 dark:text-zinc-100 antialiased transition-colors duration-200">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] px-6 py-2.5 gap-3 sm:gap-0">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setView("landing")} className="flex h-5 w-5 items-center justify-center rounded bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-[10px] font-bold transition-colors">V</button>
+            <span className="text-xs text-zinc-400 dark:text-zinc-600 font-mono">/</span>
+            <span className="text-xs font-medium tracking-tight">vibeshot.studio/workspace</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex items-center gap-4 border-r border-zinc-200 dark:border-zinc-700 pr-3">
+              <CustomSwitch isOn={lang === "id"} onToggle={() => setLang(lang === "en" ? "id" : "en")} labelOff="EN" labelOn="ID" />
+              <CustomSwitch isOn={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} IconOff={Sun} IconOn={Moon} />
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setView("landing")} className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors">{t.backToHome}</button>
+              {hasResult && <span className="text-zinc-200 dark:text-zinc-700 font-mono text-xs">|</span>}
+              {hasResult && <button onClick={handleClearAll} className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">{t.resetProject}</button>}
+            </div>
+          </div>
+        </header>
+
+        <div className="grid min-h-[calc(100vh-42px)] grid-cols-1 lg:grid-cols-[380px_1fr]">
+          <aside className="border-r border-zinc-200/70 dark:border-zinc-800/80 bg-white dark:bg-[#111111] p-5 lg:sticky lg:top-[42px] lg:h-[calc(100vh-42px)] lg:overflow-y-auto space-y-5 shadow-sm">
+            <div className="space-y-1.5">
+              <span className="block text-[9px] font-mono font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">{t.selectMode}</span>
+              <div className="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200/40 dark:border-zinc-800">
+                <button type="button" onClick={() => setActiveEngine("hybrid")} className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${hybridActiveStyle}`}>{t.modeHybrid}</button>
+                <button type="button" onClick={() => { setActiveEngine("clone"); setOpenSection("core"); }} className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${cloneActiveStyle}`}>{t.modeClone}</button>
+              </div>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 italic leading-snug px-1">{activeEngine === "hybrid" ? t.modeHybridDesc : t.modeCloneDesc}</p>
+            </div>
+            <div className="h-[1px] bg-zinc-100 dark:bg-zinc-800 my-2" />
+            
+            <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30 transition-all">
+              <button type="button" onClick={() => setOpenSection(openSection === "core" ? "none" : "core")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                <span className="flex items-center gap-2"><Edit3 className="h-3.5 w-3.5 text-zinc-500" /> {t.paramUtama}</span>
+                {openSection === "core" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
+              </button>
+              {openSection === "core" && (
+                <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">
+                  <Field label={t.namaBrand}><input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Suzuki XL7 2026" className={inputStyle} /></Field>
+                  <Field label={t.ideKasar}><textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={3} placeholder={t.placeholderIde} className={inputStyle + " resize-none"} /></Field>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30 transition-all">
+              <button type="button" onClick={() => setOpenSection(openSection === "vibe" ? "none" : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
+                <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5 text-zinc-500" /> {t.arsitekturVibe}</span>
+                {openSection === "vibe" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}
+              </button>
+              {openSection === "vibe" && (
+                <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">
+                  {activeEngine === "hybrid" && (
+                    <>
+                      <Field label={t.targetPlatform}><select value={platform} onChange={(e) => setPlatform(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="TikTok">TikTok (Organic & Raw Concept)</option><option value="Instagram Reels">Instagram Reels (Aesthetic & Trendy)</option></select></Field>
+                      <Field label={t.pillarKonten}><select value={pillar} onChange={(e) => setPillar(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="Hiburan / Entertainment">{t.pillarOption1}</option><option value="Hard Sell / Promosi Langsung">{t.pillarOption2}</option></select></Field>
+                      <Field label={lang === "id" ? t.pendekatanTalent : "Talent Approach"}><select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="Creator-Led">{t.talentOption1}</option><option value="Voice Over Only">{t.talentOption2}</option></select></Field>
+                      <Field label={t.moodTone}><input value={tone} onChange={(e) => setTone(e.target.value)} className={inputStyle} /></Field>
+                    </>
+                  )}
+                  <Field label={t.jumlahShot}><input type="number" min={1} max={24} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "6", 10))} className={inputStyle + " w-24"} /></Field>
+                  <Field label="AI Image Model (Fal.ai Weaponry)">
+                    <select value={imageModel} onChange={(e) => { setImageModel(e.target.value); localStorage.setItem("vibeshot_image_model", e.target.value); }} className={inputStyle + " bg-gradient-to-r from-indigo-500/10 to-transparent font-medium border-indigo-500/30"}>
+                      <optgroup label="⚡ KASTA EKONOMIS (Super Fast & Hemat Kredit)">
+                        <option value="fal-ai/flux/schnell">FLUX 1 [Schnell] (Rekomendasi Utama - $0.003)</option>
+                        <option value="fal-ai/flux-2/flash">FLUX 2 [Flash] (Crisper Text, Ultra Speed - $0.004)</option>
+                        <option value="fal-ai/flux-2/turbo">FLUX 2 [Turbo] (Enhanced Native Editing - $0.004)</option>
+                        <option value="fal-ai/gemini-3.1-flash-image-preview">Google Nano Banana 2 (State-of-the-art Fast - $0.003)</option>
+                        <option value="fal-ai/bytedance/seedream/v5/lite/text-to-image">ByteDance Seedream 5.0 Lite (Intelligent Fast - $0.003)</option>
+                      </optgroup>
+                      <optgroup label="🎨 KASTA DESIGNER & TYPOGRAPHY (Anti-Typo & Ragam Poster)">
+                        <option value="fal-ai/recraft/v4/pro/text-to-image">Recraft V4 Pro (SOTA Design System & Materials - $0.03)</option>
+                        <option value="fal-ai/ideogram/v3">Ideogram V3 (Exceptional Typography Handling - $0.04)</option>
+                        <option value="fal-ai/openai/gpt-image-2">OpenAI GPT Image 2 (Extremely Detailed Typography - $0.04)</option>
+                        <option value="fal-ai/flux-pro/kontext/text-to-image">FLUX Kontext Pro (Flawless Text Following - $0.03)</option>
+                      </optgroup>
+                      <optgroup label="👑 KASTA SULTAN (Cinematic Hyper-Realism / Final Presentation)">
+                        <option value="fal-ai/flux-2-max">FLUX 2 [Max] (Advanced Realism & Precision - $0.05)</option>
+                        <option value="fal-ai/flux-pro/v1.1-ultra">FLUX 1.1 Pro Ultra (2K Resolution Photo Realism - $0.05)</option>
+                        <option value="fal-ai/flux/dev">FLUX 1 [Dev] (Original Classic Cinematic - $0.025)</option>
+                        <option value="fal-ai/flux-2-flex">FLUX 2 [Flex] (Fine-Tuned Control Guidance - $0.03)</option>
+                      </optgroup>
+                    </select>
+                  </Field>
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30">
+              <button type="button" onClick={() => setOpenSection(openSection === "ref" ? "none" : "ref")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"><span className="flex items-center gap-2"><Upload className="h-3.5 w-3.5 text-zinc-500" /> {t.refMultimodal}</span>{openSection === "ref" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}</button>
+              {openSection === "ref" && (
+                <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">
+                  <Field label={t.tipeAset}>
+                    <select value={refType} onChange={(e) => setRefType(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
+                      {activeEngine === "hybrid" && <option value="none">{t.noRef}</option>}
+                      <option value="link">{t.pasteLink}</option>
+                      <option value="photo">{t.uploadPhoto}</option>
+                      <option value="text">{t.textBasedRef}</option>
+                    </select>
+                  </Field>
+                  {refType === "photo" && (
+                    <div className="space-y-2">
+                      <label className="flex flex-col items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg p-4 bg-zinc-50/50 dark:bg-zinc-900/50 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors">
+                        <Upload className="h-5 w-5 text-zinc-400 dark:text-zinc-500 mb-1" />
+                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400 text-center">{t.clickUpload}</span>
+                        <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                      </label>
+                      {refImageBase64 && <span className="text-[10px] font-mono text-emerald-500 block text-center font-medium">{t.payloadLocked}</span>}
+                    </div>
+                  )}
+                  {refType === "link" && (
+                    <Field label={t.pasteLink}>
+                      <div className="relative flex items-center">
+                        <input value={refUrl} onChange={(e) => setRefUrl(e.target.value)} placeholder={t.pastePlaceholder} className={inputStyle + " pr-8"} />
+                        <LinkIcon className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5" />
+                      </div>
+                    </Field>
+                  )}
+                  {refType === "text" && (
+                    <Field label={t.textBasedRef}>
+                      <textarea rows={4} value={refTextDescription} onChange={(e) => setRefTextDescription(e.target.value)} placeholder={t.textPlaceholder} className={inputStyle + " resize-none"} />
+                    </Field>
+                  )}
+                </div>
+              )}
+            </div>
+            <button type="button" onClick={handleGenerate} disabled={isGenerating || isContinuing} className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-4 py-3 text-xs font-bold text-white dark:text-zinc-900 shadow-md transition hover:bg-zinc-800 dark:hover:bg-white disabled:opacity-50 cursor-pointer transform active:scale-95 duration-100">
+              {isGenerating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnCompiling}</> : <><Sparkles className="h-3.5 w-3.5" /> {t.btnCompile}</>}
+            </button>
+          </aside>
+          
+          <main className="p-6 lg:p-10 overflow-y-auto max-h-[calc(100vh-42px)] bg-[#fafafa] dark:bg-[#0a0a0a]">
+            <div className="mx-auto max-w-4xl space-y-8">
+              <div className="pb-4 border-b border-zinc-200/60 dark:border-zinc-800/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-2xl font-bold tracking-tight md:text-3xl">{titleOverride || t.papanStrategi}</h2>
+                {hasResult && cloudBriefId && <button type="button" onClick={handleShareLink} className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 dark:bg-indigo-500 px-4 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 dark:hover:bg-indigo-600 shadow-sm shrink-0 cursor-pointer"><LinkIcon className="w-3.5 h-3.5" /> {t.btnShare}</button>}
+              </div>
+              {isTextOnlyBrief && (
+                <div className="p-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-in">
+                  <div><h3 className="text-sm font-bold flex items-center gap-2">💡 Teks Naskah Berhasil Di-sadur!</h3><p className="text-xs text-zinc-100 mt-0.5">Silakan periksa spesifikasi sheets di bawah. Jika mau render visual massal sekaligus, langsung klik tombol kanan.</p></div>
+                  <button type="button" onClick={handleMassExecuteImages} disabled={isRenderingVisuals} className="bg-zinc-950 hover:bg-zinc-800 text-white font-bold px-4 py-2 text-xs rounded-lg transition shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-50">{isRenderingVisuals ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t.btnRenderingVisualMassal}</> : <><Sparkles className="w-3.5 h-3.5 text-amber-400" /> {t.btnRenderVisualMassal}</>}</button>
+                </div>
+              )}
+              <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] p-5 shadow-sm space-y-2">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">{t.premisNaratif}</span>
+                <p className="whitespace-pre-line text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 font-sans">{premiseOverride || t.premisPlaceholder}</p>
+              </div>
+              {!isTextOnlyBrief && (
+                <div className="space-y-3">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">{t.panelKontinuitas}</span>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+                    {moodboardTiles.map((src, i) => (
+                      <div key={i} className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm">
+                        {src ? <SimpleAIImage src={src} index={i} alt={`Shot ${i+1}`} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" onClick={() => setPreviewImage(src)} /> : <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-zinc-50 dark:bg-zinc-900 text-zinc-300 dark:text-zinc-600"><ImageIcon className="h-4 w-4" /><span className="text-[9px] font-mono uppercase">Shot {i + 1}</span></div>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60 dark:border-zinc-800/60">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{t.garisWaktu} ({shots.length} Sequence)</span>
+                  {hasResult && <button type="button" onClick={handleCopyTable} className="inline-flex items-center gap-1.5 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-[11px] font-medium text-zinc-600 dark:text-zinc-300 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 shadow-sm cursor-pointer"><Copy className="h-3 w-3" /> {t.salinTabel}</button>}
+                </div>
+                {shots.length === 0 ? <div className="py-12 border border-dashed border-zinc-200 dark:border-dashed dark:border-zinc-800 bg-white dark:bg-[#111111] text-center rounded-xl text-xs text-zinc-400 dark:text-zinc-600 font-mono">{t.belumAda}</div> : (
+                  <div className="space-y-4">
+                    {shots.map((s, idx) => (
+                      <div key={s.id} className="group relative flex flex-col gap-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] p-4 shadow-sm transition hover:border-zinc-300 dark:hover:border-zinc-700">
+                        <div className="flex flex-col md:flex-row gap-5">
+                          <div className="flex items-start gap-3 shrink-0">
+                            <div className="text-xs font-mono font-semibold text-zinc-300 dark:text-zinc-600 pt-1">{String(idx + 1).padStart(2, "0")}</div>
+                            <div className="relative aspect-[9/16] w-24 overflow-hidden rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 shrink-0 shadow-inner">
+                              {s.image ? <SimpleAIImage src={s.image} index={idx} alt="Sequence" className="h-full w-full object-cover object-center cursor-zoom-in" onClick={() => setPreviewImage(s.image!)} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 dark:text-zinc-600 font-mono text-center px-1">Teks Ready</div>}
+                            </div>
+                          </div>
+                          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div className="space-y-2.5 border-r border-zinc-100/80 dark:border-zinc-800/80 pr-2">
+                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.cameraSpecs}</span><input value={s.angle} onChange={(e) => updateShot(s.id, "angle", e.target.value)} className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-800 dark:text-zinc-200 font-medium focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
+                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.locationEnv}</span><input value={s.location} onChange={(e) => updateShot(s.id, "location", e.target.value)} className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
+                            </div>
+                            <div className="space-y-2.5">
+                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.visualScene}</span><textarea rows={2} value={s.action} onChange={(e) => updateShot(s.id, "action", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
+                              {/* RESTORED SINKRONISASI WARNA TEKS: Menjamin kontras 100% terbaca di Light Mode maupun Dark Mode */}
+                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mb-0.5">{t.audioScript}</span><textarea rows={2} value={s.audio} onChange={(e) => updateShot(s.id, "audio", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
+                            </div>
+                          </div>
+                        </div>
+                        {s.tech_budget_hack && (
+                          <div className="mt-1 p-2.5 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-700/50 rounded-md">
+                            <span className="text-[10px] font-bold text-yellow-800 dark:text-yellow-500 flex items-center gap-1.5"><Sparkles className="w-3 h-3" /> TECH & BUDGET HACK</span>
+                            <p className="text-xs mt-1 text-yellow-900 dark:text-yellow-200/80 leading-relaxed">{s.tech_budget_hack}</p>
+                          </div>
+                        )}
+                        <div className="mt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 pt-3 flex flex-col md:flex-row md:items-end md:justify-between gap-3 md:gap-0">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 uppercase tracking-wider font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> {t.aiPromptLabel}</span>
+                              <button type="button" onClick={() => { navigator.clipboard.writeText(s.imagePrompt || ""); toast.success("Prompt disalin!"); }} className="text-[9px] text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center gap-1 font-mono transition-colors cursor-pointer"><Copy className="w-3 h-3" /> copy prompt</button>
+                            </div>
+                            <textarea rows={2} value={s.imagePrompt} onChange={(e) => updateShot(s.id, "imagePrompt", e.target.value)} className="w-full bg-zinc-900 text-zinc-300 font-mono text-[10px] rounded-md border border-zinc-800 px-2.5 py-2 leading-relaxed resize-none focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all" placeholder="Prompt generator..." />
+                          </div>
+                          {/* GRANULAR SINGLE-SHOT TRIGGER: Tombol generate visual per-adegan orisinil dengan layout super presisi */}
+                          <button type="button" onClick={() => handleExecuteSingleImage(s)} disabled={loadingShotsImages[s.id]} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-[11px] font-bold tracking-tight text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 shrink-0 ml-0 md:ml-4 cursor-pointer active:scale-95 duration-100">
+                            {loadingShotsImages[s.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Film className="w-3.5 h-3.5 text-indigo-500" />} {t.btnRenderSingle}
+                          </button>
+                        </div>
+                        <button type="button" onClick={() => removeShot(s.id)} className="absolute top-3 right-3 rounded p-1 text-zinc-300 dark:text-zinc-600 opacity-0 transition hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-red-500 dark:hover:text-red-400 group-hover:opacity-100 cursor-pointer"><Trash2 className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {hasResult && (
+                  <div className="pt-6 pb-2 text-center flex flex-col items-center gap-2">
+                    <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs">
+                      <span>{lang === "id" ? "Berapa shot kelanjutan?" : "Extension size:"}</span>
+                      <input type="number" min={1} max={12} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "3", 10))} className="w-16 bg-white dark:bg-zinc-800 rounded px-1.5 py-0.5 border border-zinc-200 dark:border-zinc-700 text-center font-bold text-zinc-800 dark:text-zinc-100" />
+                    </div>
+                    <button type="button" onClick={handleLanjutkanCerita} disabled={isContinuing} className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 px-5 py-3 text-xs font-bold text-white shadow-md transition disabled:opacity-50 cursor-pointer transform active:scale-95 duration-100">
+                      {isContinuing ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> {t.btnExtending}</> : <><ArrowDownRight className="h-3.5 w-3.5" /> <span>{t.btnExtend} (+{shotCount} Shots)</span></>}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+      {previewImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-6 cursor-zoom-out" onClick={() => setPreviewImage(null)}>
+          <div className="relative max-h-[90vh] max-w-[90vw]">
+            <img src={previewImage} alt="Preview Full Size" className="h-full w-full object-contain rounded-lg shadow-2xl border border-white/10" />
+            <button type="button" className="absolute -top-4 -right-4 bg-white text-zinc-900 rounded-full p-1.5 shadow-lg hover:bg-zinc-200 transition-colors cursor-pointer" onClick={() => setPreviewImage(null)}><X className="h-5 w-5" /></button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return ( <div className="space-y-1"><span className="block text-[10px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">{label}</span>{children}</div> ); }
