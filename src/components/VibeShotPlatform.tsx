@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { Trash2, Sparkles, Image as ImageIcon, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, Layers, Film, ArrowRight, X, Moon, Sun, AlignLeft, Edit3, Cpu } from "lucide-react";
+import { Trash2, Sparkles, Image as ImageIcon, Loader2, Copy, ArrowDownRight, Link as LinkIcon, Upload, Eye, EyeOff, Layers, Film, ArrowRight, X, Moon, Sun, AlignLeft, Edit3, Cpu, User, Mail, Key, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "../lib/supabase";
 
 interface Shot {
   id: string;
@@ -71,6 +72,22 @@ const translations = {
     btnRenderVisualMassal: "Fase 2: Hasilkan Frame Storyboard Visual (RENDER MASSAL)",
     btnRenderingVisualMassal: "Bulk rendering via Fal.ai...",
     btnRenderSingle: "Generate Visual Ini",
+    login: "Masuk",
+    signup: "Daftar",
+    logout: "Keluar",
+    email: "Alamat Email",
+    password: "Kata Sandi",
+    confirmPassword: "Konfirmasi Kata Sandi",
+    loggingIn: "Menghubungkan Sesi...",
+    signingUp: "Membuat Akun Baru...",
+    welcomeUser: "Selamat datang,",
+    noAccount: "Belum punya akun?",
+    haveAccount: "Sudah punya akun?",
+    createAccount: "Buat Akun Studio",
+    signIn: "Masuk ke Studio",
+    guestMode: "Gunakan sebagai Tamu",
+    authRequired: "Autentikasi Diperlukan",
+    authRequiredDesc: "Silakan masuk untuk menyimpan brief ke Supabase dan menggunakan saldo backend API AI Anda.",
   },
   en: {
     backToHome: "← Back to Home",
@@ -129,6 +146,22 @@ const translations = {
     btnRenderVisualMassal: "Phase 2: Generate Storyboard Frames (BULK RENDER)",
     btnRenderingVisualMassal: "Bulk rendering via Fal.ai...",
     btnRenderSingle: "Generate Visual This Shot",
+    login: "Log In",
+    signup: "Sign Up",
+    logout: "Log Out",
+    email: "Email Address",
+    password: "Password",
+    confirmPassword: "Confirm Password",
+    loggingIn: "Connecting Session...",
+    signingUp: "Creating Account...",
+    welcomeUser: "Welcome,",
+    noAccount: "Don't have an account?",
+    haveAccount: "Already have an account?",
+    createAccount: "Create Studio Account",
+    signIn: "Sign In to Studio",
+    guestMode: "Use as Guest",
+    authRequired: "Authentication Required",
+    authRequiredDesc: "Please log in to save briefs to Supabase and use your AI backend API credits.",
   },
 };
 
@@ -197,6 +230,187 @@ function CustomSwitch({ isOn, onToggle, labelOff, labelOn, IconOff, IconOn }: an
   );
 }
 
+interface ShotCardProps {
+  shot: Shot;
+  index: number;
+  t: any;
+  lang: string;
+  updateShot: (id: string, field: keyof Shot, value: string) => void;
+  removeShot: (id: string) => void;
+  handleExecuteSingleImage: (shot: Shot) => Promise<void>;
+  loadingSingleImage: boolean;
+  setPreviewImage: (src: string | null) => void;
+}
+
+function ShotCard({
+  shot,
+  index,
+  t,
+  lang,
+  updateShot,
+  removeShot,
+  handleExecuteSingleImage,
+  loadingSingleImage,
+  setPreviewImage,
+}: ShotCardProps) {
+  const [localAngle, setLocalAngle] = useState(shot.angle);
+  const [localLocation, setLocalLocation] = useState(shot.location);
+  const [localAction, setLocalAction] = useState(shot.action);
+  const [localAudio, setLocalAudio] = useState(shot.audio);
+  const [localImagePrompt, setLocalImagePrompt] = useState(shot.imagePrompt || "");
+
+  // Sync local states if the parent shot changes (e.g., loaded from cloud or re-generated)
+  useEffect(() => {
+    setLocalAngle(shot.angle);
+    setLocalLocation(shot.location);
+    setLocalAction(shot.action);
+    setLocalAudio(shot.audio);
+    setLocalImagePrompt(shot.imagePrompt || "");
+  }, [shot.angle, shot.location, shot.action, shot.audio, shot.imagePrompt]);
+
+  const handleBlur = (field: keyof Shot, localValue: string, originalValue: string) => {
+    if (localValue !== originalValue) {
+      updateShot(shot.id, field, localValue);
+    }
+  };
+
+  return (
+    <div className="group relative flex flex-col gap-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] p-4 shadow-sm transition hover:border-zinc-300 dark:hover:border-zinc-700">
+      <div className="flex flex-col md:flex-row gap-5">
+        <div className="flex items-start gap-3 shrink-0">
+          <div className="text-xs font-mono font-semibold text-zinc-300 dark:text-zinc-600 pt-1">
+            {String(index + 1).padStart(2, "0")}
+          </div>
+          <div className="relative aspect-[9/16] w-24 overflow-hidden rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 shrink-0 shadow-inner">
+            {shot.image ? (
+              <SimpleAIImage
+                src={shot.image}
+                index={index}
+                alt="Sequence"
+                className="h-full w-full object-cover object-center cursor-zoom-in"
+                onClick={() => setPreviewImage(shot.image!)}
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 dark:text-zinc-600 font-mono text-center px-1">
+                Teks Ready
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div className="space-y-2.5 border-r border-zinc-100/80 dark:border-zinc-800/80 pr-2">
+            <div>
+              <span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">
+                {t.cameraSpecs}
+              </span>
+              <input
+                value={localAngle}
+                onChange={(e) => setLocalAngle(e.target.value)}
+                onBlur={() => handleBlur("angle", localAngle, shot.angle)}
+                className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-800 dark:text-zinc-200 font-medium focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">
+                {t.locationEnv}
+              </span>
+              <input
+                value={localLocation}
+                onChange={(e) => setLocalLocation(e.target.value)}
+                onBlur={() => handleBlur("location", localLocation, shot.location)}
+                className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors"
+              />
+            </div>
+          </div>
+          <div className="space-y-2.5">
+            <div>
+              <span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">
+                {t.visualScene}
+              </span>
+              <textarea
+                rows={2}
+                value={localAction}
+                onChange={(e) => setLocalAction(e.target.value)}
+                onBlur={() => handleBlur("action", localAction, shot.action)}
+                className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">
+                {t.audioScript}
+              </span>
+              <textarea
+                rows={2}
+                value={localAudio}
+                onChange={(e) => setLocalAudio(e.target.value)}
+                onBlur={() => handleBlur("audio", localAudio, shot.audio)}
+                className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+      {shot.tech_budget_hack && (
+        <div className="mt-1 p-2.5 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-700/50 rounded-md">
+          <span className="text-[10px] font-bold text-yellow-800 dark:text-yellow-500 flex items-center gap-1.5">
+            <Sparkles className="w-3 h-3" /> TECH & BUDGET HACK
+          </span>
+          <p className="text-xs mt-1 text-yellow-900 dark:text-yellow-200/80 leading-relaxed">
+            {shot.tech_budget_hack}
+          </p>
+        </div>
+      )}
+      <div className="mt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 pt-3 flex flex-col md:flex-row md:items-end md:justify-between gap-3 md:gap-0">
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 uppercase tracking-wider font-semibold flex items-center gap-1">
+              <Sparkles className="w-3 h-3" /> {t.aiPromptLabel}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(localImagePrompt);
+                toast.success("Prompt disalin!");
+              }}
+              className="text-[9px] text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center gap-1 font-mono transition-colors cursor-pointer"
+            >
+              <Copy className="w-3 h-3" /> copy prompt
+            </button>
+          </div>
+          <textarea
+            rows={2}
+            value={localImagePrompt}
+            onChange={(e) => setLocalImagePrompt(e.target.value)}
+            onBlur={() => handleBlur("imagePrompt", localImagePrompt, shot.imagePrompt || "")}
+            className="w-full bg-zinc-900 text-zinc-300 font-mono text-[10px] rounded-md border border-zinc-800 px-2.5 py-2 leading-relaxed resize-none focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all"
+            placeholder="Prompt generator..."
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => handleExecuteSingleImage(shot)}
+          disabled={loadingSingleImage}
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-[11px] font-bold tracking-tight text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 shrink-0 ml-0 md:ml-4 cursor-pointer active:scale-95 duration-100"
+        >
+          {loadingSingleImage ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Film className="w-3.5 h-3.5 text-indigo-500" />
+          )}{" "}
+          {t.btnRenderSingle}
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={() => removeShot(shot.id)}
+        className="absolute top-3 right-3 rounded p-1 text-zinc-300 dark:text-zinc-600 opacity-0 transition hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-red-500 dark:hover:text-red-400 group-hover:opacity-100 cursor-pointer"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
 const getSupabaseToken = (): string => {
   try {
     for (let i = 0; i < localStorage.length; i++) {
@@ -214,6 +428,248 @@ const getSupabaseToken = (): string => {
   }
   return "";
 };
+
+interface AuthModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  lang: "id" | "en";
+  t: any;
+  initialMode: "login" | "signup";
+}
+
+function AuthModal({ isOpen, onClose, lang, t, initialMode }: AuthModalProps) {
+  const [mode, setMode] = useState<"login" | "signup">(initialMode);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setErrorMsg(null);
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+    }
+  }, [initialMode, isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setLoading(true);
+
+    if (!email || !password) {
+      setErrorMsg(lang === "id" ? "Email dan password wajib diisi." : "Email and password are required.");
+      setLoading(false);
+      return;
+    }
+
+    if (mode === "signup" && password !== confirmPassword) {
+      setErrorMsg(lang === "id" ? "Konfirmasi password tidak cocok." : "Password confirmation does not match.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (mode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        toast.success(lang === "id" ? "Berhasil masuk ke studio!" : "Successfully logged in!");
+        onClose();
+      } else {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) throw error;
+        if (data?.session) {
+          toast.success(lang === "id" ? "Akun berhasil dibuat dan masuk!" : "Account created and logged in!");
+        } else {
+          toast.success(lang === "id" ? "Pendaftaran berhasil! Cek email untuk verifikasi." : "Registration successful! Please check your email for verification.");
+        }
+        onClose();
+      }
+    } catch (err: any) {
+      console.error("Auth error:", err);
+      setErrorMsg(err.message || (lang === "id" ? "Terjadi kesalahan autentikasi." : "Authentication error occurred."));
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop with premium blur */}
+      <div 
+        className="absolute inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-md transition-opacity duration-300"
+        onClick={onClose}
+      />
+      
+      {/* Modal Container */}
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/95 dark:bg-[#111111]/95 p-6 shadow-2xl transition-all duration-300 transform scale-100 backdrop-blur-md">
+        
+        {/* Glow effect in background */}
+        <div className="absolute -right-16 -top-16 w-32 h-32 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -left-16 -bottom-16 w-32 h-32 bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Close Button */}
+        <button 
+          onClick={onClose}
+          type="button"
+          className="absolute right-4 top-4 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        {/* Header */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-sm font-extrabold mb-2.5 shadow-md">
+            V
+          </div>
+          <h3 className="text-base font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">
+            {mode === "login" ? t.signIn : t.createAccount}
+          </h3>
+          <p className="text-[9px] text-zinc-400 dark:text-zinc-500 mt-1 font-mono uppercase tracking-wider font-bold">
+            VibeShot Studio Portal
+          </p>
+        </div>
+
+        {/* Tabs Switch */}
+        <div className="grid grid-cols-2 gap-1 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200/40 dark:border-zinc-800 mb-5 relative z-10">
+          <button 
+            type="button" 
+            onClick={() => { setMode("login"); setErrorMsg(null); }}
+            className={`text-[11px] font-bold py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${mode === "login" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
+          >
+            {t.login}
+          </button>
+          <button 
+            type="button" 
+            onClick={() => { setMode("signup"); setErrorMsg(null); }}
+            className={`text-[11px] font-bold py-1.5 rounded-lg transition-all duration-200 cursor-pointer ${mode === "signup" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600"}`}
+          >
+            {t.signup}
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
+          {errorMsg && (
+            <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/50 rounded-lg text-[11px] text-red-600 dark:text-red-400 flex items-start gap-2">
+              <ShieldAlert className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {/* Email */}
+          <div className="space-y-1">
+            <label className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block font-semibold">
+              {t.email}
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                <Mail className="h-3.5 w-3.5 text-zinc-400" />
+              </div>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 pl-8.5 pr-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:bg-white dark:focus:bg-zinc-900 focus:outline-none transition-all shadow-inner"
+              />
+            </div>
+          </div>
+
+          {/* Password */}
+          <div className="space-y-1">
+            <label className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block font-semibold">
+              {t.password}
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                <Key className="h-3.5 w-3.5 text-zinc-400" />
+              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 pl-8.5 pr-8 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:bg-white dark:focus:bg-zinc-900 focus:outline-none transition-all shadow-inner"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+              >
+                {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password (only on Signup) */}
+          {mode === "signup" && (
+            <div className="space-y-1 animate-[fadeIn_0.2s_ease-out]">
+              <label className="text-[9px] font-mono text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block font-semibold">
+                {t.confirmPassword}
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                  <Key className="h-3.5 w-3.5 text-zinc-400" />
+                </div>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 pl-8.5 pr-3 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-indigo-500 dark:focus:border-indigo-500/50 focus:bg-white dark:focus:bg-zinc-900 focus:outline-none transition-all shadow-inner"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 py-2 text-xs font-bold tracking-tight shadow hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all duration-150 active:scale-98 disabled:opacity-50 cursor-pointer"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                {mode === "login" ? t.loggingIn : t.signingUp}
+              </>
+            ) : (
+              mode === "login" ? t.signIn : t.createAccount
+            )}
+          </button>
+
+          {/* Switch Prompt */}
+          <div className="text-center pt-1.5">
+            <button
+              type="button"
+              onClick={() => { setMode(mode === "login" ? "signup" : "login"); setErrorMsg(null); }}
+              className="text-[10px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 font-medium transition-colors hover:underline cursor-pointer"
+            >
+              {mode === "login" ? t.noAccount : t.haveAccount} <span className="text-indigo-500 dark:text-indigo-400 font-bold ml-0.5">{mode === "login" ? t.signup : t.login}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export function VibeShotPlatform() {
   const [view, setView] = useState<"landing" | "app">("landing");
@@ -256,6 +712,26 @@ export function VibeShotPlatform() {
   
   const [hasResult, setHasResult] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  const [user, setUser] = useState<any>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<"login" | "signup">("login");
+
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+    });
+
+    // Listen to changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const updateShot = (id: string, field: keyof Shot, value: string) => {
     setShots((prev) => prev.map((shot) => (shot.id === id ? { ...shot, [field]: value } : shot)) );
@@ -352,8 +828,14 @@ export function VibeShotPlatform() {
   };
 
   const handleGenerate = async () => {
-    setIsGenerating(true); setErrorMsg(null); setHasResult(false);
     const token = getSupabaseToken();
+    if (!token) {
+      toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
+      setAuthModalMode("login");
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsGenerating(true); setErrorMsg(null); setHasResult(false);
     const requestPayload = { engineMode: activeEngine, product: productName || "General Campaign Brand", usp: usp || "Buat adegan sekreatif mungkin", trend: trend, tone: activeEngine === "clone" ? "Matches Reference Pacing" : tone, shotCount: shotCount, platform: platform, pillar: pillar, talent: talent, refType: refType, refUrl: refUrl, refTextDescription: refTextDescription, refImageBase64: refImageBase64, };
     try {
       const res = await fetch(workerUrl, { 
@@ -374,8 +856,14 @@ export function VibeShotPlatform() {
   };
 
   const handleMassExecuteImages = async () => {
-    setIsRenderingVisuals(true);
     const token = getSupabaseToken();
+    if (!token) {
+      toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
+      setAuthModalMode("login");
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsRenderingVisuals(true);
     try {
       const res = await fetch(workerUrl, { 
         method: "POST", 
@@ -394,8 +882,14 @@ export function VibeShotPlatform() {
   };
 
   const handleLanjutkanCerita = async () => {
-    setIsContinuing(true); setErrorMsg(null);
     const token = getSupabaseToken();
+    if (!token) {
+      toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
+      setAuthModalMode("login");
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsContinuing(true); setErrorMsg(null);
     try {
       const res = await fetch(workerUrl, { 
         method: "POST", 
@@ -428,9 +922,15 @@ export function VibeShotPlatform() {
   };
 
   const handleExecuteSingleImage = async (shot: Shot) => {
+    const token = getSupabaseToken();
+    if (!token) {
+      toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
+      setAuthModalMode("login");
+      setIsAuthModalOpen(true);
+      return;
+    }
     if (!cloudBriefId) { toast.error("KV Cloud ID missing. Selesaikan Phase 1 dulu, Cok."); return; }
     setLoadingShotsImages(prev => ({ ...prev, [shot.id]: true }));
-    const token = getSupabaseToken();
     try {
       const res = await fetch(workerUrl, { 
         method: "POST", 
@@ -457,7 +957,85 @@ export function VibeShotPlatform() {
   const hybridActiveStyle = activeEngine === "hybrid" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600";
   const cloneActiveStyle = activeEngine === "clone" ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600";
 
-  if (view === "landing") return ( <div className="min-h-screen bg-white dark:bg-[#0a0a0a] text-zinc-900 dark:text-zinc-100 font-sans antialiased transition-colors duration-200"><nav className="mx-auto max-w-5xl flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800/50"><div className="flex items-center gap-2"><div className="flex h-5 w-5 items-center justify-center rounded bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-[10px] font-bold">V</div><span className="text-xs font-semibold tracking-tight">vibeshot.studio</span></div><div className="flex items-center gap-4"><div className="flex items-center gap-4 border-r border-zinc-200 dark:border-zinc-700 pr-4"><CustomSwitch isOn={lang === "id"} onToggle={() => setLang(lang === "en" ? "id" : "en")} labelOff="EN" labelOn="ID" /><CustomSwitch isOn={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} IconOff={Sun} IconOn={Moon} /></div><button onClick={() => setView("app")} className="text-xs font-medium bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-colors shadow-sm">Launch Studio →</button></div></nav><header className="mx-auto max-w-3xl text-center px-6 pt-20 pb-16 space-y-6"><div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800 px-3 py-1 text-[11px] text-zinc-500 dark:text-zinc-400 font-mono"><Sparkles className="h-3 w-3 text-zinc-400 dark:text-zinc-500" /> Private Beta Engine Active</div><h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.1]">Turn messy script ideas into crystal-clear production briefs.</h1><p className="text-zinc-500 dark:text-zinc-400 text-sm max-w-xl mx-auto leading-relaxed">The automated workspace built for Creative Strategists and Agency Workers. Translate loose briefs and visual references into word-for-word scripts, moodboards, and interactive storyboards in 60 seconds.</p><div className="pt-2"><button onClick={() => setView("app")} className="inline-flex items-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium text-xs px-5 py-3 rounded-lg shadow hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-all transform hover:-translate-y-0.5">Get Started for Free <ArrowRight className="h-3.5 w-3.5" /></button></div></header></div> );
+  if (view === "landing") return (
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] text-zinc-900 dark:text-zinc-100 font-sans antialiased transition-colors duration-200">
+      <nav className="mx-auto max-w-5xl flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800/50">
+        <div className="flex items-center gap-2">
+          <div className="flex h-5 w-5 items-center justify-center rounded bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-[10px] font-bold">V</div>
+          <span className="text-xs font-semibold tracking-tight">vibeshot.studio</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 border-r border-zinc-200 dark:border-zinc-700 pr-4">
+            <CustomSwitch isOn={lang === "id"} onToggle={() => setLang(lang === "en" ? "id" : "en")} labelOff="EN" labelOn="ID" />
+            <CustomSwitch isOn={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} IconOff={Sun} IconOn={Moon} />
+          </div>
+          {user ? (
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-400 font-mono">
+                <User className="h-3 w-3 text-zinc-400 dark:text-zinc-500" />
+                {user.email}
+              </div>
+              <button 
+                onClick={() => supabase.auth.signOut()} 
+                className="text-[11px] font-medium text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
+              >
+                {t.logout}
+              </button>
+              <button onClick={() => setView("app")} className="text-xs font-medium bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-colors shadow-sm cursor-pointer">
+                Launch Studio →
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => { setAuthModalMode("login"); setIsAuthModalOpen(true); }} 
+                className="text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors px-2 py-1.5 cursor-pointer"
+              >
+                {t.login}
+              </button>
+              <button 
+                onClick={() => { setAuthModalMode("signup"); setIsAuthModalOpen(true); }} 
+                className="text-xs font-medium bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-colors shadow-sm cursor-pointer"
+              >
+                {t.signup}
+              </button>
+            </div>
+          )}
+        </div>
+      </nav>
+      <header className="mx-auto max-w-3xl text-center px-6 pt-20 pb-16 space-y-6">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200/60 dark:border-zinc-800 px-3 py-1 text-[11px] text-zinc-500 dark:text-zinc-400 font-mono">
+          <Sparkles className="h-3 w-3 text-zinc-400 dark:text-zinc-500" /> Private Beta Engine Active
+        </div>
+        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.1]">Turn messy script ideas into crystal-clear production briefs.</h1>
+        <p className="text-zinc-500 dark:text-zinc-400 text-sm max-w-xl mx-auto leading-relaxed">The automated workspace built for Creative Strategists and Agency Workers. Translate loose briefs and visual references into word-for-word scripts, moodboards, and interactive storyboards in 60 seconds.</p>
+        <div className="pt-2">
+          {user ? (
+            <button onClick={() => setView("app")} className="inline-flex items-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 font-medium text-xs px-5 py-3 rounded-lg shadow hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all transform hover:-translate-y-0.5 cursor-pointer">
+              Launch Studio Workspace <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button onClick={() => { setAuthModalMode("signup"); setIsAuthModalOpen(true); }} className="inline-flex items-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium text-xs px-5 py-3 rounded-lg shadow hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-all transform hover:-translate-y-0.5 cursor-pointer">
+                Get Started for Free <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+              <button onClick={() => setView("app")} className="text-xs font-mono font-semibold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors py-2 px-3 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 rounded-lg cursor-pointer">
+                {t.guestMode}
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        lang={lang}
+        t={t}
+        initialMode={authModalMode}
+      />
+    </div>
+  );
 
   return (
     <>
@@ -474,9 +1052,31 @@ export function VibeShotPlatform() {
               <CustomSwitch isOn={isDarkMode} onToggle={() => setIsDarkMode(!isDarkMode)} IconOff={Sun} IconOn={Moon} />
             </div>
             <div className="flex items-center gap-3">
-              <button onClick={() => setView("landing")} className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors">{t.backToHome}</button>
+              {user ? (
+                <div className="flex items-center gap-2">
+                  <div className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800 text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">
+                    <User className="h-2.5 w-2.5 text-zinc-400" />
+                    {user.email}
+                  </div>
+                  <button 
+                    onClick={() => supabase.auth.signOut()} 
+                    className="text-[10px] font-bold text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors font-mono uppercase cursor-pointer"
+                  >
+                    [{t.logout}]
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => { setAuthModalMode("login"); setIsAuthModalOpen(true); }} 
+                  className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400 hover:text-indigo-650 dark:hover:text-indigo-300 transition-colors font-mono uppercase cursor-pointer"
+                >
+                  [{t.login}]
+                </button>
+              )}
+              <span className="text-zinc-200 dark:text-zinc-700 font-mono text-xs">|</span>
+              <button onClick={() => setView("landing")} className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors cursor-pointer">{t.backToHome}</button>
               {hasResult && <span className="text-zinc-200 dark:text-zinc-700 font-mono text-xs">|</span>}
-              {hasResult && <button onClick={handleClearAll} className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors">{t.resetProject}</button>}
+              {hasResult && <button onClick={handleClearAll} className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer">{t.resetProject}</button>}
             </div>
           </div>
         </header>
@@ -629,45 +1229,18 @@ export function VibeShotPlatform() {
                 {shots.length === 0 ? <div className="py-12 border border-dashed border-zinc-200 dark:border-dashed dark:border-zinc-800 bg-white dark:bg-[#111111] text-center rounded-xl text-xs text-zinc-400 dark:text-zinc-600 font-mono">{t.belumAda}</div> : (
                   <div className="space-y-4">
                     {shots.map((s, idx) => (
-                      <div key={s.id} className="group relative flex flex-col gap-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] p-4 shadow-sm transition hover:border-zinc-300 dark:hover:border-zinc-700">
-                        <div className="flex flex-col md:flex-row gap-5">
-                          <div className="flex items-start gap-3 shrink-0">
-                            <div className="text-xs font-mono font-semibold text-zinc-300 dark:text-zinc-600 pt-1">{String(idx + 1).padStart(2, "0")}</div>
-                            <div className="relative aspect-[9/16] w-24 overflow-hidden rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 shrink-0 shadow-inner">
-                              {s.image ? <SimpleAIImage src={s.image} index={idx} alt="Sequence" className="h-full w-full object-cover object-center cursor-zoom-in" onClick={() => setPreviewImage(s.image!)} /> : <div className="absolute inset-0 flex items-center justify-center text-[10px] text-zinc-400 dark:text-zinc-600 font-mono text-center px-1">Teks Ready</div>}
-                            </div>
-                          </div>
-                          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                            <div className="space-y-2.5 border-r border-zinc-100/80 dark:border-zinc-800/80 pr-2">
-                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">{t.cameraSpecs}</span><input value={s.angle} onChange={(e) => updateShot(s.id, "angle", e.target.value)} className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-800 dark:text-zinc-200 font-medium focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
-                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">{t.locationEnv}</span><input value={s.location} onChange={(e) => updateShot(s.id, "location", e.target.value)} className="w-full bg-zinc-50/50 dark:bg-zinc-900/50 rounded border border-transparent px-1.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
-                            </div>
-                            <div className="space-y-2.5">
-                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">{t.visualScene}</span><textarea rows={2} value={s.action} onChange={(e) => updateShot(s.id, "action", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
-                              <div><span className="text-[9px] font-mono text-zinc-400 dark:text-zinc-200 uppercase tracking-wider block mb-0.5">{t.audioScript}</span><textarea rows={2} value={s.audio} onChange={(e) => updateShot(s.id, "audio", e.target.value)} className="w-full bg-transparent rounded border border-transparent px-1 py-0.5 text-xs text-zinc-800 dark:text-zinc-200 font-medium leading-relaxed resize-none focus:border-zinc-200 dark:focus:border-zinc-700 focus:bg-white dark:focus:bg-zinc-800 focus:outline-none transition-colors" /></div>
-                            </div>
-                          </div>
-                        </div>
-                        {s.tech_budget_hack && (
-                          <div className="mt-1 p-2.5 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-700/50 rounded-md">
-                            <span className="text-[10px] font-bold text-yellow-800 dark:text-yellow-500 flex items-center gap-1.5"><Sparkles className="w-3 h-3" /> TECH & BUDGET HACK</span>
-                            <p className="text-xs mt-1 text-yellow-900 dark:text-yellow-200/80 leading-relaxed">{s.tech_budget_hack}</p>
-                          </div>
-                        )}
-                        <div className="mt-2 border-t border-dashed border-zinc-200 dark:border-zinc-800 pt-3 flex flex-col md:flex-row md:items-end md:justify-between gap-3 md:gap-0">
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 uppercase tracking-wider font-semibold flex items-center gap-1"><Sparkles className="w-3 h-3" /> {t.aiPromptLabel}</span>
-                              <button type="button" onClick={() => { navigator.clipboard.writeText(s.imagePrompt || ""); toast.success("Prompt disalin!"); }} className="text-[9px] text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center gap-1 font-mono transition-colors cursor-pointer"><Copy className="w-3 h-3" /> copy prompt</button>
-                            </div>
-                            <textarea rows={2} value={s.imagePrompt} onChange={(e) => updateShot(s.id, "imagePrompt", e.target.value)} className="w-full bg-zinc-900 text-zinc-300 font-mono text-[10px] rounded-md border border-zinc-800 px-2.5 py-2 leading-relaxed resize-none focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all" placeholder="Prompt generator..." />
-                          </div>
-                          <button type="button" onClick={() => handleExecuteSingleImage(s)} disabled={loadingShotsImages[s.id]} className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-[11px] font-bold tracking-tight text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 shrink-0 ml-0 md:ml-4 cursor-pointer active:scale-95 duration-100">
-                            {loadingShotsImages[s.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Film className="w-3.5 h-3.5 text-indigo-500" />} {t.btnRenderSingle}
-                          </button>
-                        </div>
-                        <button type="button" onClick={() => removeShot(s.id)} className="absolute top-3 right-3 rounded p-1 text-zinc-300 dark:text-zinc-600 opacity-0 transition hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-red-500 dark:hover:text-red-400 group-hover:opacity-100 cursor-pointer"><Trash2 className="h-3.5 w-3.5" /></button>
-                      </div>
+                      <ShotCard
+                        key={s.id}
+                        shot={s}
+                        index={idx}
+                        t={t}
+                        lang={lang}
+                        updateShot={updateShot}
+                        removeShot={removeShot}
+                        handleExecuteSingleImage={handleExecuteSingleImage}
+                        loadingSingleImage={loadingShotsImages[s.id]}
+                        setPreviewImage={setPreviewImage}
+                      />
                     ))}
                   </div>
                 )}
@@ -695,6 +1268,14 @@ export function VibeShotPlatform() {
           </div>
         </div>
       )}
+
+      <AuthModal 
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        lang={lang}
+        t={t}
+        initialMode={authModalMode}
+      />
     </>
   );
 }
