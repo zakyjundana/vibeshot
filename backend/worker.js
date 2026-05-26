@@ -72,7 +72,8 @@ function getCorsHeaders(request) {
     "http://localhost:3000",
     "http://localhost:5173",
     "https://vibeshot.studio",
-    "https://vibeshot-creative-hub.pages.dev"
+    "https://vibeshot-creative-hub.pages.dev",
+    "https://vibeshot-creative-hub.zakyjundana.workers.dev"
   ];
   
   let allowedOrigin = "*";
