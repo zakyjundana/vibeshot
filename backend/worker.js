@@ -46,7 +46,10 @@ async function getYouTubeTranscript(url) {
 }
 
 async function generateSingleFluxImage(prompt, style, seedBase, falKey, targetModel) {
-  const currentModel = targetModel || "fal-ai/flux/schnell";
+  let currentModel = targetModel || "fal-ai/flux/schnell";
+  if (currentModel.includes("gemini")) {
+    currentModel = "fal-ai/flux/schnell"; // Fallback for invalid image model option
+  }
   const currentMantra = style === "animation" 
     ? "premium 3D animation style, cinematic render, pixar disney style character design, smooth clay texture, gorgeous volumetric lighting, expressive facial features"
     : "award-winning cinematic commercial photography, highly detailed, photorealistic, flawless anatomy, shot on 35mm anamorphic lens, professional studio lighting, depth of field, 8k";
@@ -63,8 +66,14 @@ async function generateSingleFluxImage(prompt, style, seedBase, falKey, targetMo
     payload.seed = seedBase;
     payload.num_inference_steps = (currentModel.includes("schnell") || currentModel.includes("flash") || currentModel.includes("turbo")) ? 8 : 28;
     payload.guidance_scale = 3.5;
+  } else if (currentModel.includes("recraft") || currentModel.includes("ideogram")) {
+    payload.aspect_ratio = "9:16";
+    if (currentModel.includes("recraft")) {
+      payload.style = style === "animation" ? "digital_illustration" : "realistic_image";
+    }
+  } else if (currentModel.includes("openai")) {
+    payload.size = "1024x1792";
   } else {
-    payload.style = style === "animation" ? "digital_illustration" : "realistic_image";
     payload.aspect_ratio = "9:16";
   }
 
@@ -93,15 +102,19 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
 
     if (request.method === "GET") {
-      const url = new URL(request.url);
-      const briefId = url.searchParams.get("id");
-      if (briefId) {
-        if (!env.VIBESHOT_KV) return new Response(JSON.stringify({ error: "KV missing" }), { status: 500, headers: corsHeaders });
-        const savedData = await env.VIBESHOT_KV.get(briefId);
-        if (savedData) return new Response(savedData, { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-        return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers: corsHeaders });
+      try {
+        const url = new URL(request.url);
+        const briefId = url.searchParams.get("id");
+        if (briefId) {
+          if (!env.VIBESHOT_KV) return new Response(JSON.stringify({ error: "KV missing" }), { status: 500, headers: corsHeaders });
+          const savedData = await env.VIBESHOT_KV.get(briefId);
+          if (savedData) return new Response(savedData, { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers: corsHeaders });
+        }
+        return new Response(JSON.stringify({ status: "Online" }), { status: 200, headers: corsHeaders });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: corsHeaders });
       }
-      return new Response(JSON.stringify({ status: "Online" }), { status: 200, headers: corsHeaders });
     }
 
     try {
@@ -124,7 +137,9 @@ export default {
       // ========================================================
       // FASE 2: RENDER SINGLE IMAGE (🔥 FIX SAKTI DETEKSI ADAPTIF)
       // ========================================================
-      if (action === "render_single_image" && shotToGenerate && activeBriefId && env.VIBESHOT_KV) {
+      if (action === "render_single_image") {
+        if (!env.VIBESHOT_KV) return new Response(JSON.stringify({ error: "KV missing" }), { status: 500, headers: corsHeaders });
+        if (!shotToGenerate || !activeBriefId) return new Response(JSON.stringify({ error: "Missing parameters" }), { status: 400, headers: corsHeaders });
         const existingBriefDataRaw = await env.VIBESHOT_KV.get(activeBriefId);
         if (!existingBriefDataRaw) return new Response(JSON.stringify({ error: "Data missing" }), { status: 404, headers: corsHeaders });
         let briefData = JSON.parse(existingBriefDataRaw);
@@ -188,9 +203,11 @@ export default {
       // BABAK 1: KILAT IMAGE TO TEXT DESCRIPTION
       // ========================================================
       let imageToTextDescription = "";
-      if (refType === "photo" && refImageBase64) {
-        const cleanBase64Match = refImageBase64.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/);
-        if (cleanBase64Match) {
+      if (refType === "photo" && refImageBase64 && refImageBase64.startsWith("data:image/")) {
+        const parts = refImageBase64.split(";base64,");
+        if (parts.length === 2) {
+          const mimeType = parts[0].replace("data:", "");
+          const base64Data = parts[1];
           try {
             const descResponse = await fetch(geminiUrl, {
               method: "POST",
@@ -199,7 +216,7 @@ export default {
                 contents: [{
                   parts: [
                     { text: "Bedah ringkas gambar moodboard referensi ini. Tulis dalam 2 kalimat bahasa inggris tentang: core framing layout, visual composition, and pacing rhythm." },
-                    { inlineData: { mimeType: cleanBase64Match[1], data: cleanBase64Match[2] } }
+                    { inlineData: { mimeType: mimeType, data: base64Data } }
                   ]
                 }]
               })
@@ -300,7 +317,13 @@ export default {
       if (!geminiResponseTextOnly.ok) throw new Error(`Gemini Error: ${responseTextGeminiTextOnly}`);
 
       const geminiRawPayload = JSON.parse(responseTextGeminiTextOnly);
-      let textContent = geminiRawPayload.candidates[0].content.parts[0].text;
+      if (!geminiRawPayload.candidates || geminiRawPayload.candidates.length === 0) {
+        throw new Error("Gemini did not return any candidates. The prompt may have triggered safety filters.");
+      }
+      let textContent = geminiRawPayload.candidates[0].content?.parts?.[0]?.text;
+      if (!textContent) {
+        throw new Error("Gemini returned an empty completion. Please check prompt content safety.");
+      }
       
       if (typeof textContent === "string") {
         const startIdx = textContent.indexOf("{");

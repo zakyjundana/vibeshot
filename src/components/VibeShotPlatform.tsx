@@ -27,6 +27,8 @@ const translations = {
     namaBrand: "Nama Brand / Produk Target Baru",
     ideKasar: "Instruksi Modifikasi / USP Produk Baru",
     placeholderIde: "Contoh: Jadikan ini buat produk Kopi Susu Gula Aren, tonjolkan efek bikin melek instan...",
+    trendLabel: "Tren Viral Saat Ini / Gaya Visual (Opsional)",
+    trendPlaceholder: "Contoh: Tren ASMR tapping produk, transisi beat drop jedag-jedug, gaya sinematik lofi...",
     arsitekturVibe: "2. Arsitektur & Vibe Konten",
     targetPlatform: "Target Platform Konten",
     pillarKonten: "Pillar / Kategori Konten",
@@ -83,6 +85,8 @@ const translations = {
     namaBrand: "Target New Brand / Product Name",
     ideKasar: "Modification Prompt / New Product USP",
     placeholderIde: "e.g., Turn this into a campaign for iced coffee, emphasize the instant energy kick...",
+    trendLabel: "Current Viral Trend / Visual Style (Optional)",
+    trendPlaceholder: "e.g., ASMR product tapping, lofi cinematic aesthetic, fast beat drop transitions...",
     arsitekturVibe: "2. Content Architecture",
     targetPlatform: "Target Platform",
     pillarKonten: "Content Pillar",
@@ -448,6 +452,7 @@ export function VibeShotPlatform() {
                 <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">
                   <Field label={t.namaBrand}><input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g., Suzuki XL7 2026" className={inputStyle} /></Field>
                   <Field label={t.ideKasar}><textarea value={usp} onChange={(e) => setUsp(e.target.value)} rows={3} placeholder={t.placeholderIde} className={inputStyle + " resize-none"} /></Field>
+                  <Field label={t.trendLabel}><input value={trend} onChange={(e) => setTrend(e.target.value)} placeholder={t.trendPlaceholder} className={inputStyle} /></Field>
                 </div>
               )}
             </div>
