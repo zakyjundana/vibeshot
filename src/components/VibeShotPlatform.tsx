@@ -1234,29 +1234,6 @@ export function VibeShotPlatform() {
                     </>
                   )}
                   <Field label={t.jumlahShot}><input type="number" min={1} max={24} value={shotCount} onChange={(e) => setShotCount(parseInt(e.target.value || "6", 10))} className={inputStyle + " w-24"} /></Field>
-                  <Field label="AI Image Model (Fal.ai Weaponry)">
-                    <select value={imageModel} onChange={(e) => { setImageModel(e.target.value); localStorage.setItem("vibeshot_image_model", e.target.value); }} className={inputStyle + " bg-gradient-to-r from-indigo-500/10 to-transparent font-medium border-indigo-500/30"}>
-                      <optgroup label="⚡ KASTA EKONOMIS (Super Fast & Hemat Kredit)">
-                        <option value="fal-ai/flux/schnell">FLUX 1 [Schnell] (Rekomendasi Utama - $0.003)</option>
-                        <option value="fal-ai/flux-2/flash">FLUX 2 [Flash] (Crisper Text, Ultra Speed - $0.004)</option>
-                        <option value="fal-ai/flux-2/turbo">FLUX 2 [Turbo] (Enhanced Native Editing - $0.004)</option>
-                        <option value="fal-ai/gemini-3.1-flash-image-preview">Google Nano Banana 2 (State-of-the-art Fast - $0.003)</option>
-                        <option value="fal-ai/bytedance/seedream/v5/lite/text-to-image">ByteDance Seedream 5.0 Lite (Intelligent Fast - $0.003)</option>
-                      </optgroup>
-                      <optgroup label="🎨 KASTA DESIGNER & TYPOGRAPHY (Anti-Typo & Ragam Poster)">
-                        <option value="fal-ai/recraft/v4/pro/text-to-image">Recraft V4 Pro (SOTA Design System & Materials - $0.03)</option>
-                        <option value="fal-ai/ideogram/v3">Ideogram V3 (Exceptional Typography Handling - $0.04)</option>
-                        <option value="fal-ai/openai/gpt-image-2">OpenAI GPT Image 2 (Extremely Detailed Typography - $0.04)</option>
-                        <option value="fal-ai/flux-pro/kontext/text-to-image">FLUX Kontext Pro (Flawless Text Following - $0.03)</option>
-                      </optgroup>
-                      <optgroup label="👑 KASTA SULTAN (Cinematic Hyper-Realism / Final Presentation)">
-                        <option value="fal-ai/flux-2-max">FLUX 2 [Max] (Advanced Realism & Precision - $0.05)</option>
-                        <option value="fal-ai/flux-pro/v1.1-ultra">FLUX 1.1 Pro Ultra (2K Resolution Photo Realism - $0.05)</option>
-                        <option value="fal-ai/flux/dev">FLUX 1 [Dev] (Original Classic Cinematic - $0.025)</option>
-                        <option value="fal-ai/flux-2-flex">FLUX 2 [Flex] (Fine-Tuned Control Guidance - $0.03)</option>
-                      </optgroup>
-                    </select>
-                  </Field>
                 </div>
               )}
             </div>
