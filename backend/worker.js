@@ -477,6 +477,9 @@ export default {
         - 'tech_budget_hack': 1 kalimat trik budget murah taktis lapangan (Bahasa Indonesia).
         - 'action': Gerakan visual talent/produk secara spesifik.
         - 'audio': Tulis copywriting naskah VO/Dialog kata-demi-kata siap ucap + efek SFX/Backsound (Bahasa Indonesia).
+        - 'imagePrompt': Tulis deskripsi adegan visual terperinci dalam Bahasa Inggris untuk AI Generator (9:16 Portrait).
+          PENTING: Karena rasio adalah 9:16 vertikal (sangat sempit ke samping), hindari menyusun manusia dan mobil/objek lebar berdampingan horizontal ('next to') agar tidak gepeng/teremas.
+          Sebaliknya, susun secara vertikal/berlapis (contoh: karakter berdiri di depan/foreground, mobil parkir di belakangnya/background; atau close-up serong 3/4 kabin mobil).
       `;
 
       // ========================================================
