@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vibeshot-backend-ai",
+  "main": "worker.js",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "SUPABASE_URL": "https://jnkvqvygiwbjkowhprcp.supabase.co",
+    "SUPABASE_JWT_SECRET": "0E3ksb1dGW65Azf/gPKQYLls6PgQmVaiykuuZC92FASgKmRnwuuQEa5/JGIANzpAXwsZgXsq/J4Qp9+il0xlEQ=="
+  },
+  "observability": {
+    "enabled": true
+  }
+}

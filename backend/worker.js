@@ -17,6 +17,7 @@ function base64UrlDecode(str) {
 }
 
 // HS256 JWT Signature Verification Helper using Web Crypto (Zero Dependencies)
+// IMPORTANT: Supabase JWT secret is base64-encoded. We must decode it to raw bytes first.
 async function verifyJWT(token, secret) {
   if (!token || !secret) return null;
   try {
@@ -26,7 +27,16 @@ async function verifyJWT(token, secret) {
     
     const encoder = new TextEncoder();
     const data = encoder.encode(`${headerB64}.${payloadB64}`);
-    const keyData = encoder.encode(secret);
+    
+    // Supabase JWT secrets are base64-encoded — decode to raw bytes for HMAC key
+    // This is the critical fix: using UTF-8 bytes of base64 string was wrong
+    let keyData;
+    try {
+      keyData = Uint8Array.from(atob(secret), c => c.charCodeAt(0));
+    } catch {
+      // Fallback: if base64 decode fails, use raw UTF-8 bytes
+      keyData = encoder.encode(secret);
+    }
     
     // Import the secret as an HMAC key
     const key = await crypto.subtle.importKey(
