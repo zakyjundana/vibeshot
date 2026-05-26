@@ -18,9 +18,8 @@ function base64UrlDecode(str) {
 
 // HS256 JWT Signature Verification Helper using Web Crypto (Zero Dependencies)
 // IMPORTANT: Supabase JWT secret is base64-encoded. We must decode it to raw bytes first.
-async function verifyJWT(token, secret) {
+async function verifyJWT(token, secret, supabaseUrl, supabaseAnonKey) {
   if (!token) throw new Error("Missing token");
-  if (!secret) throw new Error("Missing secret");
   
   const parts = token.split('.');
   if (parts.length !== 3) {
@@ -45,58 +44,110 @@ async function verifyJWT(token, secret) {
   const data = encoder.encode(`${headerB64}.${payloadB64}`);
   const signature = base64UrlDecode(signatureB64);
   
-  // Generate candidate secrets
-  const candidates = [];
+  const alg = header.alg || "HS256";
   
-  // 1. Raw secret as is
-  candidates.push({ name: "raw_secret_as_utf8", value: encoder.encode(secret) });
-  try {
-    candidates.push({ name: "raw_secret_as_base64", value: Uint8Array.from(atob(secret), c => c.charCodeAt(0)) });
-  } catch (e) {}
-  
-  // 2. Secret with "JWT_" prefix removed (if present) or added (if not)
-  if (secret.startsWith("JWT_")) {
-    const stripped = secret.substring(4);
-    candidates.push({ name: "stripped_jwt_prefix_as_utf8", value: encoder.encode(stripped) });
+  if (alg === "ES256") {
+    // ECDSA Asymmetric Verification using Supabase JWKS
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Cannot verify ES256 token: backend is missing SUPABASE_URL or SUPABASE_ANON_KEY env variables");
+    }
+    
+    // Fetch JWKS from Supabase
+    const jwksUrl = `${supabaseUrl}/auth/v1/.well-known/jwks.json?apikey=${supabaseAnonKey}`;
+    let jwksData;
     try {
-      candidates.push({ name: "stripped_jwt_prefix_as_base64", value: Uint8Array.from(atob(stripped), c => c.charCodeAt(0)) });
+      const res = await fetch(jwksUrl);
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      jwksData = await res.json();
+    } catch (err) {
+      throw new Error(`Failed to fetch Supabase JWKS from ${jwksUrl}: ${err.message}`);
+    }
+    
+    const jwkKey = jwksData.keys?.find(k => k.kid === header.kid) || jwksData.keys?.[0];
+    if (!jwkKey) {
+      throw new Error(`No matching JWK found in JWKS for kid: ${header.kid}`);
+    }
+    
+    const key = await crypto.subtle.importKey(
+      "jwk",
+      jwkKey,
+      { name: "ECDSA", namedCurve: "P-256" },
+      false,
+      ["verify"]
+    );
+    
+    const verified = await crypto.subtle.verify(
+      { name: "ECDSA", hash: { name: "SHA-256" } },
+      key,
+      signature,
+      data
+    );
+    
+    if (!verified) {
+      throw new Error(`ES256 signature verification failed against JWK with kid: ${jwkKey.kid}`);
+    }
+    
+    console.log(`verifyJWT: ES256 Signature verified successfully using JWK kid: ${jwkKey.kid}`);
+  } else if (alg === "HS256") {
+    // Symmetric HMAC Verification using SUPABASE_JWT_SECRET
+    if (!secret) {
+      throw new Error("Cannot verify HS256 token: SUPABASE_JWT_SECRET is missing");
+    }
+    
+    // Generate candidate secrets
+    const candidates = [];
+    candidates.push({ name: "raw_secret_as_utf8", value: encoder.encode(secret) });
+    try {
+      candidates.push({ name: "raw_secret_as_base64", value: Uint8Array.from(atob(secret), c => c.charCodeAt(0)) });
     } catch (e) {}
+    
+    if (secret.startsWith("JWT_")) {
+      const stripped = secret.substring(4);
+      candidates.push({ name: "stripped_jwt_prefix_as_utf8", value: encoder.encode(stripped) });
+      try {
+        candidates.push({ name: "stripped_jwt_prefix_as_base64", value: Uint8Array.from(atob(stripped), c => c.charCodeAt(0)) });
+      } catch (e) {}
+    } else {
+      const prefixed = "JWT_" + secret;
+      candidates.push({ name: "prefixed_jwt_prefix_as_utf8", value: encoder.encode(prefixed) });
+      try {
+        candidates.push({ name: "prefixed_jwt_prefix_as_base64", value: Uint8Array.from(atob(prefixed), c => c.charCodeAt(0)) });
+      } catch (e) {}
+    }
+    
+    let isValid = false;
+    let successfulCandidate = null;
+    
+    for (const cand of candidates) {
+      try {
+        const key = await crypto.subtle.importKey(
+          "raw",
+          cand.value,
+          { name: "HMAC", hash: { name: "SHA-256" } },
+          false,
+          ["verify"]
+        );
+        const verified = await crypto.subtle.verify(
+          "HMAC",
+          key,
+          signature,
+          data
+        );
+        if (verified) {
+          isValid = true;
+          successfulCandidate = cand.name;
+          break;
+        }
+      } catch (err) {}
+    }
+    
+    if (!isValid) {
+      throw new Error(`HS256 signature verification failed for all ${candidates.length} key candidates.`);
+    }
+    
+    console.log(`verifyJWT: HS256 Signature verified successfully using candidate: ${successfulCandidate}`);
   } else {
-    const prefixed = "JWT_" + secret;
-    candidates.push({ name: "prefixed_jwt_prefix_as_utf8", value: encoder.encode(prefixed) });
-    try {
-      candidates.push({ name: "prefixed_jwt_prefix_as_base64", value: Uint8Array.from(atob(prefixed), c => c.charCodeAt(0)) });
-    } catch (e) {}
-  }
-  
-  let isValid = false;
-  let successfulCandidate = null;
-  
-  for (const cand of candidates) {
-    try {
-      const key = await crypto.subtle.importKey(
-        "raw",
-        cand.value,
-        { name: "HMAC", hash: { name: "SHA-256" } },
-        false,
-        ["verify"]
-      );
-      const verified = await crypto.subtle.verify(
-        "HMAC",
-        key,
-        signature,
-        data
-      );
-      if (verified) {
-        isValid = true;
-        successfulCandidate = cand.name;
-        break;
-      }
-    } catch (err) {}
-  }
-  
-  if (!isValid) {
-    throw new Error(`Signature verification failed for all ${candidates.length} key candidates. Token claims - iss: ${payload.iss || 'none'}, aud: ${payload.aud || 'none'}, sub: ${payload.sub || 'none'}, header.alg: ${header.alg || 'none'}. Secret length in worker is ${secret.length} chars.`);
+    throw new Error(`Unsupported token signing algorithm: ${alg}`);
   }
   
   // Check if the token has expired
@@ -290,13 +341,9 @@ export default {
       }
       
       const token = authHeader.split(" ")[1];
-      if (!supabaseSecret) {
-        return new Response(JSON.stringify({ error: "Backend Binding Error: SUPABASE_JWT_SECRET is not configured on Cloudflare Workers" }), { status: 500, headers: corsHeaders });
-      }
-      
       let jwtPayload;
       try {
-        jwtPayload = await verifyJWT(token, supabaseSecret);
+        jwtPayload = await verifyJWT(token, supabaseSecret, supabaseUrl, supabaseKey);
       } catch (err) {
         return new Response(JSON.stringify({ error: `Unauthorized: ${err.message}. Sesi token Anda kedaluwarsa atau tidak valid. Silakan login ulang.` }), { status: 401, headers: corsHeaders });
       }
