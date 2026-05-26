@@ -411,22 +411,7 @@ function ShotCard({
   );
 }
 
-// Async token getter using official Supabase SDK — handles refresh automatically
-const getSupabaseToken = async (): Promise<string> => {
-  try {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) {
-      console.error("Supabase getSession error:", error);
-      return "";
-    }
-    if (data?.session?.access_token) {
-      return data.session.access_token;
-    }
-  } catch (e) {
-    console.error("Failed to retrieve Supabase session:", e);
-  }
-  return "";
-};
+
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -764,18 +749,21 @@ export function VibeShotPlatform() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const [user, setUser] = useState<any>(null);
+  const [accessToken, setAccessToken] = useState<string>("");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "signup">("login");
 
   useEffect(() => {
-    // Check initial session
+    // Check initial session and cache the token in React state
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user || null);
+      setAccessToken(session?.access_token || "");
     });
 
-    // Listen to changes
+    // Keep token in sync whenever auth state changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      setAccessToken(session?.access_token || "");
     });
 
     return () => {
@@ -878,7 +866,7 @@ export function VibeShotPlatform() {
   };
 
   const handleGenerate = async () => {
-    const token = await getSupabaseToken();
+    const token = accessToken;
     if (!token) {
       toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
       setAuthModalMode("login");
@@ -906,7 +894,7 @@ export function VibeShotPlatform() {
   };
 
   const handleMassExecuteImages = async () => {
-    const token = await getSupabaseToken();
+    const token = accessToken;
     if (!token) {
       toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
       setAuthModalMode("login");
@@ -932,7 +920,7 @@ export function VibeShotPlatform() {
   };
 
   const handleLanjutkanCerita = async () => {
-    const token = await getSupabaseToken();
+    const token = accessToken;
     if (!token) {
       toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
       setAuthModalMode("login");
@@ -972,7 +960,7 @@ export function VibeShotPlatform() {
   };
 
   const handleExecuteSingleImage = async (shot: Shot) => {
-    const token = await getSupabaseToken();
+    const token = accessToken;
     if (!token) {
       toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
       setAuthModalMode("login");
