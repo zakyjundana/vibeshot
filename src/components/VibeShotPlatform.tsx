@@ -197,6 +197,24 @@ function CustomSwitch({ isOn, onToggle, labelOff, labelOn, IconOff, IconOn }: an
   );
 }
 
+const getSupabaseToken = (): string => {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
+        const rawToken = localStorage.getItem(key);
+        if (rawToken) {
+          const parsed = JSON.parse(rawToken);
+          return parsed?.access_token || "";
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Failed to parse Supabase token from local storage:", e);
+  }
+  return "";
+};
+
 export function VibeShotPlatform() {
   const [view, setView] = useState<"landing" | "app">("landing");
   const [lang, setLang] = useState<"id" | "en">("en");
@@ -335,9 +353,17 @@ export function VibeShotPlatform() {
 
   const handleGenerate = async () => {
     setIsGenerating(true); setErrorMsg(null); setHasResult(false);
+    const token = getSupabaseToken();
     const requestPayload = { engineMode: activeEngine, product: productName || "General Campaign Brand", usp: usp || "Buat adegan sekreatif mungkin", trend: trend, tone: activeEngine === "clone" ? "Matches Reference Pacing" : tone, shotCount: shotCount, platform: platform, pillar: pillar, talent: talent, refType: refType, refUrl: refUrl, refTextDescription: refTextDescription, refImageBase64: refImageBase64, };
     try {
-      const res = await fetch(workerUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(requestPayload), });
+      const res = await fetch(workerUrl, { 
+        method: "POST", 
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        }, 
+        body: JSON.stringify(requestPayload), 
+      });
       const data = await res.json(); if (!res.ok) throw new Error(data?.error || "Error compiling.");
 
       const normalized = (data.shotlist || []).map((r: any) => ({ id: crypto.randomUUID(), angle: String(r?.angle || ""), location: String(r?.location || ""), tech_budget_hack: String(r?.tech_budget_hack || ""), action: String(r?.action || ""), audio: String(r?.audio || ""), image: String(r?.image || ""), imagePrompt: String(r?.imagePrompt || ""), }));
@@ -349,8 +375,16 @@ export function VibeShotPlatform() {
 
   const handleMassExecuteImages = async () => {
     setIsRenderingVisuals(true);
+    const token = getSupabaseToken();
     try {
-      const res = await fetch(workerUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "render_images", briefId: cloudBriefId, title: titleOverride, premise: premiseOverride, visual_style: visualStyle, masterIdentity: masterIdentity, shotlist: shots, imageModel: imageModel }), });
+      const res = await fetch(workerUrl, { 
+        method: "POST", 
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        }, 
+        body: JSON.stringify({ action: "render_images", briefId: cloudBriefId, title: titleOverride, premise: premiseOverride, visual_style: visualStyle, masterIdentity: masterIdentity, shotlist: shots, imageModel: imageModel }), 
+      });
       const data = await res.json(); if (!res.ok) throw new Error(data?.error || "Error rendering images.");
       const updatedWithImages = (data.shotlist || []).map((r: any, idx: number) => ({ ...shots[idx], image: String(r?.image || ""), imagePrompt: String(r?.imagePrompt || shots[idx].imagePrompt), }));
       setShots(updatedWithImages); setMoodboard(data.moodboard || []);
@@ -361,8 +395,16 @@ export function VibeShotPlatform() {
 
   const handleLanjutkanCerita = async () => {
     setIsContinuing(true); setErrorMsg(null);
+    const token = getSupabaseToken();
     try {
-      const res = await fetch(workerUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ engineMode: activeEngine, product: productName || "Analyzed Reference Video", usp: usp, trend, tone, shotCount: shotCount || 3, platform, pillar, talent, isContinuation: true, existingShots: shots, masterIdentity: masterIdentity, title: titleOverride, visual_style: visualStyle, refType, refUrl, refTextDescription, refImageBase64, }), });
+      const res = await fetch(workerUrl, { 
+        method: "POST", 
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        }, 
+        body: JSON.stringify({ engineMode: activeEngine, product: productName || "Analyzed Reference Video", usp: usp, trend, tone, shotCount: shotCount || 3, platform, pillar, talent, isContinuation: true, existingShots: shots, masterIdentity: masterIdentity, title: titleOverride, visual_style: visualStyle, refType, refUrl, refTextDescription, refImageBase64, }), 
+      });
       const data = await res.json(); if (!res.ok) throw new Error(data?.error || "Error chaining.");
       const normalizedNewShots = (data.shotlist || []).map((r: any) => ({ id: crypto.randomUUID(), angle: String(r?.angle || ""), location: String(r?.location || ""), tech_budget_hack: String(r?.tech_budget_hack || ""), action: String(r?.action || ""), audio: String(r?.audio || ""), image: String(r?.image || ""), imagePrompt: String(r?.imagePrompt || ""), }));
       const finalShots = [...shots, ...normalizedNewShots]; const finalMood = [...moodboard, ...(data.moodboard || [])]; const finalPremise = `${premiseOverride}\n\n[Continuous Sequence]:\n${data.premise}`;
@@ -388,8 +430,16 @@ export function VibeShotPlatform() {
   const handleExecuteSingleImage = async (shot: Shot) => {
     if (!cloudBriefId) { toast.error("KV Cloud ID missing. Selesaikan Phase 1 dulu, Cok."); return; }
     setLoadingShotsImages(prev => ({ ...prev, [shot.id]: true }));
+    const token = getSupabaseToken();
     try {
-      const res = await fetch(workerUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "render_single_image", briefId: cloudBriefId, visual_style: visualStyle, singleShotId: shot.id, shotToGenerate: shot, masterIdentity: masterIdentity, imageModel: imageModel }), });
+      const res = await fetch(workerUrl, { 
+        method: "POST", 
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+        }, 
+        body: JSON.stringify({ action: "render_single_image", briefId: cloudBriefId, visual_style: visualStyle, singleShotId: shot.id, shotToGenerate: shot, masterIdentity: masterIdentity, imageModel: imageModel }), 
+      });
       const data = await res.json(); if (!res.ok) throw new Error(data?.error || "Error rendering single.");
       updateShot(shot.id, "image", data.imageUrl);
       saveToLocalStorage( shots.map(s => s.id === shot.id ? {...s, image: data.imageUrl} : s), moodboard, premiseOverride, titleOverride, masterIdentity, visualStyle, cloudBriefId );

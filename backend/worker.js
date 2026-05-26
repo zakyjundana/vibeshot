@@ -1,3 +1,96 @@
+// ========================================================
+// VIBESHOT BACKEND — CLOUDFLARE WORKER (SUPABASE & CORS SECURED)
+// ========================================================
+
+// Base64url decoder helper
+function base64UrlDecode(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) {
+    str += '=';
+  }
+  const raw = atob(str);
+  const buffer = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) {
+    buffer[i] = raw.charCodeAt(i);
+  }
+  return buffer;
+}
+
+// HS256 JWT Signature Verification Helper using Web Crypto (Zero Dependencies)
+async function verifyJWT(token, secret) {
+  if (!token || !secret) return null;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const [headerB64, payloadB64, signatureB64] = parts;
+    
+    const encoder = new TextEncoder();
+    const data = encoder.encode(`${headerB64}.${payloadB64}`);
+    const keyData = encoder.encode(secret);
+    
+    // Import the secret as an HMAC key
+    const key = await crypto.subtle.importKey(
+      "raw",
+      keyData,
+      { name: "HMAC", hash: { name: "SHA-256" } },
+      false,
+      ["verify"]
+    );
+    
+    // Decode the signature and verify it
+    const signature = base64UrlDecode(signatureB64);
+    const isValid = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      signature,
+      data
+    );
+    
+    if (!isValid) return null;
+    
+    // Decode and parse the JSON payload
+    const payloadJson = atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"));
+    const payload = JSON.parse(payloadJson);
+    
+    // Check if the token has expired
+    if (payload.exp && Date.now() / 1000 > payload.exp) {
+      return null; // Expired
+    }
+    
+    return payload; // Returns payload containing .sub as user_id
+  } catch (e) {
+    return null;
+  }
+}
+
+// Dynamic CORS Header Builder
+function getCorsHeaders(request) {
+  const origin = request.headers.get("Origin");
+  
+  // List of approved development and production origins
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "https://vibeshot.studio",
+    "https://vibeshot-creative-hub.pages.dev"
+  ];
+  
+  let allowedOrigin = "*";
+  if (origin) {
+    const isAllowed = allowedOrigins.some(ao => origin === ao || origin.endsWith(ao.replace("https://", ".")));
+    if (isAllowed) {
+      allowedOrigin = origin;
+    }
+  }
+  
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Max-Age": "86400"
+  };
+}
+
 async function getYouTubeTranscript(url) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);
@@ -93,23 +186,47 @@ async function generateSingleFluxImage(prompt, style, seedBase, falKey, targetMo
 
 export default {
   async fetch(request, env, ctx) {
-    const corsHeaders = {
-      "Access-Control-Allow-Origin": "*", 
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    };
+    const corsHeaders = getCorsHeaders(request);
 
-    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
+    // OPTIONS preflight response for CORS
+    if (request.method === "OPTIONS") {
+      return new Response(null, { status: 204, headers: corsHeaders });
+    }
 
+    const supabaseUrl = env.SUPABASE_URL;
+    const supabaseKey = env.SUPABASE_ANON_KEY;
+    const supabaseSecret = env.SUPABASE_JWT_SECRET;
+    const geminiKey = env.GEMINI_API_KEY;
+    const falKey = env.FAL_API_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      return new Response(JSON.stringify({ error: "Backend Environment Error: SUPABASE_URL or SUPABASE_ANON_KEY bindings missing" }), { status: 500, headers: corsHeaders });
+    }
+
+    // ========================================================
+    // RUTE GET: Mengambil Brief berdasarkan UUID (Public read allowed)
+    // ========================================================
     if (request.method === "GET") {
       try {
         const url = new URL(request.url);
         const briefId = url.searchParams.get("id");
         if (briefId) {
-          if (!env.VIBESHOT_KV) return new Response(JSON.stringify({ error: "KV missing" }), { status: 500, headers: corsHeaders });
-          const savedData = await env.VIBESHOT_KV.get(briefId);
-          if (savedData) return new Response(savedData, { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-          return new Response(JSON.stringify({ error: "Not found" }), { status: 404, headers: corsHeaders });
+          // Hubungi Supabase REST API untuk mencocokkan UUID
+          const supabaseRes = await fetch(`${supabaseUrl}/rest/v1/briefs?id=eq.${briefId}`, {
+            headers: {
+              "apikey": supabaseKey,
+              "Authorization": `Bearer ${supabaseKey}` // Lakukan query sebagai key anon (read policy akan melewatinya)
+            }
+          });
+          if (!supabaseRes.ok) {
+            const errText = await supabaseRes.text();
+            throw new Error(`Supabase Retrieve Error: ${errText}`);
+          }
+          const briefs = await supabaseRes.json();
+          if (briefs.length > 0) {
+            return new Response(JSON.stringify(briefs[0]), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+          }
+          return new Response(JSON.stringify({ error: "Brief not found" }), { status: 404, headers: corsHeaders });
         }
         return new Response(JSON.stringify({ status: "Online" }), { status: 200, headers: corsHeaders });
       } catch (e) {
@@ -117,7 +234,27 @@ export default {
       }
     }
 
+    // ========================================================
+    // RUTE POST: Wajib Verifikasi JWT Supabase (Write operations)
+    // ========================================================
     try {
+      const authHeader = request.headers.get("Authorization");
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return new Response(JSON.stringify({ error: "Unauthorized: Missing Authorization Bearer token. Silakan login terlebih dahulu." }), { status: 401, headers: corsHeaders });
+      }
+      
+      const token = authHeader.split(" ")[1];
+      if (!supabaseSecret) {
+        return new Response(JSON.stringify({ error: "Backend Binding Error: SUPABASE_JWT_SECRET is not configured on Cloudflare Workers" }), { status: 500, headers: corsHeaders });
+      }
+      
+      const jwtPayload = await verifyJWT(token, supabaseSecret);
+      if (!jwtPayload) {
+        return new Response(JSON.stringify({ error: "Unauthorized: Sesi token Anda kedaluwarsa atau tidak valid. Silakan login ulang." }), { status: 401, headers: corsHeaders });
+      }
+      
+      const userId = jwtPayload.sub; // Ambil UID pengguna Supabase yang terverifikasi secara aman
+
       const bodyData = await request.json();
       const { 
         product, usp, trend, tone, shotCount, platform, pillar, talent, 
@@ -126,8 +263,6 @@ export default {
         singleShotId, shotToGenerate, imageModel, briefId 
       } = bodyData;
       
-      const geminiKey = env.GEMINI_API_KEY;
-      const falKey = env.FAL_API_KEY;
       if (!geminiKey) return new Response(JSON.stringify({ error: "GEMINI_API_KEY missing" }), { status: 500, headers: corsHeaders });
 
       const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
@@ -135,19 +270,31 @@ export default {
       const activeBriefId = briefId || bodyData.briefId;
 
       // ========================================================
-      // FASE 2: RENDER SINGLE IMAGE (🔥 FIX SAKTI DETEKSI ADAPTIF)
+      // FASE 2: RENDER SINGLE IMAGE (SUPABASE DATABASE INTERACTION)
       // ========================================================
       if (action === "render_single_image") {
-        if (!env.VIBESHOT_KV) return new Response(JSON.stringify({ error: "KV missing" }), { status: 500, headers: corsHeaders });
-        if (!shotToGenerate || !activeBriefId) return new Response(JSON.stringify({ error: "Missing parameters" }), { status: 400, headers: corsHeaders });
-        const existingBriefDataRaw = await env.VIBESHOT_KV.get(activeBriefId);
-        if (!existingBriefDataRaw) return new Response(JSON.stringify({ error: "Data missing" }), { status: 404, headers: corsHeaders });
-        let briefData = JSON.parse(existingBriefDataRaw);
+        if (!shotToGenerate || !activeBriefId) {
+          return new Response(JSON.stringify({ error: "Missing parameters: shotToGenerate or briefId" }), { status: 400, headers: corsHeaders });
+        }
         
-        // Jalur 1: Coba cari berdasarkan ID bawaan frontend
+        // Ambil data brief dari Supabase
+        const fetchRes = await fetch(`${supabaseUrl}/rest/v1/briefs?id=eq.${activeBriefId}`, {
+          headers: {
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${token}` // RLS akan membatasi agar hanya pemilik yang bisa melihat
+          }
+        });
+        if (!fetchRes.ok) {
+          const errText = await fetchRes.text();
+          return new Response(JSON.stringify({ error: `Supabase retrieve failed: ${errText}` }), { status: fetchRes.status, headers: corsHeaders });
+        }
+        
+        const briefs = await fetchRes.json();
+        if (briefs.length === 0) return new Response(JSON.stringify({ error: "Brief data not found or unauthorized access" }), { status: 404, headers: corsHeaders });
+        
+        let briefData = briefs[0];
+        
         let shotIndex = briefData.shotlist.findIndex(s => s.id === singleShotId);
-        
-        // Jalur 2 Fallback: Jika ID ga cocok akibat dioverwrite frontend, cari berdasarkan kesamaan teks naskah audio/visual!
         if (shotIndex === -1) {
           shotIndex = briefData.shotlist.findIndex(s => 
             (s.audio && s.audio === shotToGenerate.audio) || 
@@ -155,8 +302,6 @@ export default {
             (s.imagePrompt && s.imagePrompt === shotToGenerate.imagePrompt)
           );
         }
-        
-        // Jalur 3 Jaga-jaga: Kalau bener-bener mentok, pasang di slot pertama biar gak crash 404
         if (shotIndex === -1) shotIndex = 0;
         
         const currentStyle = visual_style || briefData.visual_style || "real-life";
@@ -166,26 +311,66 @@ export default {
         const newImageUrl = await generateSingleFluxImage(targetPrompt, currentStyle, shotSeed, falKey, imageModel);
         
         briefData.shotlist[shotIndex].image = newImageUrl;
-        briefData.shotlist[shotIndex].id = singleShotId; // Sinkronisasikan ID sekalian biar match buat request kedepan
+        briefData.shotlist[shotIndex].id = singleShotId;
         
-        await env.VIBESHOT_KV.put(activeBriefId, JSON.stringify(briefData));
+        // Update data ke Supabase (PATCH)
+        const updateRes = await fetch(`${supabaseUrl}/rest/v1/briefs?id=eq.${activeBriefId}`, {
+          method: "PATCH",
+          headers: {
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ shotlist: briefData.shotlist })
+        });
+        if (!updateRes.ok) {
+          const errText = await updateRes.text();
+          return new Response(JSON.stringify({ error: `Supabase update failed: ${errText}` }), { status: updateRes.status, headers: corsHeaders });
+        }
+        
         return new Response(JSON.stringify({ imageUrl: newImageUrl }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
       // ========================================================
-      // FASE 2: BULK MASSAL IMAGE RENDER
+      // FASE 2: BULK MASSAL IMAGE RENDER (SUPABASE DATABASE INTERACTION)
       // ========================================================
       if (action === "render_images") {
+        if (!activeBriefId) return new Response(JSON.stringify({ error: "Missing briefId" }), { status: 400, headers: corsHeaders });
         const incomingList = bodyData.shotlist || [];
         const processedList = await Promise.all(incomingList.map(async (shot, idx) => {
           const imageUrlMassal = await generateSingleFluxImage(shot.imagePrompt || shot.action, visual_style || "real-life", currentSecondsBase + idx, falKey, imageModel);
           return { ...shot, image: imageUrlMassal };
         }));
-        let responsePayloadMassal = { title, premise: bodyData.premise, visual_style, master_identity: masterIdentity, shotlist: processedList, moodboard: processedList.map(shot => shot.image) };
-        if (env.VIBESHOT_KV && activeBriefId) {
-          responsePayloadMassal.briefId = activeBriefId;
-          await env.VIBESHOT_KV.put(activeBriefId, JSON.stringify(responsePayloadMassal));
+        
+        let responsePayloadMassal = { 
+          id: activeBriefId,
+          user_id: userId,
+          title: title || "Untitled Strategy Board", 
+          premise: bodyData.premise || "", 
+          visual_style: visualStyle || "real-life", 
+          master_identity: masterIdentity || {}, 
+          shotlist: processedList, 
+          moodboard: processedList.map(shot => shot.image) 
+        };
+        
+        // Simpan perbaruan ke Supabase (PATCH)
+        const updateRes = await fetch(`${supabaseUrl}/rest/v1/briefs?id=eq.${activeBriefId}`, {
+          method: "PATCH",
+          headers: {
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ 
+            shotlist: responsePayloadMassal.shotlist, 
+            moodboard: responsePayloadMassal.moodboard 
+          })
+        });
+        if (!updateRes.ok) {
+          const errText = await updateRes.text();
+          return new Response(JSON.stringify({ error: `Supabase mass update failed: ${errText}` }), { status: updateRes.status, headers: corsHeaders });
         }
+        
         return new Response(JSON.stringify(responsePayloadMassal), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
@@ -200,7 +385,7 @@ export default {
       `;
 
       // ========================================================
-      // BABAK 1: KILAT IMAGE TO TEXT DESCRIPTION
+      // BABAK 1: KILAT IMAGE TO TEXT DESCRIPTION (ReDoS-safe split parser)
       // ========================================================
       let imageToTextDescription = "";
       if (refType === "photo" && refImageBase64 && refImageBase64.startsWith("data:image/")) {
@@ -338,17 +523,41 @@ export default {
       aiJsonTextOnly.shotlist = aiJsonTextOnly.shotlist.map(shot => ({ ...shot, image: "" }));
       aiJsonTextOnly.moodboard = [];
 
-      if (env.VIBESHOT_KV) {
-        const generatedIdMassal = crypto.randomUUID();
-        let cloudDataPayloadMassal = { ...aiJsonTextOnly };
-        if (isContinuation && existingShots && existingShots.length > 0) {
-          cloudDataPayloadMassal.shotlist = [...existingShots, ...aiJsonTextOnly.shotlist];
-        }
-        cloudDataPayloadMassal.briefId = generatedIdMassal;
-        aiJsonTextOnly.briefId = generatedIdMassal; 
-        await env.VIBESHOT_KV.put(generatedIdMassal, JSON.stringify(cloudDataPayloadMassal));
+      // Simpan brief baru ke database Supabase
+      const generatedIdMassal = crypto.randomUUID();
+      let cloudDataPayloadMassal = { 
+        id: generatedIdMassal,
+        user_id: userId,
+        title: aiJsonTextOnly.title || title || "Untitled Strategy Board",
+        premise: aiJsonTextOnly.premise || "",
+        visual_style: aiJsonTextOnly.visual_style || visual_style || "real-life",
+        master_identity: aiJsonTextOnly.master_identity || {},
+        shotlist: aiJsonTextOnly.shotlist,
+        moodboard: aiJsonTextOnly.moodboard
+      };
+      
+      if (isContinuation && existingShots && existingShots.length > 0) {
+        cloudDataPayloadMassal.shotlist = [...existingShots, ...aiJsonTextOnly.shotlist];
+        cloudDataPayloadMassal.id = activeBriefId; // Gunakan briefId yang sudah ada untuk kelanjutan
       }
 
+      // Hubungi Supabase REST API (UPSERT)
+      const saveRes = await fetch(`${supabaseUrl}/rest/v1/briefs`, {
+        method: "POST",
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "Prefer": "resolution=merge" // Lakukan UPSERT jika ID sudah ada
+        },
+        body: JSON.stringify(cloudDataPayloadMassal)
+      });
+      if (!saveRes.ok) {
+        const errText = await saveRes.text();
+        throw new Error(`Supabase save failed: ${errText}`);
+      }
+
+      aiJsonTextOnly.briefId = cloudDataPayloadMassal.id;
       return new Response(JSON.stringify(aiJsonTextOnly), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     } catch (error) {
