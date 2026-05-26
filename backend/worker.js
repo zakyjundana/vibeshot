@@ -19,58 +19,93 @@ function base64UrlDecode(str) {
 // HS256 JWT Signature Verification Helper using Web Crypto (Zero Dependencies)
 // IMPORTANT: Supabase JWT secret is base64-encoded. We must decode it to raw bytes first.
 async function verifyJWT(token, secret) {
-  if (!token || !secret) return null;
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const [headerB64, payloadB64, signatureB64] = parts;
-    
-    const encoder = new TextEncoder();
-    const data = encoder.encode(`${headerB64}.${payloadB64}`);
-    
-    // Supabase JWT secrets are base64-encoded — decode to raw bytes for HMAC key
-    // This is the critical fix: using UTF-8 bytes of base64 string was wrong
-    let keyData;
-    try {
-      keyData = Uint8Array.from(atob(secret), c => c.charCodeAt(0));
-    } catch {
-      // Fallback: if base64 decode fails, use raw UTF-8 bytes
-      keyData = encoder.encode(secret);
-    }
-    
-    // Import the secret as an HMAC key
-    const key = await crypto.subtle.importKey(
-      "raw",
-      keyData,
-      { name: "HMAC", hash: { name: "SHA-256" } },
-      false,
-      ["verify"]
-    );
-    
-    // Decode the signature and verify it
-    const signature = base64UrlDecode(signatureB64);
-    const isValid = await crypto.subtle.verify(
-      "HMAC",
-      key,
-      signature,
-      data
-    );
-    
-    if (!isValid) return null;
-    
-    // Decode and parse the JSON payload
-    const payloadJson = atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/"));
-    const payload = JSON.parse(payloadJson);
-    
-    // Check if the token has expired
-    if (payload.exp && Date.now() / 1000 > payload.exp) {
-      return null; // Expired
-    }
-    
-    return payload; // Returns payload containing .sub as user_id
-  } catch (e) {
-    return null;
+  if (!token) throw new Error("Missing token");
+  if (!secret) throw new Error("Missing secret");
+  
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    throw new Error(`Token format invalid: has ${parts.length} parts (expected 3)`);
   }
+  const [headerB64, payloadB64, signatureB64] = parts;
+  
+  let header, payload;
+  try {
+    header = JSON.parse(atob(headerB64.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch (e) {
+    throw new Error(`Failed to parse token header: ${e.message}`);
+  }
+  
+  try {
+    payload = JSON.parse(atob(payloadB64.replace(/-/g, "+").replace(/_/g, "/")));
+  } catch (e) {
+    throw new Error(`Failed to parse token payload: ${e.message}`);
+  }
+  
+  const encoder = new TextEncoder();
+  const data = encoder.encode(`${headerB64}.${payloadB64}`);
+  const signature = base64UrlDecode(signatureB64);
+  
+  // Generate candidate secrets
+  const candidates = [];
+  
+  // 1. Raw secret as is
+  candidates.push({ name: "raw_secret_as_utf8", value: encoder.encode(secret) });
+  try {
+    candidates.push({ name: "raw_secret_as_base64", value: Uint8Array.from(atob(secret), c => c.charCodeAt(0)) });
+  } catch (e) {}
+  
+  // 2. Secret with "JWT_" prefix removed (if present) or added (if not)
+  if (secret.startsWith("JWT_")) {
+    const stripped = secret.substring(4);
+    candidates.push({ name: "stripped_jwt_prefix_as_utf8", value: encoder.encode(stripped) });
+    try {
+      candidates.push({ name: "stripped_jwt_prefix_as_base64", value: Uint8Array.from(atob(stripped), c => c.charCodeAt(0)) });
+    } catch (e) {}
+  } else {
+    const prefixed = "JWT_" + secret;
+    candidates.push({ name: "prefixed_jwt_prefix_as_utf8", value: encoder.encode(prefixed) });
+    try {
+      candidates.push({ name: "prefixed_jwt_prefix_as_base64", value: Uint8Array.from(atob(prefixed), c => c.charCodeAt(0)) });
+    } catch (e) {}
+  }
+  
+  let isValid = false;
+  let successfulCandidate = null;
+  
+  for (const cand of candidates) {
+    try {
+      const key = await crypto.subtle.importKey(
+        "raw",
+        cand.value,
+        { name: "HMAC", hash: { name: "SHA-256" } },
+        false,
+        ["verify"]
+      );
+      const verified = await crypto.subtle.verify(
+        "HMAC",
+        key,
+        signature,
+        data
+      );
+      if (verified) {
+        isValid = true;
+        successfulCandidate = cand.name;
+        break;
+      }
+    } catch (err) {}
+  }
+  
+  if (!isValid) {
+    throw new Error(`Signature verification failed for all ${candidates.length} key candidates. Token claims - iss: ${payload.iss || 'none'}, aud: ${payload.aud || 'none'}, sub: ${payload.sub || 'none'}, header.alg: ${header.alg || 'none'}. Secret length in worker is ${secret.length} chars.`);
+  }
+  
+  // Check if the token has expired
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.exp && now > payload.exp) {
+    throw new Error(`Token expired. Expired at: ${payload.exp} (${new Date(payload.exp * 1000).toISOString()}), Current time: ${now} (${new Date(now * 1000).toISOString()}), Diff: ${now - payload.exp} seconds`);
+  }
+  
+  return payload;
 }
 
 // Dynamic CORS Header Builder
@@ -259,9 +294,11 @@ export default {
         return new Response(JSON.stringify({ error: "Backend Binding Error: SUPABASE_JWT_SECRET is not configured on Cloudflare Workers" }), { status: 500, headers: corsHeaders });
       }
       
-      const jwtPayload = await verifyJWT(token, supabaseSecret);
-      if (!jwtPayload) {
-        return new Response(JSON.stringify({ error: "Unauthorized: Sesi token Anda kedaluwarsa atau tidak valid. Silakan login ulang." }), { status: 401, headers: corsHeaders });
+      let jwtPayload;
+      try {
+        jwtPayload = await verifyJWT(token, supabaseSecret);
+      } catch (err) {
+        return new Response(JSON.stringify({ error: `Unauthorized: ${err.message}. Sesi token Anda kedaluwarsa atau tidak valid. Silakan login ulang.` }), { status: 401, headers: corsHeaders });
       }
       
       const userId = jwtPayload.sub; // Ambil UID pengguna Supabase yang terverifikasi secara aman
