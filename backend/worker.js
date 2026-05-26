@@ -409,12 +409,12 @@ export default {
           );
         }
         if (shotIndex === -1) shotIndex = 0;
-        
-        const currentStyle = visual_style || briefData.visual_style || "real-life";
+               const currentStyle = visual_style || briefData.visual_style || "real-life";
         const targetPrompt = shotToGenerate.imagePrompt || shotToGenerate.action || "cinematic commercial scenario";
         const shotSeed = currentSecondsBase + shotIndex;
+        const activeModel = shotToGenerate.imageModel || imageModel;
 
-        const newImageUrl = await generateSingleFluxImage(targetPrompt, currentStyle, shotSeed, falKey, imageModel);
+        const newImageUrl = await generateSingleFluxImage(targetPrompt, currentStyle, shotSeed, falKey, activeModel);
         
         briefData.shotlist[shotIndex].image = newImageUrl;
         briefData.shotlist[shotIndex].id = singleShotId;
@@ -444,7 +444,8 @@ export default {
         if (!activeBriefId) return new Response(JSON.stringify({ error: "Missing briefId" }), { status: 400, headers: corsHeaders });
         const incomingList = bodyData.shotlist || [];
         const processedList = await Promise.all(incomingList.map(async (shot, idx) => {
-          const imageUrlMassal = await generateSingleFluxImage(shot.imagePrompt || shot.action, visual_style || "real-life", currentSecondsBase + idx, falKey, imageModel);
+          const activeModelMass = shot.imageModel || imageModel;
+          const imageUrlMassal = await generateSingleFluxImage(shot.imagePrompt || shot.action, visual_style || "real-life", currentSecondsBase + idx, falKey, activeModelMass);
           return { ...shot, image: imageUrlMassal };
         }));
         

@@ -12,6 +12,7 @@ interface Shot {
   audio: string;
   image?: string;
   imagePrompt?: string;
+  imageModel?: string;
 }
 
 const translations = {
@@ -386,19 +387,52 @@ function ShotCard({
             placeholder="Prompt generator..."
           />
         </div>
-        <button
-          type="button"
-          onClick={() => handleExecuteSingleImage(shot)}
-          disabled={loadingSingleImage}
-          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-[11px] font-bold tracking-tight text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 shrink-0 ml-0 md:ml-4 cursor-pointer active:scale-95 duration-100"
-        >
-          {loadingSingleImage ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Film className="w-3.5 h-3.5 text-indigo-500" />
-          )}{" "}
-          {t.btnRenderSingle}
-        </button>
+        <div className="flex flex-col gap-1.5 shrink-0 w-full md:w-auto ml-0 md:ml-4">
+          <div>
+            <span className="text-[8px] font-mono text-zinc-450 dark:text-zinc-500 uppercase tracking-wider block mb-1">
+              AI model
+            </span>
+            <select
+              value={shot.imageModel || ""}
+              onChange={(e) => updateShot(shot.id, "imageModel", e.target.value)}
+              className="w-full md:w-48 rounded border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-2 py-1 text-[10px] text-zinc-800 dark:text-zinc-200 focus:border-zinc-400 dark:focus:border-zinc-700 focus:outline-none transition-colors font-medium"
+            >
+              <option value="">(Global Model Default)</option>
+              <optgroup label="⚡ KASTA EKONOMIS">
+                <option value="fal-ai/flux/schnell">FLUX 1 [Schnell] ($0.003)</option>
+                <option value="fal-ai/flux-2/flash">FLUX 2 [Flash] ($0.004)</option>
+                <option value="fal-ai/flux-2/turbo">FLUX 2 [Turbo] ($0.004)</option>
+                <option value="fal-ai/gemini-3.1-flash-image-preview">Google Nano 2 ($0.003)</option>
+                <option value="fal-ai/bytedance/seedream/v5/lite/text-to-image">Seedream 5.0 Lite ($0.003)</option>
+              </optgroup>
+              <optgroup label="🎨 KASTA DESIGNER & TYPO">
+                <option value="fal-ai/recraft/v4/pro/text-to-image">Recraft V4 Pro ($0.03)</option>
+                <option value="fal-ai/ideogram/v3">Ideogram V3 ($0.04)</option>
+                <option value="fal-ai/openai/gpt-image-2">OpenAI GPT 2 ($0.04)</option>
+                <option value="fal-ai/flux-pro/kontext/text-to-image">FLUX Kontext Pro ($0.03)</option>
+              </optgroup>
+              <optgroup label="👑 KASTA SULTAN">
+                <option value="fal-ai/flux-2-max">FLUX 2 [Max] ($0.05)</option>
+                <option value="fal-ai/flux-pro/v1.1-ultra">FLUX 1.1 Ultra ($0.05)</option>
+                <option value="fal-ai/flux/dev">FLUX 1 [Dev] ($0.025)</option>
+                <option value="fal-ai/flux-2-flex">FLUX 2 [Flex] ($0.03)</option>
+              </optgroup>
+            </select>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleExecuteSingleImage(shot)}
+            disabled={loadingSingleImage}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-[11px] font-bold tracking-tight text-zinc-700 dark:text-zinc-200 transition hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 cursor-pointer active:scale-95 duration-100 w-full"
+          >
+            {loadingSingleImage ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Film className="w-3.5 h-3.5 text-indigo-500" />
+            )}{" "}
+            {t.btnRenderSingle}
+          </button>
+        </div>
       </div>
       <button
         type="button"
