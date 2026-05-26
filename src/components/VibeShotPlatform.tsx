@@ -88,7 +88,7 @@ const translations = {
     pillarKonten: "Content Pillar",
     pillarOption1: "Entertainment / Comedy Skit",
     pillarOption2: "Hard Sell / Direct Product Promotion",
-    talentApproach: "Talent Approach",
+    pendekatanTalent: "Talent Approach",
     talentOption1: "Creator-Led (Talent talking to camera)",
     talentOption2: "Voice Over Only (Visual clips + VO narrator)",
     moodTone: "Content Mood & Tone",
@@ -463,7 +463,7 @@ export function VibeShotPlatform() {
                     <>
                       <Field label={t.targetPlatform}><select value={platform} onChange={(e) => setPlatform(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="TikTok">TikTok (Organic & Raw Concept)</option><option value="Instagram Reels">Instagram Reels (Aesthetic & Trendy)</option></select></Field>
                       <Field label={t.pillarKonten}><select value={pillar} onChange={(e) => setPillar(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="Hiburan / Entertainment">{t.pillarOption1}</option><option value="Hard Sell / Promosi Langsung">{t.pillarOption2}</option></select></Field>
-                      <Field label={lang === "id" ? t.pendekatanTalent : "Talent Approach"}><select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="Creator-Led">{t.talentOption1}</option><option value="Voice Over Only">{t.talentOption2}</option></select></Field>
+                      <Field label={t.pendekatanTalent}><select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="Creator-Led">{t.talentOption1}</option><option value="Voice Over Only">{t.talentOption2}</option></select></Field>
                       <Field label={t.moodTone}><input value={tone} onChange={(e) => setTone(e.target.value)} className={inputStyle} /></Field>
                     </>
                   )}
