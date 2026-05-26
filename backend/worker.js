@@ -263,8 +263,19 @@ async function generateSingleFluxImage(prompt, style, seedBase, falKey, targetMo
     }
   } else if (currentModel.includes("openai")) {
     payload.size = "1024x1792";
+  } else if (currentModel.includes("seedream")) {
+    payload.width = 576;
+    payload.height = 1024;
+    payload.seed = seedBase;
+  } else if (currentModel.includes("gemini")) {
+    payload.width = 576;
+    payload.height = 1024;
   } else {
+    // Robust fallback for any other custom models
+    payload.width = 576;
+    payload.height = 1024;
     payload.aspect_ratio = "9:16";
+    payload.seed = seedBase;
   }
 
   try {
