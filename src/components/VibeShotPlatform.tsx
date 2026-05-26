@@ -411,20 +411,19 @@ function ShotCard({
   );
 }
 
-const getSupabaseToken = (): string => {
+// Async token getter using official Supabase SDK — handles refresh automatically
+const getSupabaseToken = async (): Promise<string> => {
   try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) {
-        const rawToken = localStorage.getItem(key);
-        if (rawToken) {
-          const parsed = JSON.parse(rawToken);
-          return parsed?.access_token || "";
-        }
-      }
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error("Supabase getSession error:", error);
+      return "";
+    }
+    if (data?.session?.access_token) {
+      return data.session.access_token;
     }
   } catch (e) {
-    console.error("Failed to parse Supabase token from local storage:", e);
+    console.error("Failed to retrieve Supabase session:", e);
   }
   return "";
 };
@@ -879,7 +878,7 @@ export function VibeShotPlatform() {
   };
 
   const handleGenerate = async () => {
-    const token = getSupabaseToken();
+    const token = await getSupabaseToken();
     if (!token) {
       toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
       setAuthModalMode("login");
@@ -893,7 +892,7 @@ export function VibeShotPlatform() {
         method: "POST", 
         headers: { 
           "Content-Type": "application/json",
-          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+          "Authorization": `Bearer ${token}`
         }, 
         body: JSON.stringify(requestPayload), 
       });
@@ -907,7 +906,7 @@ export function VibeShotPlatform() {
   };
 
   const handleMassExecuteImages = async () => {
-    const token = getSupabaseToken();
+    const token = await getSupabaseToken();
     if (!token) {
       toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
       setAuthModalMode("login");
@@ -920,7 +919,7 @@ export function VibeShotPlatform() {
         method: "POST", 
         headers: { 
           "Content-Type": "application/json",
-          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+          "Authorization": `Bearer ${token}`
         }, 
         body: JSON.stringify({ action: "render_images", briefId: cloudBriefId, title: titleOverride, premise: premiseOverride, visual_style: visualStyle, masterIdentity: masterIdentity, shotlist: shots, imageModel: imageModel }), 
       });
@@ -933,7 +932,7 @@ export function VibeShotPlatform() {
   };
 
   const handleLanjutkanCerita = async () => {
-    const token = getSupabaseToken();
+    const token = await getSupabaseToken();
     if (!token) {
       toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
       setAuthModalMode("login");
@@ -946,7 +945,7 @@ export function VibeShotPlatform() {
         method: "POST", 
         headers: { 
           "Content-Type": "application/json",
-          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+          "Authorization": `Bearer ${token}`
         }, 
         body: JSON.stringify({ engineMode: activeEngine, product: productName || "Analyzed Reference Video", usp: usp, trend, tone, shotCount: shotCount || 3, platform, pillar, talent, isContinuation: true, existingShots: shots, masterIdentity: masterIdentity, title: titleOverride, visual_style: visualStyle, refType, refUrl, refTextDescription, refImageBase64, }), 
       });
@@ -973,7 +972,7 @@ export function VibeShotPlatform() {
   };
 
   const handleExecuteSingleImage = async (shot: Shot) => {
-    const token = getSupabaseToken();
+    const token = await getSupabaseToken();
     if (!token) {
       toast.error(lang === "id" ? "Autentikasi diperlukan. Silakan masuk terlebih dahulu!" : "Authentication required. Please log in first!");
       setAuthModalMode("login");
@@ -987,7 +986,7 @@ export function VibeShotPlatform() {
         method: "POST", 
         headers: { 
           "Content-Type": "application/json",
-          ...(token ? { "Authorization": `Bearer ${token}` } : {})
+          "Authorization": `Bearer ${token}`
         }, 
         body: JSON.stringify({ action: "render_single_image", briefId: cloudBriefId, visual_style: visualStyle, singleShotId: shot.id, shotToGenerate: shot, masterIdentity: masterIdentity, imageModel: imageModel }), 
       });
