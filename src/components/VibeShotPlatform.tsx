@@ -29,7 +29,7 @@ const translations = {
     placeholderIde: "Contoh: Jadikan ini buat produk Kopi Susu Gula Aren, tonjolkan efek bikin melek instan...",
     trendLabel: "Tren Viral Saat Ini / Gaya Visual (Opsional)",
     trendPlaceholder: "Contoh: Tren ASMR tapping produk, transisi beat drop jedag-jedug, gaya sinematik lofi...",
-    arsitekturVibe: "2. Arsitektur & Vibe Konten",
+    arsitekturVibe: "3. Arsitektur & Vibe Konten",
     targetPlatform: "Target Platform Konten",
     pillarKonten: "Pillar / Kategori Konten",
     pillarOption1: "Hiburan / Komedi Skit / Entertainment",
@@ -39,15 +39,15 @@ const translations = {
     talentOption2: "Voice Over Only (Potongan visual + VO narator)",
     moodTone: "Mood & Tone Konten (Gaya Penyampaian)",
     jumlahShot: "Jumlah Shot Yang Diminta (Awal/Lanjutan)",
-    refMultimodal: "3. Referensi Alur & Visual (Multimodal)",
+    refMultimodal: "2. Referensi Alur & Visual (Multimodal)",
     tipeAset: "Tipe Aset Referensi",
     noRef: "Tanpa referensi (Andalkan Teks Murni)",
     uploadPhoto: "Upload Foto Moodboard / Screenshot",
-    pasteLink: "Paste Link Video Referensi (TikTok/YouTube)",
+    pasteLink: "Paste Link Video Referensi (YouTube)",
     textBasedRef: "Tulis Deskripsi Teks / Transkrip Video Manual",
     clickUpload: "Klik untuk pilih gambar/screenshot/video",
     payloadLocked: "✓ payload aset visual terkunci",
-    pastePlaceholder: "Paste link video TikTok atau YouTube di sini untuk dicuri strukturnya...",
+    pastePlaceholder: "Paste link video YouTube di sini untuk dicuri strukturnya...",
     textPlaceholder: "Tulis di sini deskripsi alur video yang lo ingat, ketik transkrip manual, atau sebutkan gaya moodboard text-based...",
     btnCompile: "Eksekusi Cetak Biru Konten 🚀",
     btnCompiling: "Membongkar Referensi & Meracik AI...",
@@ -87,7 +87,7 @@ const translations = {
     placeholderIde: "e.g., Turn this into a campaign for iced coffee, emphasize the instant energy kick...",
     trendLabel: "Current Viral Trend / Visual Style (Optional)",
     trendPlaceholder: "e.g., ASMR product tapping, lofi cinematic aesthetic, fast beat drop transitions...",
-    arsitekturVibe: "2. Content Architecture",
+    arsitekturVibe: "3. Content Architecture",
     targetPlatform: "Target Platform",
     pillarKonten: "Content Pillar",
     pillarOption1: "Entertainment / Comedy Skit",
@@ -97,15 +97,15 @@ const translations = {
     talentOption2: "Voice Over Only (Visual clips + VO narrator)",
     moodTone: "Content Mood & Tone",
     jumlahShot: "Requested Shot Count (Initial/Extension)",
-    refMultimodal: "3. Flow & Visual References (Multimodal)",
+    refMultimodal: "2. Flow & Visual References (Multimodal)",
     tipeAset: "Reference Asset Type",
     noRef: "No reference (Text only)",
     uploadPhoto: "Upload Moodboard / Screenshot Photo",
-    pasteLink: "Paste Reference Video Link (TikTok/YouTube)",
+    pasteLink: "Paste Reference Video Link (YouTube)",
     textBasedRef: "Write Text Description / Manual Transcript",
     clickUpload: "Click to select image/screenshot/video",
     payloadLocked: "✓ visual asset payload cached",
-    pastePlaceholder: "Paste TikTok or YouTube link to extract structural pacing...",
+    pastePlaceholder: "Paste YouTube link to extract structural pacing...",
     textPlaceholder: "Write rough pacing, text transcript, or text-based moodboard instructions here...",
     btnCompile: "Execute Production Blueprint 🚀",
     btnCompiling: "Dissecting References & Compiling AI...",
@@ -208,7 +208,7 @@ export function VibeShotPlatform() {
   const [usp, setUsp] = useState("");
   const [trend, setTrend] = useState("");
   const [tone, setTone] = useState("Comedic");
-  const [platform, setPlatform] = useState("TikTok");
+  const [platform, setPlatform] = useState("Instagram Reels");
   const [pillar, setPillar] = useState("Hiburan / Entertainment");
   const [talent, setTalent] = useState("Creator-Led");
   const [shotCount, setShotCount] = useState(6);
@@ -437,7 +437,7 @@ export function VibeShotPlatform() {
               <span className="block text-[9px] font-mono font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">{t.selectMode}</span>
               <div className="grid grid-cols-2 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200/40 dark:border-zinc-800">
                 <button type="button" onClick={() => setActiveEngine("hybrid")} className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${hybridActiveStyle}`}>{t.modeHybrid}</button>
-                <button type="button" onClick={() => { setActiveEngine("clone"); setOpenSection("core"); }} className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${cloneActiveStyle}`}>{t.modeClone}</button>
+                <button type="button" onClick={() => { setActiveEngine("clone"); setRefType("link"); setOpenSection("core"); }} className={`text-[11px] font-bold py-2 px-3 rounded-lg transition-all duration-200 cursor-pointer ${cloneActiveStyle}`}>{t.modeClone}</button>
               </div>
               <p className="text-[10px] text-zinc-400 dark:text-zinc-500 italic leading-snug px-1">{activeEngine === "hybrid" ? t.modeHybridDesc : t.modeCloneDesc}</p>
             </div>
@@ -457,6 +457,45 @@ export function VibeShotPlatform() {
               )}
             </div>
 
+            <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30">
+              <button type="button" onClick={() => setOpenSection(openSection === "ref" ? "none" : "ref")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"><span className="flex items-center gap-2"><Upload className="h-3.5 w-3.5 text-zinc-500" /> {t.refMultimodal}</span>{openSection === "ref" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}</button>
+              {openSection === "ref" && (
+                <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">
+                  <Field label={t.tipeAset}>
+                    <select value={refType} onChange={(e) => setRefType(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
+                      {activeEngine === "hybrid" && <option value="none">{t.noRef}</option>}
+                      <option value="link">{t.pasteLink}</option>
+                      <option value="photo">{t.uploadPhoto}</option>
+                      {activeEngine === "hybrid" && <option value="text">{t.textBasedRef}</option>}
+                    </select>
+                  </Field>
+                  {refType === "photo" && (
+                    <div className="space-y-2">
+                      <label className="flex flex-col items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg p-4 bg-zinc-50/50 dark:bg-zinc-900/50 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors">
+                        <Upload className="h-5 w-5 text-zinc-400 dark:text-zinc-500 mb-1" />
+                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400 text-center">{t.clickUpload}</span>
+                        <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                      </label>
+                      {refImageBase64 && <span className="text-[10px] font-mono text-emerald-500 block text-center font-medium">{t.payloadLocked}</span>}
+                    </div>
+                  )}
+                  {refType === "link" && (
+                    <Field label={t.pasteLink}>
+                      <div className="relative flex items-center">
+                        <input value={refUrl} onChange={(e) => setRefUrl(e.target.value)} placeholder={t.pastePlaceholder} className={inputStyle + " pr-8"} />
+                        <LinkIcon className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5" />
+                      </div>
+                    </Field>
+                  )}
+                  {refType === "text" && (
+                    <Field label={t.textBasedRef}>
+                      <textarea rows={4} value={refTextDescription} onChange={(e) => setRefTextDescription(e.target.value)} placeholder={t.textPlaceholder} className={inputStyle + " resize-none"} />
+                    </Field>
+                  )}
+                </div>
+              )}
+            </div>
+
             <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30 transition-all">
               <button type="button" onClick={() => setOpenSection(openSection === "vibe" ? "none" : "vibe")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                 <span className="flex items-center gap-2"><Layers className="h-3.5 w-3.5 text-zinc-500" /> {t.arsitekturVibe}</span>
@@ -466,7 +505,7 @@ export function VibeShotPlatform() {
                 <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">
                   {activeEngine === "hybrid" && (
                     <>
-                      <Field label={t.targetPlatform}><select value={platform} onChange={(e) => setPlatform(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="TikTok">TikTok (Organic & Raw Concept)</option><option value="Instagram Reels">Instagram Reels (Aesthetic & Trendy)</option></select></Field>
+                      <Field label={t.targetPlatform}><select value={platform} onChange={(e) => setPlatform(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="Instagram Reels">Instagram Reels (Aesthetic & Trendy)</option><option value="YouTube Shorts">YouTube Shorts (Fast & Punchy)</option></select></Field>
                       <Field label={t.pillarKonten}><select value={pillar} onChange={(e) => setPillar(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="Hiburan / Entertainment">{t.pillarOption1}</option><option value="Hard Sell / Promosi Langsung">{t.pillarOption2}</option></select></Field>
                       <Field label={t.pendekatanTalent}><select value={talent} onChange={(e) => setTalent(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}><option value="Creator-Led">{t.talentOption1}</option><option value="Voice Over Only">{t.talentOption2}</option></select></Field>
                       <Field label={t.moodTone}><input value={tone} onChange={(e) => setTone(e.target.value)} className={inputStyle} /></Field>
@@ -496,45 +535,6 @@ export function VibeShotPlatform() {
                       </optgroup>
                     </select>
                   </Field>
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-lg border border-zinc-200/60 dark:border-zinc-800 overflow-hidden bg-zinc-50/30 dark:bg-zinc-900/30">
-              <button type="button" onClick={() => setOpenSection(openSection === "ref" ? "none" : "ref")} className="flex w-full items-center justify-between p-3 text-left text-xs font-medium bg-white dark:bg-[#111111] border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"><span className="flex items-center gap-2"><Upload className="h-3.5 w-3.5 text-zinc-500" /> {t.refMultimodal}</span>{openSection === "ref" ? <Eye className="h-3 w-3 text-zinc-400" /> : <EyeOff className="h-3 w-3 text-zinc-400" />}</button>
-              {openSection === "ref" && (
-                <div className="p-4 space-y-4 bg-white dark:bg-[#111111]">
-                  <Field label={t.tipeAset}>
-                    <select value={refType} onChange={(e) => setRefType(e.target.value)} className={inputStyle + " bg-zinc-50/50 dark:bg-zinc-800/50"}>
-                      {activeEngine === "hybrid" && <option value="none">{t.noRef}</option>}
-                      <option value="link">{t.pasteLink}</option>
-                      <option value="photo">{t.uploadPhoto}</option>
-                      <option value="text">{t.textBasedRef}</option>
-                    </select>
-                  </Field>
-                  {refType === "photo" && (
-                    <div className="space-y-2">
-                      <label className="flex flex-col items-center justify-center border border-dashed border-zinc-200 dark:border-zinc-700 rounded-lg p-4 bg-zinc-50/50 dark:bg-zinc-900/50 cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800/50 transition-colors">
-                        <Upload className="h-5 w-5 text-zinc-400 dark:text-zinc-500 mb-1" />
-                        <span className="text-[11px] text-zinc-500 dark:text-zinc-400 text-center">{t.clickUpload}</span>
-                        <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-                      </label>
-                      {refImageBase64 && <span className="text-[10px] font-mono text-emerald-500 block text-center font-medium">{t.payloadLocked}</span>}
-                    </div>
-                  )}
-                  {refType === "link" && (
-                    <Field label={t.pasteLink}>
-                      <div className="relative flex items-center">
-                        <input value={refUrl} onChange={(e) => setRefUrl(e.target.value)} placeholder={t.pastePlaceholder} className={inputStyle + " pr-8"} />
-                        <LinkIcon className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5" />
-                      </div>
-                    </Field>
-                  )}
-                  {refType === "text" && (
-                    <Field label={t.textBasedRef}>
-                      <textarea rows={4} value={refTextDescription} onChange={(e) => setRefTextDescription(e.target.value)} placeholder={t.textPlaceholder} className={inputStyle + " resize-none"} />
-                    </Field>
-                  )}
                 </div>
               )}
             </div>
