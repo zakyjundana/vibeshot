@@ -261,10 +261,23 @@ async function getYouTubeTranscript(url) {
   } else if (currentModel.includes("seedream")) {
     payload.image_size = "portrait_16_9";
     payload.seed = seedBase;
-  } else if (currentModel.includes("banana") || currentModel.includes("gemini")) {
+  } else if (currentModel.includes("nano-banana-pro")) {
+    // Nano Banana Pro (Google Gemini) — $0.15/image
     payload.aspect_ratio = "9:16";
     payload.seed = seedBase;
     payload.resolution = "1K";
+    payload.num_images = 1;
+    payload.output_format = "jpeg";
+    payload.safety_tolerance = "4";
+  } else if (currentModel.includes("nano-banana") || currentModel.includes("banana")) {
+    // Nano Banana 2 (Google Gemini) — $0.08/image, default aspect_ratio is "auto"
+    payload.aspect_ratio = "9:16";
+    payload.seed = seedBase;
+    payload.resolution = "1K";
+    payload.num_images = 1;
+    payload.output_format = "jpeg";
+    payload.limit_generations = true;  // prevent multi-image generation from prompt
+    payload.safety_tolerance = "4";
   } else {
     // Robust fallback for any other custom models
     payload.width = 576;

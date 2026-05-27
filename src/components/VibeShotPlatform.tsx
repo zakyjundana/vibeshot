@@ -402,8 +402,6 @@ function ShotCard({
                 <option value="fal-ai/flux/schnell">FLUX 1 [Schnell] ($0.003)</option>
                 <option value="fal-ai/flux-2/flash">FLUX 2 [Flash] ($0.004)</option>
                 <option value="fal-ai/flux-2/turbo">FLUX 2 [Turbo] ($0.004)</option>
-                <option value="fal-ai/nano-banana-2">Google Nano Banana 2 ($0.003)</option>
-                <option value="fal-ai/nano-banana-pro">Google Nano Banana Pro ($0.003)</option>
                 <option value="fal-ai/bytedance/seedream/v5/lite/text-to-image">Seedream 5.0 Lite ($0.003)</option>
               </optgroup>
               <optgroup label="🎨 KASTA DESIGNER & TYPO">
@@ -411,6 +409,10 @@ function ShotCard({
                 <option value="fal-ai/ideogram/v3">Ideogram V3 ($0.04)</option>
                 <option value="fal-ai/openai/gpt-image-2">OpenAI GPT 2 ($0.04)</option>
                 <option value="fal-ai/flux-pro/kontext/text-to-image">FLUX Kontext Pro ($0.03)</option>
+              </optgroup>
+              <optgroup label="🤖 GOOGLE AI (GEMINI)">
+                <option value="fal-ai/nano-banana-2">Nano Banana 2 — FAST ($0.08)</option>
+                <option value="fal-ai/nano-banana-pro">Nano Banana Pro — SOTA ($0.15)</option>
               </optgroup>
               <optgroup label="👑 KASTA SULTAN">
                 <option value="fal-ai/flux-2-max">FLUX 2 [Max] ($0.05)</option>
