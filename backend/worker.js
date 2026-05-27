@@ -237,7 +237,7 @@ async function getYouTubeTranscript(url) {
   let currentModel = targetModel || "fal-ai/flux/schnell";
   const currentMantra = style === "animation" 
     ? "premium 3D animation style, cinematic render, pixar disney style character design, smooth clay texture, gorgeous volumetric lighting, expressive facial features"
-    : "award-winning cinematic commercial photography, highly detailed, photorealistic, flawless anatomy, shot on 35mm anamorphic lens, professional studio lighting, depth of field, 8k";
+    : "award-winning cinematic commercial photography, highly detailed, photorealistic, flawless anatomy, cinematic shot on 85mm portrait lens, professional studio lighting, depth of field, 8k";
   
   const optimizedPrompt = `${prompt.trim()}, ${currentMantra}`;
   const encodedPrompt = encodeURIComponent(optimizedPrompt);
