@@ -233,13 +233,8 @@ async function getYouTubeTranscript(url) {
   } finally {
     clearTimeout(timeoutId);
   }
-}
-
-async function generateSingleFluxImage(prompt, style, seedBase, falKey, targetModel) {
+}async function generateSingleFluxImage(prompt, style, seedBase, falKey, targetModel) {
   let currentModel = targetModel || "fal-ai/flux/schnell";
-  if (currentModel.includes("gemini")) {
-    currentModel = "fal-ai/flux/schnell"; // Fallback for invalid image model option
-  }
   const currentMantra = style === "animation" 
     ? "premium 3D animation style, cinematic render, pixar disney style character design, smooth clay texture, gorgeous volumetric lighting, expressive facial features"
     : "award-winning cinematic commercial photography, highly detailed, photorealistic, flawless anatomy, shot on 35mm anamorphic lens, professional studio lighting, depth of field, 8k";
@@ -249,7 +244,7 @@ async function generateSingleFluxImage(prompt, style, seedBase, falKey, targetMo
   const fallbackUrl = `https://image.pollinations.ai/p/${encodedPrompt}?width=540&height=960&seed=${seedBase}&model=flux`;
   
   if (!falKey) return fallbackUrl;
-
+ 
   let payload = { prompt: optimizedPrompt };
   if (currentModel.includes("flux")) {
     payload.image_size = "portrait_16_9";
@@ -267,9 +262,10 @@ async function generateSingleFluxImage(prompt, style, seedBase, falKey, targetMo
     payload.width = 576;
     payload.height = 1024;
     payload.seed = seedBase;
-  } else if (currentModel.includes("gemini")) {
-    payload.width = 576;
-    payload.height = 1024;
+  } else if (currentModel.includes("banana") || currentModel.includes("gemini")) {
+    payload.aspect_ratio = "9:16";
+    payload.seed = seedBase;
+    payload.resolution = "1K";
   } else {
     // Robust fallback for any other custom models
     payload.width = 576;
