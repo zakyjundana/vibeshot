@@ -259,10 +259,7 @@ async function getYouTubeTranscript(url) {
   } else if (currentModel.includes("openai")) {
     payload.size = "1024x1792";
   } else if (currentModel.includes("seedream")) {
-    payload.image_size = {
-      width: 576,
-      height: 1024
-    };
+    payload.image_size = "portrait_16_9";
     payload.seed = seedBase;
   } else if (currentModel.includes("banana") || currentModel.includes("gemini")) {
     payload.aspect_ratio = "9:16";
