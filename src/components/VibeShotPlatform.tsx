@@ -1014,16 +1014,20 @@ export function VibeShotPlatform() {
         body: JSON.stringify({ action: "render_single_image", briefId: cloudBriefId, visual_style: visualStyle, singleShotId: shot.id, shotToGenerate: shot, masterIdentity: masterIdentity, imageModel: imageModel }), 
       });
       const data = await res.json(); if (!res.ok) throw new Error(data?.error || "Error rendering single.");
+      const nextShots = shots.map(s => s.id === shot.id ? {...s, image: data.imageUrl} : s);
+      const nextMood = nextShots.map(s => s.image || "");
       updateShot(shot.id, "image", data.imageUrl);
-      saveToLocalStorage( shots.map(s => s.id === shot.id ? {...s, image: data.imageUrl} : s), moodboard, premiseOverride, titleOverride, masterIdentity, visualStyle, cloudBriefId );
+      setMoodboard(nextMood);
+      saveToLocalStorage( nextShots, nextMood, premiseOverride, titleOverride, masterIdentity, visualStyle, cloudBriefId );
       toast.success(lang === "id" ? "Visual adegan berhasil dirender!" : "Visual frame generated!");
     } catch (err: any) { toast.error(err.message); } finally { setLoadingShotsImages(prev => ({ ...prev, [shot.id]: false })); }
   };
 
   const moodboardTiles = useMemo(() => {
-    if (moodboard.length > 0) return moodboard;
+    const list = shots.map(s => s.image || null);
+    if (list.some(img => img !== null)) return list;
     return Array.from({ length: shots.length || shotCount }).map(() => null);
-  }, [moodboard, shotCount, shots.length]);
+  }, [shots, shotCount]);
 
   const isTextOnlyBrief = useMemo(() => shots.length > 0 && shots.every((s) => !s.image), [shots]);
   const inputStyle = "w-full rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-zinc-400 dark:focus:border-zinc-500 focus:outline-none transition-colors";
