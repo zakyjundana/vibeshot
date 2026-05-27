@@ -1312,8 +1312,8 @@ export function VibeShotPlatform() {
       </div>
       {previewImage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-6 cursor-zoom-out" onClick={() => setPreviewImage(null)}>
-          <div className="relative max-h-[90vh] max-w-[90vw]">
-            <img src={previewImage} alt="Preview Full Size" className="h-full w-full object-contain rounded-lg shadow-2xl border border-white/10" />
+          <div className="relative">
+            <img src={previewImage} alt="Preview Full Size" className="max-h-[85vh] max-w-[90vw] w-auto h-auto object-contain rounded-lg shadow-2xl border border-white/10" />
             <button type="button" className="absolute -top-4 -right-4 bg-white text-zinc-900 rounded-full p-1.5 shadow-lg hover:bg-zinc-200 transition-colors cursor-pointer" onClick={() => setPreviewImage(null)}><X className="h-5 w-5" /></button>
           </div>
         </div>
