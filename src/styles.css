@@ -229,8 +229,24 @@
     align-items: stretch !important;
   }
 
-  .slide-page img {
-    max-height: 180px !important;
+  /* Enforce strict 9:16 aspect ratio for all shot visual frames */
+  .slide-page .slide-visual-frame {
+    position: relative !important;
+    width: 100% !important;
+    aspect-ratio: 9 / 16 !important;
+    overflow: hidden !important;
+    background: #e4e4e7 !important;
+    border-radius: 6px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .slide-page .slide-visual-frame img {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    max-height: none !important;
   }
 
   /* Preserve high-fidelity colors and background print */

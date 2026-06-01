@@ -3001,8 +3001,8 @@ export function VibeShotPlatform() {
                         {formattedIndex}
                       </span>
 
-                      {/* 9:16 Visual Frame */}
-                      <div className="relative aspect-[9/16] rounded-md overflow-hidden bg-zinc-200 mb-2.5">
+                      {/* 9:16 Visual Frame — uses slide-visual-frame CSS class for strict print enforcement */}
+                      <div className="slide-visual-frame mb-2.5">
                         {shot.image ? (
                           <img
                             src={shot.image}
@@ -3010,7 +3010,7 @@ export function VibeShotPlatform() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-center p-3 text-zinc-400 bg-zinc-100">
+                          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-3 text-zinc-400 bg-zinc-100">
                             <ImageIcon className="w-6 h-6 stroke-1 mb-1" />
                             <span className="text-[7px] font-medium leading-tight">
                               No Visual Rendered
