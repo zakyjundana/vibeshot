@@ -1006,7 +1006,6 @@ ${conversationText}
 
 User berkata: "${newMessage}"${ytTranscriptContext}`;
 
-
         const chatTurnJsonSchema = {
           type: "OBJECT",
           properties: {
