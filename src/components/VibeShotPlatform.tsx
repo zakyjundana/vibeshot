@@ -2253,9 +2253,7 @@ export function VibeShotPlatform() {
   const handleExportSlides = () => {
     if (shots.length === 0) {
       toast.error(
-        lang === "id"
-          ? "Tidak ada storyboard untuk diekspor!"
-          : "No storyboard to export!",
+        lang === "id" ? "Tidak ada storyboard untuk diekspor!" : "No storyboard to export!",
       );
       return;
     }
@@ -2263,7 +2261,7 @@ export function VibeShotPlatform() {
       lang === "id"
         ? "Membuka menu cetak... Pilih opsi 'Landscape', 'A4', dan aktifkan 'Background graphics' untuk hasil terbaik!"
         : "Opening print menu... Choose 'Landscape', 'A4', and enable 'Background graphics' for best results!",
-      { duration: 6000 }
+      { duration: 6000 },
     );
     setTimeout(() => {
       window.print();
@@ -2657,7 +2655,8 @@ export function VibeShotPlatform() {
                         onClick={handleExportSlides}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 text-xs font-bold transition shadow-sm cursor-pointer hover:scale-105 active:scale-95 duration-100"
                       >
-                        <Film className="w-3.5 h-3.5" /> {lang === "id" ? "Ekspor ke Slides 📊" : "Export to Slides 📊"}
+                        <Film className="w-3.5 h-3.5" />{" "}
+                        {lang === "id" ? "Ekspor ke Slides 📊" : "Export to Slides 📊"}
                       </button>
                     </div>
                   )}
@@ -2902,35 +2901,58 @@ export function VibeShotPlatform() {
               Campaign Storyboard Deck
             </div>
             <h1 className="text-4xl font-extrabold tracking-tight mt-2 text-white">
-              {titleOverride || productName || (lang === "id" ? "Rencana Strategis Kampanye Video" : "Strategic Video Campaign Plan")}
+              {titleOverride ||
+                productName ||
+                (lang === "id"
+                  ? "Rencana Strategis Kampanye Video"
+                  : "Strategic Video Campaign Plan")}
             </h1>
           </div>
-          
+
           <div className="my-auto py-8">
             <div className="text-zinc-500 font-semibold text-xs uppercase tracking-widest mb-2">
               PREMISE UTAMA / CORE NARRATIVE CONCEPT
             </div>
             <blockquote className="text-xl font-medium leading-relaxed italic text-zinc-200 border-l-4 border-emerald-500 pl-4">
-              "{premiseOverride || usp || (lang === "id" ? "Konsep visual kreatif untuk menghasilkan interaksi dan konversi maksimal." : "Creative visual concept designed for maximum engagement and conversions.")}"
+              "
+              {premiseOverride ||
+                usp ||
+                (lang === "id"
+                  ? "Konsep visual kreatif untuk menghasilkan interaksi dan konversi maksimal."
+                  : "Creative visual concept designed for maximum engagement and conversions.")}
+              "
             </blockquote>
           </div>
-          
+
           <div className="grid grid-cols-4 gap-6 pt-6 border-t border-zinc-800 text-xs">
             <div>
-              <span className="text-zinc-500 block font-mono uppercase tracking-wider mb-1">Target Platform</span>
-              <span className="font-semibold text-zinc-200">{platform || "Instagram / TikTok"}</span>
+              <span className="text-zinc-500 block font-mono uppercase tracking-wider mb-1">
+                Target Platform
+              </span>
+              <span className="font-semibold text-zinc-200">
+                {platform || "Instagram / TikTok"}
+              </span>
             </div>
             <div>
-              <span className="text-zinc-500 block font-mono uppercase tracking-wider mb-1">Narrative Tone</span>
+              <span className="text-zinc-500 block font-mono uppercase tracking-wider mb-1">
+                Narrative Tone
+              </span>
               <span className="font-semibold text-zinc-200">{tone || "Comedic / Engagement"}</span>
             </div>
             <div>
-              <span className="text-zinc-500 block font-mono uppercase tracking-wider mb-1">Visual Style</span>
+              <span className="text-zinc-500 block font-mono uppercase tracking-wider mb-1">
+                Visual Style
+              </span>
               <span className="font-semibold text-zinc-200">9:16 Cinematic (Portrait Mode)</span>
             </div>
             <div>
-              <span className="text-zinc-500 block font-mono uppercase tracking-wider mb-1">Decentralized Seal</span>
-              <span className="font-mono text-zinc-400 truncate block max-w-[200px]" title="Guz6jxrmW8744a4k9CLa19SWLdm4HPs4yEefEj6PTje2">
+              <span className="text-zinc-500 block font-mono uppercase tracking-wider mb-1">
+                Decentralized Seal
+              </span>
+              <span
+                className="font-mono text-zinc-400 truncate block max-w-[200px]"
+                title="Guz6jxrmW8744a4k9CLa19SWLdm4HPs4yEefEj6PTje2"
+              >
                 SOL-SEAL: Guz6jxrmW8744a4k9...
               </span>
             </div>
@@ -2941,14 +2963,18 @@ export function VibeShotPlatform() {
         {shotChunks.map((chunk, chunkIdx) => {
           const startNum = chunkIdx * 6 + 1;
           const endNum = Math.min((chunkIdx + 1) * 6, shots.length);
-          
+
           return (
-            <div key={chunkIdx} className="slide-page bg-white text-zinc-900 flex flex-col justify-between p-10 border-none">
+            <div
+              key={chunkIdx}
+              className="slide-page bg-white text-zinc-900 flex flex-col justify-between p-10 border-none"
+            >
               {/* Header */}
               <div className="flex justify-between items-center border-b border-zinc-150 pb-3 mb-4">
                 <div>
                   <h3 className="text-sm font-bold tracking-tight text-zinc-900 uppercase">
-                    STORYBOARD & SHOTLIST — {titleOverride || productName || (lang === "id" ? "KAMPANYE" : "CAMPAIGN")}
+                    STORYBOARD & SHOTLIST —{" "}
+                    {titleOverride || productName || (lang === "id" ? "KAMPANYE" : "CAMPAIGN")}
                   </h3>
                   <p className="text-[10px] text-zinc-500 font-mono mt-0.5">
                     SCENE {String(startNum).padStart(2, "0")} - {String(endNum).padStart(2, "0")}
@@ -2964,14 +2990,17 @@ export function VibeShotPlatform() {
                 {chunk.map((shot, idx) => {
                   const shotIndex = startNum + idx;
                   const formattedIndex = String(shotIndex).padStart(2, "0");
-                  
+
                   return (
-                    <div key={shot.id || idx} className="flex flex-col justify-between bg-zinc-50 rounded-lg p-2.5 border border-zinc-200/60 shadow-sm relative h-full">
+                    <div
+                      key={shot.id || idx}
+                      className="flex flex-col justify-between bg-zinc-50 rounded-lg p-2.5 border border-zinc-200/60 shadow-sm relative h-full"
+                    >
                       {/* Badge Overlay */}
                       <span className="absolute top-4 left-4 z-10 bg-zinc-950 text-white font-mono text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
                         {formattedIndex}
                       </span>
-                      
+
                       {/* 9:16 Visual Frame */}
                       <div className="relative aspect-[9/16] rounded-md overflow-hidden bg-zinc-200 mb-2.5">
                         {shot.image ? (
@@ -2983,7 +3012,9 @@ export function VibeShotPlatform() {
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center text-center p-3 text-zinc-400 bg-zinc-100">
                             <ImageIcon className="w-6 h-6 stroke-1 mb-1" />
-                            <span className="text-[7px] font-medium leading-tight">No Visual Rendered</span>
+                            <span className="text-[7px] font-medium leading-tight">
+                              No Visual Rendered
+                            </span>
                           </div>
                         )}
                       </div>
@@ -2992,19 +3023,32 @@ export function VibeShotPlatform() {
                       <div className="flex-1 flex flex-col justify-between space-y-2">
                         {/* Shotlist angle */}
                         <div className="text-[8px] leading-relaxed">
-                          <span className="font-extrabold uppercase text-zinc-900 block tracking-wider">SHOTLIST:</span>
-                          <span className="font-bold text-zinc-700 block italic leading-snug mt-0.5 truncate" title={shot.angle}>
+                          <span className="font-extrabold uppercase text-zinc-900 block tracking-wider">
+                            SHOTLIST:
+                          </span>
+                          <span
+                            className="font-bold text-zinc-700 block italic leading-snug mt-0.5 truncate"
+                            title={shot.angle}
+                          >
                             {shot.angle}
                           </span>
-                          <span className="text-zinc-600 block leading-normal mt-1 line-clamp-3" title={shot.action}>
+                          <span
+                            className="text-zinc-600 block leading-normal mt-1 line-clamp-3"
+                            title={shot.action}
+                          >
                             {shot.action}
                           </span>
                         </div>
 
                         {/* Note block */}
                         <div className="text-[7px] border-t border-zinc-200/80 pt-1.5 leading-snug">
-                          <span className="font-extrabold uppercase text-zinc-900 block tracking-wider">NOTE:</span>
-                          <span className="text-zinc-650 block line-clamp-2 mt-0.5 italic" title={shot.tech_budget_hack || "-"}>
+                          <span className="font-extrabold uppercase text-zinc-900 block tracking-wider">
+                            NOTE:
+                          </span>
+                          <span
+                            className="text-zinc-650 block line-clamp-2 mt-0.5 italic"
+                            title={shot.tech_budget_hack || "-"}
+                          >
                             {shot.tech_budget_hack || "-"}
                           </span>
                         </div>

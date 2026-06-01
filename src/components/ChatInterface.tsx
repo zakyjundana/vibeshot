@@ -658,7 +658,9 @@ export function ChatInterface({
             <div className="rounded-xl border border-indigo-200 dark:border-indigo-900/60 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 p-4 space-y-3.5 shadow-sm animate-[fadeIn_0.3s_ease-out]">
               <div className="flex items-center gap-2 text-xs font-extrabold text-indigo-600 dark:text-indigo-400">
                 <Sparkles className="w-4 h-4 text-indigo-500" />
-                <span>{lang === "id" ? "Cetak Biru Siap Dieksekusi!" : "Blueprint Ready to Execute!"}</span>
+                <span>
+                  {lang === "id" ? "Cetak Biru Siap Dieksekusi!" : "Blueprint Ready to Execute!"}
+                </span>
               </div>
 
               <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap">
@@ -667,19 +669,25 @@ export function ChatInterface({
 
               <div className="bg-white/60 dark:bg-zinc-950/60 rounded-lg p-2.5 border border-zinc-150 dark:border-zinc-850 space-y-1.5 text-[11px]">
                 <div className="flex justify-between">
-                  <span className="text-zinc-400 font-mono">{lang === "id" ? "Produk:" : "Product:"}</span>
+                  <span className="text-zinc-400 font-mono">
+                    {lang === "id" ? "Produk:" : "Product:"}
+                  </span>
                   <span className="font-bold text-zinc-800 dark:text-zinc-200">
                     {extracted.product}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-400 font-mono">{lang === "id" ? "Platform:" : "Platform:"}</span>
+                  <span className="text-zinc-400 font-mono">
+                    {lang === "id" ? "Platform:" : "Platform:"}
+                  </span>
                   <span className="font-semibold text-zinc-800 dark:text-zinc-300">
                     {extracted.platform || "TikTok/Reels (default)"}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-zinc-400 font-mono">{lang === "id" ? "Shot:" : "Shots:"}</span>
+                  <span className="text-zinc-400 font-mono">
+                    {lang === "id" ? "Shot:" : "Shots:"}
+                  </span>
                   <span className="font-semibold text-zinc-800 dark:text-zinc-300">
                     {extracted.shotCount || 6} {lang === "id" ? "Shot" : "Shots"}
                   </span>
@@ -701,7 +709,9 @@ export function ChatInterface({
               <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
               <div>
                 <h4 className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                  {lang === "id" ? "Meracik Runtutan Storyboard..." : "Compiling Storyboard Sequence..."}
+                  {lang === "id"
+                    ? "Meracik Runtutan Storyboard..."
+                    : "Compiling Storyboard Sequence..."}
                 </h4>
                 <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">
                   {lang === "id"
@@ -749,7 +759,9 @@ export function ChatInterface({
           </div>
           {/* Custom Draft Mode Toggle */}
           <div className="flex items-center justify-between px-1 text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
-            <span className="font-bold uppercase tracking-wider">✍️ {lang === "id" ? "Mode Draf Manual" : "Custom Draft Mode"}</span>
+            <span className="font-bold uppercase tracking-wider">
+              ✍️ {lang === "id" ? "Mode Draf Manual" : "Custom Draft Mode"}
+            </span>
             <label className="relative inline-flex items-center cursor-pointer select-none">
               <input
                 type="checkbox"
@@ -1059,7 +1071,11 @@ export function ChatInterface({
                 <div className="rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 p-5 space-y-4 shadow-xl backdrop-blur-md animate-[fadeIn_0.3s_ease-out] w-full max-w-2xl">
                   <div className="flex items-center gap-2 text-sm font-extrabold text-indigo-650 dark:text-indigo-400">
                     <Sparkles className="w-4.5 h-4.5 text-indigo-500" />
-                    <span>{lang === "id" ? "Cetak Biru Siap Dieksekusi!" : "Blueprint Ready to Execute!"}</span>
+                    <span>
+                      {lang === "id"
+                        ? "Cetak Biru Siap Dieksekusi!"
+                        : "Blueprint Ready to Execute!"}
+                    </span>
                   </div>
 
                   <p className="text-xs text-zinc-650 dark:text-zinc-350 leading-relaxed whitespace-pre-wrap font-medium">
@@ -1068,19 +1084,25 @@ export function ChatInterface({
 
                   <div className="bg-white/60 dark:bg-zinc-950/60 rounded-xl p-3.5 border border-zinc-200/40 dark:border-zinc-850 space-y-1.5 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-zinc-400 font-mono">{lang === "id" ? "Produk:" : "Product:"}</span>
+                      <span className="text-zinc-400 font-mono">
+                        {lang === "id" ? "Produk:" : "Product:"}
+                      </span>
                       <span className="font-bold text-zinc-800 dark:text-zinc-100">
                         {extracted.product}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-zinc-400 font-mono">{lang === "id" ? "Platform:" : "Platform:"}</span>
+                      <span className="text-zinc-400 font-mono">
+                        {lang === "id" ? "Platform:" : "Platform:"}
+                      </span>
                       <span className="font-semibold text-zinc-850 dark:text-zinc-200">
                         {extracted.platform || "TikTok/Reels (default)"}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-zinc-400 font-mono">{lang === "id" ? "Shot:" : "Shots:"}</span>
+                      <span className="text-zinc-400 font-mono">
+                        {lang === "id" ? "Shot:" : "Shots:"}
+                      </span>
                       <span className="font-semibold text-zinc-850 dark:text-zinc-200">
                         {extracted.shotCount || 6} {lang === "id" ? "Shot" : "Shots"}
                       </span>
@@ -1092,7 +1114,9 @@ export function ChatInterface({
                     className="w-full inline-flex items-center justify-center gap-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white py-3 text-xs font-bold shadow-lg hover:shadow-indigo-500/30 active:scale-98 transition duration-150 cursor-pointer"
                   >
                     <Sparkles className="w-4 h-4" />
-                    {lang === "id" ? "Eksekusi Cetak Biru Konten 🚀" : "Execute Content Blueprint 🚀"}
+                    {lang === "id"
+                      ? "Eksekusi Cetak Biru Konten 🚀"
+                      : "Execute Content Blueprint 🚀"}
                   </button>
                 </div>
               )}
@@ -1102,7 +1126,9 @@ export function ChatInterface({
                   <Loader2 className="w-7 h-7 text-indigo-500 animate-spin" />
                   <div>
                     <h4 className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
-                      {lang === "id" ? "Meracik Runtutan Storyboard..." : "Compiling Storyboard Sequence..."}
+                      {lang === "id"
+                        ? "Meracik Runtutan Storyboard..."
+                        : "Compiling Storyboard Sequence..."}
                     </h4>
                     <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-snug">
                       {lang === "id"

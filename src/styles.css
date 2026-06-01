@@ -185,7 +185,7 @@
   #root > :not(.print-slides-container) {
     display: none !important;
   }
-  
+
   /* Show only print slides container */
   .print-slides-container {
     display: block !important;
@@ -198,13 +198,13 @@
     background: #ffffff !important;
     color: #000000 !important;
   }
-  
+
   /* Configure page margins and size */
   @page {
     size: A4 landscape;
     margin: 0 !important;
   }
-  
+
   .slide-page {
     width: 297mm !important;
     height: 209mm !important; /* Offset tiny bit to avoid ghost pages */
@@ -220,7 +220,7 @@
     justify-content: space-between !important;
     overflow: hidden !important;
   }
-  
+
   /* Fix vertical grids in printing flex layouts */
   .slide-page .grid {
     display: grid !important;
@@ -228,11 +228,11 @@
     gap: 12px !important;
     align-items: stretch !important;
   }
-  
+
   .slide-page img {
     max-height: 180px !important;
   }
-  
+
   /* Preserve high-fidelity colors and background print */
   * {
     -webkit-print-color-adjust: exact !important;
