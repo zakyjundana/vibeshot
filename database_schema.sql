@@ -43,3 +43,64 @@ CREATE POLICY "Allow authenticated delete briefs"
 ON briefs FOR DELETE 
 TO authenticated 
 USING (auth.uid() = user_id);
+
+-- 4. Create the chat_sessions table for chat history
+CREATE TABLE IF NOT EXISTS chat_sessions (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  title       TEXT,
+  messages    JSONB NOT NULL DEFAULT '[]'::jsonb,
+  extracted   JSONB NOT NULL DEFAULT '{}'::jsonb,
+  brief_id    UUID REFERENCES briefs(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ DEFAULT now(),
+  updated_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- 5. Enable Row Level Security (RLS) on chat_sessions
+ALTER TABLE chat_sessions ENABLE ROW LEVEL SECURITY;
+
+-- 6. Configure Security Policies for chat_sessions
+CREATE POLICY "Allow authenticated select own chat_sessions"
+ON chat_sessions FOR SELECT
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow authenticated insert own chat_sessions"
+ON chat_sessions FOR INSERT
+TO authenticated
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Allow authenticated update own chat_sessions"
+ON chat_sessions FOR UPDATE
+TO authenticated
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Allow authenticated delete own chat_sessions"
+ON chat_sessions FOR DELETE
+TO authenticated
+USING (auth.uid() = user_id);
+
+
+-- 7. Create the profiles table for payment tier and credits tracking
+CREATE TABLE IF NOT EXISTS profiles (
+  id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  tier        TEXT DEFAULT 'free', -- 'free' or 'premium'
+  credits     INTEGER DEFAULT 5, -- render credits
+  updated_at  TIMESTAMPTZ DEFAULT now()
+);
+
+-- Enable RLS on profiles
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Configure Security Policies for profiles
+CREATE POLICY "Allow authenticated select own profile"
+ON profiles FOR SELECT
+TO authenticated
+USING (auth.uid() = id);
+
+CREATE POLICY "Allow authenticated update own profile"
+ON profiles FOR UPDATE
+TO authenticated
+USING (auth.uid() = id);
+
+

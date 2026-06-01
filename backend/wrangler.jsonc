@@ -6,9 +6,10 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "SUPABASE_URL": "https://jnkvqvygiwbjkowhprcp.supabase.co",
-    "SUPABASE_JWT_SECRET": "0E3ksb1dGW65Azf/gPKQYLls6PgQmVaiykuuZC92FASgKmRnwuuQEa5/JGIANzpAXwsZgXsq/J4Qp9+il0xlEQ=="
+    "SUPABASE_JWT_SECRET": "0E3ksb1dGW65Azf/gPKQYLls6PgQmVaiykuuZC92FASgKmRnwuuQEa5/JGIANzpAXwsZgXsq/J4Qp9+il0xlEQ==",
+    "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impua3ZxdnlnaXdiamtvd2hwcmNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3Nzk0MjQsImV4cCI6MjA5NTM1NTQyNH0.em14Eh5U1XjD_tGA-hjDw1xuWySftejFRA_S3xt8uPI",
   },
   "observability": {
-    "enabled": true
-  }
+    "enabled": true,
+  },
 }

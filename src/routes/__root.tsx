@@ -73,29 +73,87 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      
+
       // SEO DASAR & BRADING UTAMA VIBESHOT
       { title: "VibeShot AI — AI Production Brief & Storyboard Generator" },
-      { name: "description", content: "Turn messy script ideas into crystal-clear production briefs, moodboards, and interactive storyboards in 60 seconds. Built for creative agencies & content creators." },
+      {
+        name: "description",
+        content:
+          "Turn messy script ideas into crystal-clear production briefs, moodboards, and interactive storyboards in 60 seconds. Built for creative agencies & content creators.",
+      },
       { name: "author", content: "Zaky Jundana" },
-      
+
       // PREVIEW LINKEDIN / WHATSAPP / FACEBOOK
       { property: "og:title", content: "VibeShot AI — AI Production Brief & Storyboard Generator" },
-      { property: "og:description", content: "Turn messy script ideas into crystal-clear production briefs, moodboards, and interactive storyboards in 60 seconds." },
+      {
+        property: "og:description",
+        content:
+          "Turn messy script ideas into crystal-clear production briefs, moodboards, and interactive storyboards in 60 seconds.",
+      },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://vibeshot-creative-hub.zakyjundana.workers.dev/" },
-      { property: "og:image", content: "https://images.pollinations.ai/p/cinematic%20minimalist%20saas%20dashboard%20mockup%20on%20tablet%20screen%2C%20dark%20ui%2C%20creative%20agency%20vibe?width=1200&height=630&seed=12345" },
-      
+      {
+        property: "og:image",
+        content:
+          "https://images.pollinations.ai/p/cinematic%20minimalist%20saas%20dashboard%20mockup%20on%20tablet%20screen%2C%20dark%20ui%2C%20creative%20agency%20vibe?width=1200&height=630&seed=12345",
+      },
+
       // PREVIEW TWITTER / X CARD (Format Banner Gede Premium)
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "VibeShot AI — AI Production Brief & Storyboard Generator" },
-      { name: "twitter:description", content: "Turn messy script ideas into crystal-clear production briefs, moodboards, and interactive storyboards in 60 seconds." },
-      { name: "twitter:image", content: "https://images.pollinations.ai/p/cinematic%20minimalist%20saas%20dashboard%20mockup%20on%20tablet%20screen%2C%20dark%20ui%2C%20creative%20agency%20vibe?width=1200&height=630&seed=12345" },
+      {
+        name: "twitter:title",
+        content: "VibeShot AI — AI Production Brief & Storyboard Generator",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Turn messy script ideas into crystal-clear production briefs, moodboards, and interactive storyboards in 60 seconds.",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://images.pollinations.ai/p/cinematic%20minimalist%20saas%20dashboard%20mockup%20on%20tablet%20screen%2C%20dark%20ui%2C%20creative%20agency%20vibe?width=1200&height=630&seed=12345",
+      },
     ],
     links: [
       {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap",
+      },
+      {
         rel: "stylesheet",
         href: appCss,
+      },
+    ],
+    scripts: [
+      {
+        children: `
+          (function(p,e,n,d,o){var v,w,x,y,z;o=p[d]=p[d]||[];o._q=o._q||[];
+          v=e.createElement(n);v.async=true;v.src='https://cdn.pendo.io/agent/static/a7b1b369-pendo-vibeshot/pendo.js';
+          w=e.getElementsByTagName(n)[0];w.parentNode.insertBefore(v,w);
+          pendo.initialize = function(c){o._q.push(['initialize',c])};
+          })(window,document,'script','pendo');
+        `,
+      },
+      {
+        children: `
+          (function(n,o,v,u,s){
+            n[s]=n[s]||function(){(n[s].q=n[s].q||[]).push(arguments)};
+            var a=o.createElement(v);a.async=true;a.src=u;
+            var b=o.getElementsByTagName(v)[0];b.parentNode.insertBefore(a,b);
+          })(window,document,'script','https://cdn.novus.ai/sdk/novus.js','novus');
+          novus('init', 'pilotxis-workspace-vibeshot');
+          novus('track', 'pageview');
+        `,
       },
     ],
   }),
