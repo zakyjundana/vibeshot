@@ -317,20 +317,39 @@ export function ChatInterface({
     setAttachedImage(null);
 
     try {
-      const res = await fetch(workerUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          action: "chat_turn",
-          conversationHistory: messages,
-          newMessage: text,
-          attachedImage: imagePayload || undefined,
-          currentBriefId: currentSession?.brief_id || undefined,
-        }),
-      });
+      // Retry with exponential backoff for 503/429 (high demand / rate limit)
+      const MAX_RETRIES = 3;
+      let res: Response | null = null;
+      let lastError: Error | null = null;
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        if (attempt > 0) {
+          const delayMs = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s
+          await new Promise((r) => setTimeout(r, delayMs));
+        }
+        try {
+          res = await fetch(workerUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              action: "chat_turn",
+              conversationHistory: messages,
+              newMessage: text,
+              attachedImage: imagePayload || undefined,
+              currentBriefId: currentSession?.brief_id || undefined,
+            }),
+          });
+          // Break on success or non-retryable errors
+          if (res.status !== 503 && res.status !== 429) break;
+          lastError = new Error(`Server busy (${res.status}), retrying...`);
+        } catch (fetchErr: any) {
+          lastError = fetchErr;
+          // Network error — retry
+        }
+      }
+      if (!res) throw lastError ?? new Error("Network error after retries.");
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Chat turn failed.");
