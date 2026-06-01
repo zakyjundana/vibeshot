@@ -1144,7 +1144,7 @@ export function ChatInterface({
 
         {/* CAPSULE SEARCH INPUT BAR */}
         <div
-          className={`w-full max-w-2xl relative z-20 ${isLandingMode ? "" : "fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6"} space-y-3`}
+          className={`w-full max-w-2xl relative z-20 ${isLandingMode ? "" : "fixed bottom-6 left-0 right-0 mx-auto px-6"} space-y-3`}
         >
           {/* Custom Draft Mode Toggle */}
           <div className="flex items-center justify-between px-4 text-xs font-mono text-zinc-500 dark:text-zinc-400">
