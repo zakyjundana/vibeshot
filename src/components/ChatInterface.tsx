@@ -17,6 +17,9 @@ import {
   Image as ImageIcon,
   UploadCloud,
   ArrowRight,
+  Layers,
+  Edit3,
+  PlusCircle,
 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
@@ -605,6 +608,43 @@ export function ChatInterface({
           </button>
         </div>
 
+        {/* Active Storyboard Context Badge + Edit/Create Mode Indicator */}
+        {activeShots && activeShots.length > 0 && (
+          <div className="bg-gradient-to-r from-indigo-500/5 via-purple-500/5 to-indigo-500/5 dark:from-indigo-500/10 dark:via-purple-500/10 dark:to-indigo-500/10 border-b border-indigo-200/40 dark:border-indigo-800/40 px-3 py-1.5 flex items-center justify-between gap-2 shrink-0 animate-[fadeIn_0.3s_ease-out]">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-300/30 dark:border-indigo-600/30">
+                <Layers className="w-3 h-3 text-indigo-500 dark:text-indigo-400" />
+                <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-300 tracking-wide">
+                  {activeShots.length} {activeShots.length === 1 ? "Shot" : "Shots"}
+                </span>
+              </div>
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 dark:bg-amber-500/15 border border-amber-300/30 dark:border-amber-600/30">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                </span>
+                <Edit3 className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400" />
+                <span className="text-[9px] font-mono font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                  {lang === "id" ? "Mode Edit" : "Edit Mode"}
+                </span>
+              </div>
+            </div>
+            <span className="text-[8px] font-mono text-zinc-400 dark:text-zinc-600 uppercase tracking-widest hidden sm:block">
+              {lang === "id" ? "Storyboard Aktif Terhubung" : "Live Storyboard Connected"}
+            </span>
+          </div>
+        )}
+        {(!activeShots || activeShots.length === 0) && (
+          <div className="border-b border-emerald-200/30 dark:border-emerald-800/30 px-3 py-1 flex items-center gap-2 shrink-0 bg-emerald-500/3 dark:bg-emerald-500/5">
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-300/20 dark:border-emerald-600/20">
+              <PlusCircle className="w-2.5 h-2.5 text-emerald-500 dark:text-emerald-400" />
+              <span className="text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                {lang === "id" ? "Mode Buat Baru" : "Create Mode"}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Parameter Extracted Progress Indicator */}
         <div className="bg-zinc-50 dark:bg-[#151515] border-b border-zinc-200/50 dark:border-zinc-800/50 px-4 py-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 shrink-0 text-[10px] font-mono">
           <span className="text-zinc-400 uppercase tracking-wider font-bold">Parameters:</span>
@@ -920,73 +960,110 @@ export function ChatInterface({
 
       {/* Header Bar */}
       <div className="px-6 py-4 flex items-center justify-between shrink-0 relative z-20">
-        <div className="relative">
-          <button
-            onClick={() =>
-              user
-                ? setShowHistory(!showHistory)
-                : toast.info(
-                    lang === "id"
-                      ? "Silakan login untuk menyimpan histori brief!"
-                      : "Please log in to save brief history!",
-                  )
-            }
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-zinc-200/50 dark:border-zinc-800 bg-white/70 dark:bg-zinc-950/70 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition backdrop-blur-md cursor-pointer select-none"
-          >
-            <History className="w-3.5 h-3.5 text-indigo-500" />
-            <span>{lang === "id" ? "Riwayat Studio" : "Studio History"}</span>
-            <ChevronDown
-              className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${showHistory ? "rotate-180" : ""}`}
-            />
-          </button>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <button
+              onClick={() =>
+                user
+                  ? setShowHistory(!showHistory)
+                  : toast.info(
+                      lang === "id"
+                        ? "Silakan login untuk menyimpan histori brief!"
+                        : "Please log in to save brief history!",
+                    )
+              }
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-zinc-200/50 dark:border-zinc-800 bg-white/70 dark:bg-zinc-950/70 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition backdrop-blur-md cursor-pointer select-none"
+            >
+              <History className="w-3.5 h-3.5 text-indigo-500" />
+              <span>{lang === "id" ? "Riwayat Studio" : "Studio History"}</span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${showHistory ? "rotate-180" : ""}`}
+              />
+            </button>
 
-          {showHistory && (
-            <div className="absolute top-full left-0 z-30 mt-1.5 w-64 max-h-60 overflow-y-auto rounded-2xl border border-zinc-250/60 dark:border-zinc-800/80 bg-white/95 dark:bg-[#151515]/95 p-2 shadow-2xl backdrop-blur-lg animate-[fadeIn_0.15s_ease-out]">
-              <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-zinc-150 dark:border-zinc-800 font-mono text-[9px] text-zinc-400 font-bold uppercase tracking-wider">
-                <span>{lang === "id" ? "Riwayat Briefing" : "Briefing History"}</span>
-                <button
-                  onClick={handleNewSession}
-                  className="flex items-center gap-1 text-indigo-500 hover:text-indigo-400 font-bold"
-                >
-                  <Plus className="w-3 h-3" /> NEW
-                </button>
-              </div>
-              {sessions.length === 0 ? (
-                <div className="py-6 text-center text-xs text-zinc-400 font-mono italic">
-                  {lang === "id" ? "Belum ada riwayat." : "No history found."}
+            {showHistory && (
+              <div className="absolute top-full left-0 z-30 mt-1.5 w-64 max-h-60 overflow-y-auto rounded-2xl border border-zinc-250/60 dark:border-zinc-800/80 bg-white/95 dark:bg-[#151515]/95 p-2 shadow-2xl backdrop-blur-lg animate-[fadeIn_0.15s_ease-out]">
+                <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-zinc-150 dark:border-zinc-800 font-mono text-[9px] text-zinc-400 font-bold uppercase tracking-wider">
+                  <span>{lang === "id" ? "Riwayat Briefing" : "Briefing History"}</span>
+                  <button
+                    onClick={handleNewSession}
+                    className="flex items-center gap-1 text-indigo-500 hover:text-indigo-400 font-bold"
+                  >
+                    <Plus className="w-3 h-3" /> NEW
+                  </button>
                 </div>
-              ) : (
-                <div className="space-y-0.5">
-                  {sessions.map((s) => (
-                    <div
-                      key={s.id}
-                      onClick={() => handleSelectSession(s)}
-                      className={`flex items-center justify-between w-full text-left px-2 py-2 rounded-lg text-xs cursor-pointer transition ${currentSession?.id === s.id ? "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-650 dark:text-indigo-300 font-medium" : "hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300"}`}
-                    >
-                      <span className="truncate flex-1 pr-2">{s.title}</span>
-                      <button
-                        onClick={(e) => handleDeleteSession(e, s.id)}
-                        className="text-zinc-400 hover:text-red-500 p-1 rounded hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition"
+                {sessions.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-zinc-400 font-mono italic">
+                    {lang === "id" ? "Belum ada riwayat." : "No history found."}
+                  </div>
+                ) : (
+                  <div className="space-y-0.5">
+                    {sessions.map((s) => (
+                      <div
+                        key={s.id}
+                        onClick={() => handleSelectSession(s)}
+                        className={`flex items-center justify-between w-full text-left px-2 py-2 rounded-lg text-xs cursor-pointer transition ${currentSession?.id === s.id ? "bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-650 dark:text-indigo-300 font-medium" : "hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300"}`}
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
+                        <span className="truncate flex-1 pr-2">{s.title}</span>
+                        <button
+                          onClick={(e) => handleDeleteSession(e, s.id)}
+                          className="text-zinc-400 hover:text-red-500 p-1 rounded hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Immersive Mode — Active Storyboard Context Badge */}
+          {activeShots && activeShots.length > 0 && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-indigo-300/30 dark:border-indigo-700/30 bg-indigo-500/5 dark:bg-indigo-500/10 backdrop-blur-md animate-[fadeIn_0.3s_ease-out]">
+              <div className="flex items-center gap-1.5">
+                <Layers className="w-3 h-3 text-indigo-500 dark:text-indigo-400" />
+                <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-300">
+                  {activeShots.length} {activeShots.length === 1 ? "Shot" : "Shots"}
+                </span>
+              </div>
+              <span className="text-zinc-300 dark:text-zinc-700">·</span>
+              <div className="flex items-center gap-1">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500" />
+                </span>
+                <Edit3 className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400" />
+                <span className="text-[9px] font-mono font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                  {lang === "id" ? "Edit" : "Edit"}
+                </span>
+              </div>
             </div>
           )}
         </div>
 
-        {!isLandingMode && (
-          <button
-            onClick={handleNewSession}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200/50 dark:border-zinc-800 bg-white/70 dark:bg-zinc-950/70 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-indigo-550 transition backdrop-blur-md cursor-pointer active:scale-95"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>{lang === "id" ? "Brief Baru" : "New Brief"}</span>
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Immersive Mode — Create Mode Badge (when no active storyboard) */}
+          {(!activeShots || activeShots.length === 0) && !isLandingMode && (
+            <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-emerald-300/20 dark:border-emerald-700/20 bg-emerald-500/5 dark:bg-emerald-500/10 backdrop-blur-md">
+              <PlusCircle className="w-3 h-3 text-emerald-500 dark:text-emerald-400" />
+              <span className="text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                {lang === "id" ? "Buat Baru" : "Create"}
+              </span>
+            </div>
+          )}
+
+          {!isLandingMode && (
+            <button
+              onClick={handleNewSession}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200/50 dark:border-zinc-800 bg-white/70 dark:bg-zinc-950/70 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:text-indigo-550 transition backdrop-blur-md cursor-pointer active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>{lang === "id" ? "Brief Baru" : "New Brief"}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Main Immersive Canvas Area */}
