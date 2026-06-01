@@ -402,7 +402,7 @@ export default {
             const profilePayload = {
               id: targetUserId,
               tier: "premium",
-              credits: 100, // Grant 100 render credits
+              credits: 300, // Grant 300 render credits
               updated_at: new Date().toISOString(),
             };
 
@@ -463,7 +463,7 @@ export default {
           const profilePayload = {
             id: targetUserId,
             tier: "premium",
-            credits: 100, // Grant 100 render credits
+            credits: 300, // Grant 300 render credits
             updated_at: new Date().toISOString(),
           };
 
@@ -670,7 +670,7 @@ export default {
             const profilePayload = {
               id: userId,
               tier: "premium",
-              credits: 100, // Grant 100 render credits
+              credits: 300, // Grant 300 render credits
               updated_at: new Date().toISOString(),
             };
 
@@ -695,7 +695,7 @@ export default {
                 success: true,
                 message: verificationMessage,
                 tier: "premium",
-                credits: 100,
+                credits: 300,
               }),
               {
                 status: 200,
@@ -738,7 +738,7 @@ export default {
           const mayarApiKey = env.MAYAR_API_KEY || "live_mock_mayar_key_testing_12345";
           const mayarPayload = {
             name: name || "VibeShot Pro Upgrade",
-            description: description || "Akses premium Vibeshot Studio + 100 render visual",
+            description: description || "Akses premium Vibeshot Studio + 300 render visual",
             amount: amount || 150000,
             redirect_url: redirectUrl || "https://vibeshot-creative-hub.zakyjundana.workers.dev/",
             email: userEmail,
@@ -775,6 +775,87 @@ export default {
           return new Response(JSON.stringify({ error: checkoutErr.message }), {
             status: 500,
             headers: corsHeaders,
+          });
+        }
+      }
+
+      // ========================================================
+      // RUTE AKTIVASI FREE TIER: Aktivasi Akun Free dengan Added Payment Method
+      // ========================================================
+      if (pathname === "/api/checkout/free-activate") {
+        try {
+          // Fetch current profile to check tier
+          const profileGetRes = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${userId}`, {
+            method: "GET",
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (!profileGetRes.ok) {
+            const errText = await profileGetRes.text();
+            throw new Error(`Profile query failed: ${errText}`);
+          }
+
+          const profiles = await profileGetRes.json();
+          const currentProfile = profiles[0] || {};
+
+          // Verify current tier is "free"
+          if (currentProfile.tier && currentProfile.tier !== "free") {
+            return new Response(
+              JSON.stringify({
+                error: `Free tier credits can only be activated once. Your current tier is: ${currentProfile.tier}`,
+              }),
+              {
+                status: 400,
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+              },
+            );
+          }
+
+          // Update profile to "free-active" with 10 credits
+          const profilePayload = {
+            id: userId,
+            tier: "free-active",
+            credits: 10,
+            updated_at: new Date().toISOString(),
+          };
+
+          const profileRes = await fetch(`${supabaseUrl}/rest/v1/profiles`, {
+            method: "POST",
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
+              "Content-Type": "application/json",
+              Prefer: "resolution=merge", // UPSERT
+            },
+            body: JSON.stringify(profilePayload),
+          });
+
+          if (!profileRes.ok) {
+            const errText = await profileRes.text();
+            throw new Error(`Profile update failed: ${errText}`);
+          }
+
+          return new Response(
+            JSON.stringify({
+              success: true,
+              message: "Free tier activated! 10 render credits successfully added.",
+              tier: "free-active",
+              credits: 10,
+            }),
+            {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            },
+          );
+        } catch (err) {
+          console.error("Free Tier Activation Error:", err.message);
+          return new Response(JSON.stringify({ error: err.message }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
       }

@@ -878,6 +878,8 @@ interface UpgradeModalProps {
   lang: "id" | "en";
   t: any;
   workerUrl: string;
+  profile: any;
+  onProfileUpdated: () => void;
 }
 
 function UpgradeModal({
@@ -888,6 +890,8 @@ function UpgradeModal({
   lang,
   t,
   workerUrl,
+  profile,
+  onProfileUpdated,
 }: UpgradeModalProps) {
   const [activeTab, setActiveTab] = useState<"crypto" | "card" | "mayar">("crypto");
 
@@ -895,6 +899,10 @@ function UpgradeModal({
   const [signature, setSignature] = useState("");
   const [isVerifyingCrypto, setIsVerifyingCrypto] = useState(false);
   const [solanaNetwork, setSolanaNetwork] = useState<"mainnet-beta" | "devnet">("mainnet-beta");
+
+  // PLG Free Tier Activation Lock states
+  const [isPaymentMethodAdded, setIsPaymentMethodAdded] = useState(false);
+  const [isActivatingFree, setIsActivatingFree] = useState(false);
 
   // Card Flow states
   const [cardNumber, setCardNumber] = useState("");
@@ -916,12 +924,55 @@ function UpgradeModal({
       setExpiry("");
       setCvv("");
       setCardFlipped(false);
+      setIsPaymentMethodAdded(false);
     }
   }, [isOpen]);
 
   const handleCopySolanaAddress = () => {
     navigator.clipboard.writeText("Guz6jxrmW8744a4k9CLa19SWLdm4HPs4yEefEj6PTje2");
     toast.success(lang === "id" ? "Alamat Solana disalin!" : "Solana wallet address copied!");
+  };
+
+  const handleActivateFree = async () => {
+    if (!isPaymentMethodAdded) {
+      toast.error(
+        lang === "id"
+          ? "Harap tautkan metode pembayaran (kartu atau Solana wallet) terlebih dahulu!"
+          : "Please link a payment method (card or Solana wallet) first!",
+      );
+      return;
+    }
+
+    setIsActivatingFree(true);
+    try {
+      const res = await fetch(`${workerUrl}api/checkout/free-activate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mengaktifkan free tier.");
+
+      toast.success(
+        data.message ||
+          (lang === "id" ? "Aktivasi free tier sukses!" : "Free tier activation successful!"),
+      );
+
+      if (onProfileUpdated) {
+        onProfileUpdated();
+      }
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setIsActivatingFree(false);
+    }
   };
 
   const handleVerifyCrypto = async (simulate: boolean) => {
@@ -957,6 +1008,10 @@ function UpgradeModal({
         data.message || (lang === "id" ? "Aktivasi sukses!" : "Activation successful!"),
       );
 
+      if (onProfileUpdated) {
+        onProfileUpdated();
+      }
+
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -989,7 +1044,7 @@ function UpgradeModal({
           email: user?.email,
           amount: 150000,
           name: "VibeShot Pro Upgrade",
-          description: "Premium access via simulated Stripe card billing",
+          description: "Premium access via simulated Stripe card billing + 300 render visual",
         }),
       });
 
@@ -1016,6 +1071,11 @@ function UpgradeModal({
           ? "Pembayaran kartu disimulasikan & akun diupgrade!"
           : "Card payment simulated & premium activated!",
       );
+
+      if (onProfileUpdated) {
+        onProfileUpdated();
+      }
+
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -1040,7 +1100,7 @@ function UpgradeModal({
           email: user?.email,
           amount: 150000,
           name: "VibeShot Pro Upgrade",
-          description: "Akses premium Vibeshot Studio + 100 render visual",
+          description: "Akses premium Vibeshot Studio + 300 render visual",
         }),
       });
 
@@ -1100,7 +1160,7 @@ function UpgradeModal({
       />
 
       {/* Modal Container */}
-      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/95 dark:bg-[#111111]/95 p-6 shadow-2xl transition-all duration-300 transform scale-100 backdrop-blur-md text-zinc-900 dark:text-zinc-100">
+      <div className="relative w-full max-w-lg overflow-y-auto max-h-[90vh] rounded-2xl border border-zinc-200/80 dark:border-zinc-800/80 bg-white/95 dark:bg-[#111111]/95 p-6 shadow-2xl transition-all duration-300 transform scale-100 backdrop-blur-md text-zinc-900 dark:text-zinc-100 scrollbar-thin">
         {/* Glow effects in background */}
         <div className="absolute -right-16 -top-16 w-32 h-32 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute -left-16 -bottom-16 w-32 h-32 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
@@ -1115,8 +1175,8 @@ function UpgradeModal({
         </button>
 
         {/* Header */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-sm font-extrabold mb-2.5 shadow-md">
+        <div className="flex flex-col items-center mb-5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 font-mono text-sm font-extrabold mb-2 shadow-md">
             V
           </div>
           <h3 className="text-base font-extrabold tracking-tight text-zinc-900 dark:text-zinc-100 leading-none">
@@ -1128,6 +1188,46 @@ function UpgradeModal({
             VIBESHOT PREMIUM MEMBERSHIP
           </p>
         </div>
+
+        {/* Free Tier Activation Lock Banner */}
+        {user && (!profile || profile.tier === "free" || profile.tier === "") && (
+          <div className="mb-5 p-3.5 rounded-xl border border-emerald-250/20 bg-emerald-500/5 dark:bg-emerald-500/10 backdrop-blur-md relative overflow-hidden animate-[fadeIn_0.3s_ease-out]">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400">
+                  🎁 Unlock 10 Free Renders!
+                </span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[7px] font-mono uppercase tracking-wider font-extrabold ${isPaymentMethodAdded ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300" : "bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300"}`}
+                >
+                  {isPaymentMethodAdded ? "🟢 Ready" : "🔴 Link Card/Wallet first"}
+                </span>
+              </div>
+              <p className="text-[10px] text-zinc-500 leading-relaxed">
+                {lang === "id"
+                  ? "Dapatkan 10 render gratis! Cukup hubungkan Solana Wallet atau isi detail kartu sandbox di bawah sebagai verifikasi identitas anti-bot Anda."
+                  : "Get 10 free renders! Simply link a Solana Wallet or enter sandbox card details below as your anti-bot identity verification."}
+              </p>
+              <button
+                type="button"
+                disabled={!isPaymentMethodAdded || isActivatingFree}
+                onClick={handleActivateFree}
+                className={`w-full py-1.5 rounded-lg text-[10px] font-extrabold tracking-tight shadow active:scale-98 transition-all disabled:opacity-50 cursor-pointer ${isPaymentMethodAdded ? "bg-emerald-600 hover:bg-emerald-500 text-white" : "bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed"}`}
+              >
+                {isActivatingFree ? (
+                  <span className="flex items-center justify-center gap-1.5">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {lang === "id" ? "Mengaktifkan..." : "Activating..."}
+                  </span>
+                ) : lang === "id" ? (
+                  "Aktifkan Saldo Free 10 Render 🎁"
+                ) : (
+                  "Activate Free 10 Render Credits 🎁"
+                )}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Tabs Switch */}
         <div className="grid grid-cols-3 gap-1 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200/40 dark:border-zinc-800 mb-5 relative z-10">
@@ -1175,6 +1275,34 @@ function UpgradeModal({
                   : "This gateway operates live! Transfer SOL or USDC to the merchant address below, then paste the transaction signature for instant on-chain verification."}
               </div>
 
+              {/* Anti-Bot Connect Wallet */}
+              <div className="p-3 bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/50 dark:border-zinc-800/80 rounded-xl flex items-center justify-between gap-3 animate-[fadeIn_0.2s_ease-out]">
+                <div className="space-y-0.5">
+                  <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest font-extrabold">
+                    Anti-Bot Identity Verification
+                  </div>
+                  <p className="text-[9px] text-zinc-500 leading-normal">
+                    {lang === "id"
+                      ? "Hubungkan dompet Anda untuk verifikasi identitas anti-bot instan."
+                      : "Link Solana wallet for instant anti-bot verification."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPaymentMethodAdded(true);
+                    toast.success(
+                      lang === "id"
+                        ? "Dompet Solana terhubung! Metode pembayaran tersimpan."
+                        : "Solana Wallet linked! Payment method registered.",
+                    );
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold tracking-tight active:scale-98 transition-all cursor-pointer border shrink-0 ${isPaymentMethodAdded ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-250/20" : "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 border-transparent"}`}
+                >
+                  {isPaymentMethodAdded ? "🟢 Connected" : "🔗 Connect Wallet"}
+                </button>
+              </div>
+
               {/* QR Code and Wallet Area */}
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/50 dark:border-zinc-800/80 rounded-xl">
                 {/* Simulated QR Code */}
@@ -1213,7 +1341,7 @@ function UpgradeModal({
                   <div className="text-[11px] text-zinc-500">
                     {lang === "id" ? "Harga Upgrade:" : "Upgrade Price:"}{" "}
                     <strong className="text-zinc-850 dark:text-zinc-100 font-bold font-mono">
-                      10 USDC / 0.1 SOL
+                      10 USDC / 0.1 SOL (300 Renders)
                     </strong>
                   </div>
                 </div>
@@ -1393,6 +1521,30 @@ function UpgradeModal({
                 </div>
               </div>
 
+              {/* Link Simulated Card Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!cardNumber || !cardHolder || !expiry || !cvv) {
+                    toast.error(
+                      lang === "id"
+                        ? "Semua field kartu wajib diisi untuk menautkan!"
+                        : "All card fields are required to link.",
+                    );
+                    return;
+                  }
+                  setIsPaymentMethodAdded(true);
+                  toast.success(
+                    lang === "id"
+                      ? "Kartu Kredit disimulasikan & ditautkan sebagai metode pembayaran!"
+                      : "Card linked as a simulated payment method!",
+                  );
+                }}
+                className={`w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-xs font-bold shadow border active:scale-98 transition-all cursor-pointer ${isPaymentMethodAdded ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-250/20 animate-[pulse_2s_infinite]" : "bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-850"}`}
+              >
+                {isPaymentMethodAdded ? "🟢 Card Saved" : "🔗 Link Simulated Card"}
+              </button>
+
               {/* Submit Card */}
               <button
                 type="submit"
@@ -1515,6 +1667,34 @@ export function VibeShotPlatform() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "signup">("login");
+
+  const [profile, setProfile] = useState<{ tier: string; credits: number } | null>(null);
+
+  const fetchProfile = async () => {
+    if (!user) {
+      setProfile(null);
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("tier, credits")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error.message);
+      } else if (data) {
+        setProfile(data);
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, [user]);
 
   useEffect(() => {
     // Check initial session and cache the token in React state
@@ -2309,6 +2489,8 @@ export function VibeShotPlatform() {
           lang={lang}
           t={t}
           workerUrl={workerUrl}
+          profile={profile}
+          onProfileUpdated={fetchProfile}
         />
       </div>
     );
@@ -2349,6 +2531,17 @@ export function VibeShotPlatform() {
                     <User className="h-2.5 w-2.5 text-zinc-400" />
                     {user.email}
                   </div>
+                  {profile && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-55/10 dark:bg-emerald-950/40 border border-emerald-500/20 text-[10px] font-mono text-emerald-600 dark:text-emerald-450 uppercase font-extrabold animate-[fadeIn_0.3s_ease-out]">
+                      {profile.tier === "premium"
+                        ? "Pro 🚀"
+                        : profile.tier === "free-active"
+                          ? "Active Free 🎁"
+                          : "Inactive Free 🔒"}
+                      <span className="opacity-40 font-normal">|</span>
+                      <span>{profile.credits} Renders</span>
+                    </div>
+                  )}
                   <button
                     onClick={() => supabase.auth.signOut()}
                     className="text-[10px] font-bold text-zinc-400 hover:text-red-500 dark:hover:text-red-400 transition-colors font-mono uppercase cursor-pointer"
@@ -2386,12 +2579,14 @@ export function VibeShotPlatform() {
                 </button>
               )}
               <span className="text-zinc-200 dark:text-zinc-700 font-mono text-xs">|</span>
-              <button
-                onClick={handleOpenUpgradeModal}
-                className="text-[11px] font-bold text-emerald-600 hover:text-emerald-500 transition-colors cursor-pointer inline-flex items-center gap-1 hover:scale-105 transition-transform"
-              >
-                Upgrade Pro 🚀
-              </button>
+              {(!profile || profile.tier !== "premium") && (
+                <button
+                  onClick={handleOpenUpgradeModal}
+                  className="text-[11px] font-bold text-emerald-600 hover:text-emerald-500 transition-colors cursor-pointer inline-flex items-center gap-1 hover:scale-105 transition-transform animate-pulse"
+                >
+                  Upgrade Pro 🚀
+                </button>
+              )}
             </div>
           </div>
         </header>
@@ -2655,6 +2850,8 @@ export function VibeShotPlatform() {
         lang={lang}
         t={t}
         workerUrl={workerUrl}
+        profile={profile}
+        onProfileUpdated={fetchProfile}
       />
     </>
   );
