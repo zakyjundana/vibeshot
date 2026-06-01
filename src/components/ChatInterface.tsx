@@ -178,8 +178,8 @@ export function ChatInterface({
       role: "assistant",
       content:
         lang === "id"
-          ? "Yo! Gua Vibeshot — AI creative strategist lo.\nCeritain aja mau bikin konten apa: produk, brand, campaign, atau paste link referensi video. Gua yang urus sisanya. 🎬"
-          : "Yo! I'm Vibeshot — your AI creative strategist.\nJust tell me what content you want to create: your product, brand, campaign, or paste a reference video link. I'll handle the rest. 🎬",
+          ? "Yo! Gua Vibeshot — AI creative strategist lo. (💡 Gratis: Sesi Chat & Penyimpanan Brief ke Cloud tak terbatas untuk semua tier!)\nCeritain aja mau bikin konten apa: produk, brand, campaign, atau paste link referensi video. Gua yang urus sisanya. 🎬"
+          : "Yo! I'm Vibeshot — your AI creative strategist. (💡 Free: Unlimited Chat & Cloud Brief Saving enabled for all tiers!)\nJust tell me what content you want to create: your product, brand, campaign, or paste a reference video link. I'll handle the rest. 🎬",
       timestamp: new Date().toISOString(),
     };
 
@@ -588,6 +588,19 @@ export function ChatInterface({
 
         {/* Messages Scroll Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Freemium Reassurance Banner */}
+          <div className="p-2.5 rounded-xl border border-indigo-250/20 bg-indigo-500/5 dark:bg-indigo-500/10 text-[10px] text-indigo-650 dark:text-indigo-300 leading-relaxed flex items-center justify-between gap-2 shadow-sm shrink-0">
+            <span className="font-medium">
+              💡{" "}
+              {lang === "id"
+                ? "Akses Gratis: Chat & Peracikan Brief sepuasnya! Data otomatis tersimpan ke cloud."
+                : "Free Access: Unlimited Chat & Brief refinement! Data auto-saved to cloud."}
+            </span>
+            <span className="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-[7px] tracking-wider uppercase font-bold text-indigo-700 dark:text-indigo-400 font-mono shrink-0">
+              Unlimited
+            </span>
+          </div>
+
           {messages.map((m, idx) => (
             <div
               key={idx}
@@ -970,6 +983,19 @@ export function ChatInterface({
           /* ACTIVE IMMERSIVE CHAT LOG */
           <div className="w-full max-w-3xl flex-1 flex flex-col space-y-6 pt-4 justify-end pb-24">
             <div className="space-y-5 overflow-y-auto max-h-[calc(100vh-280px)] pr-2">
+              {/* Freemium Reassurance Banner */}
+              <div className="mb-2 p-2.5 rounded-xl border border-indigo-250/20 bg-indigo-500/5 dark:bg-indigo-500/10 text-[10px] text-indigo-650 dark:text-indigo-300 leading-relaxed flex items-center justify-between gap-2 shadow-sm shrink-0 animate-[fadeIn_0.3s_ease-out]">
+                <span className="font-medium">
+                  💡{" "}
+                  {lang === "id"
+                    ? "Akses Gratis: Chat & Peracikan Brief sepuasnya! Data otomatis tersimpan ke cloud."
+                    : "Free Access: Unlimited Chat & Brief refinement! Data auto-saved to cloud."}
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-[7px] tracking-wider uppercase font-bold text-indigo-700 dark:text-indigo-400 font-mono shrink-0">
+                  Unlimited
+                </span>
+              </div>
+
               {messages.map((m, idx) => (
                 <div
                   key={idx}
