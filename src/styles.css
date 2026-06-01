@@ -178,3 +178,64 @@
       0 1px 3px rgba(15, 23, 42, 0.03);
   }
 }
+
+/* Print styles for landscape presentation slides */
+@media print {
+  /* Hide all screen components except the print slides container */
+  #root > :not(.print-slides-container) {
+    display: none !important;
+  }
+  
+  /* Show only print slides container */
+  .print-slides-container {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  /* Configure page margins and size */
+  @page {
+    size: A4 landscape;
+    margin: 0 !important;
+  }
+  
+  .slide-page {
+    width: 297mm !important;
+    height: 209mm !important; /* Offset tiny bit to avoid ghost pages */
+    page-break-after: always !important;
+    break-after: page !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 16mm !important; /* Premium margins */
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    overflow: hidden !important;
+  }
+  
+  /* Fix vertical grids in printing flex layouts */
+  .slide-page .grid {
+    display: grid !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+  }
+  
+  .slide-page img {
+    max-height: 180px !important;
+  }
+  
+  /* Preserve high-fidelity colors and background print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
