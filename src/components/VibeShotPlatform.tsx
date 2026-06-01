@@ -25,6 +25,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
+import pptxgen from "pptxgenjs";
 import { supabase } from "../lib/supabase";
 import { ChatInterface } from "./ChatInterface";
 
@@ -2268,6 +2269,310 @@ export function VibeShotPlatform() {
     }, 800);
   };
 
+  const handleExportPptx = async () => {
+    if (shots.length === 0) {
+      toast.error(
+        lang === "id" ? "Tidak ada storyboard untuk diekspor!" : "No storyboard to export!",
+      );
+      return;
+    }
+    const toastId = toast.loading(
+      lang === "id" ? "Menyiapkan file .pptx..." : "Preparing .pptx file...",
+    );
+    try {
+      const pptx = new pptxgen();
+      pptx.layout = "LAYOUT_WIDE"; // 16:9 widescreen
+      pptx.author = "VibeShot AI";
+      pptx.subject = "Storyboard & Shotlist";
+
+      // ── SLIDE 1: Cover ──────────────────────────────────────────
+      const cover = pptx.addSlide();
+      cover.background = { color: "09090b" };
+
+      // Gradient accent bar
+      cover.addShape(pptx.ShapeType.rect, {
+        x: 0,
+        y: 0,
+        w: "100%",
+        h: 0.18,
+        fill: { color: "6366f1" },
+        line: { color: "6366f1" },
+      });
+
+      // VibeShot label
+      cover.addText("VIBESHOT AI", {
+        x: 0.6,
+        y: 0.5,
+        w: "90%",
+        h: 0.4,
+        fontSize: 10,
+        color: "6366f1",
+        bold: true,
+        fontFace: "Arial",
+        charSpacing: 4,
+      });
+
+      // Title from brief
+      const coverTitle =
+        titleOverride ||
+        productName ||
+        (lang === "id" ? "Storyboard Konten" : "Content Storyboard");
+      cover.addText(coverTitle, {
+        x: 0.6,
+        y: 1.1,
+        w: "90%",
+        h: 1.2,
+        fontSize: 36,
+        color: "ffffff",
+        bold: true,
+        fontFace: "Arial",
+        breakLine: false,
+      });
+
+      // Premise
+      if (premiseOverride) {
+        const premiseText =
+          premiseOverride.length > 400
+            ? premiseOverride.substring(0, 400) + "..."
+            : premiseOverride;
+        cover.addText(premiseText, {
+          x: 0.6,
+          y: 2.6,
+          w: "88%",
+          h: 2.0,
+          fontSize: 11,
+          color: "a1a1aa",
+          fontFace: "Arial",
+          valign: "top",
+          breakLine: true,
+        });
+      }
+
+      // Meta info row
+      const metaItems = [
+        platform ? `Platform: ${platform}` : null,
+        tone ? `Tone: ${tone}` : null,
+        visualStyle ? `Style: ${visualStyle}` : null,
+        `${shots.length} shots`,
+      ]
+        .filter(Boolean)
+        .join("  ·  ");
+
+      cover.addText(metaItems, {
+        x: 0.6,
+        y: 4.8,
+        w: "90%",
+        h: 0.4,
+        fontSize: 9,
+        color: "52525b",
+        fontFace: "Arial",
+        bold: true,
+        charSpacing: 1,
+      });
+
+      // ── CONTENT SLIDES: 6 shots per slide ───────────────────────
+      const SHOTS_PER_SLIDE = 6;
+      for (let i = 0; i < shots.length; i += SHOTS_PER_SLIDE) {
+        const chunk = shots.slice(i, i + SHOTS_PER_SLIDE);
+        const slideNum = Math.floor(i / SHOTS_PER_SLIDE) + 1;
+        const totalSlides = Math.ceil(shots.length / SHOTS_PER_SLIDE);
+
+        const slide = pptx.addSlide();
+        slide.background = { color: "ffffff" };
+
+        // Top accent bar
+        slide.addShape(pptx.ShapeType.rect, {
+          x: 0,
+          y: 0,
+          w: "100%",
+          h: 0.12,
+          fill: { color: "6366f1" },
+          line: { color: "6366f1" },
+        });
+
+        // Slide header
+        slide.addText(`STORYBOARD & SHOTLIST — ${(coverTitle || "").toUpperCase()}`, {
+          x: 0.35,
+          y: 0.22,
+          w: 7.5,
+          h: 0.28,
+          fontSize: 7,
+          color: "3f3f46",
+          bold: true,
+          fontFace: "Arial",
+          charSpacing: 2,
+        });
+        slide.addText(`SLIDE ${slideNum + 1} / ${totalSlides + 1}`, {
+          x: 8.5,
+          y: 0.22,
+          w: 1.5,
+          h: 0.28,
+          fontSize: 7,
+          color: "a1a1aa",
+          bold: true,
+          fontFace: "Arial",
+          align: "right",
+        });
+
+        // Divider
+        slide.addShape(pptx.ShapeType.line, {
+          x: 0.35,
+          y: 0.58,
+          w: 9.6,
+          h: 0,
+          line: { color: "e4e4e7", width: 0.5 },
+        });
+
+        // 6 shot cards in a row
+        const CARD_W = 1.52;
+        const CARD_H = 4.7;
+        const CARD_GAP = 0.08;
+        const START_X = 0.2;
+        const START_Y = 0.72;
+        const FRAME_H = CARD_W * (16 / 9); // strict 9:16 → height from width
+
+        chunk.forEach((shot, idx) => {
+          const shotNum = i + idx + 1;
+          const cx = START_X + idx * (CARD_W + CARD_GAP);
+          const cy = START_Y;
+
+          // Card background
+          slide.addShape(pptx.ShapeType.rect, {
+            x: cx,
+            y: cy,
+            w: CARD_W,
+            h: CARD_H,
+            fill: { color: "fafafa" },
+            line: { color: "e4e4e7", width: 0.5 },
+            rectRadius: 0.08,
+          });
+
+          // Shot number badge
+          slide.addShape(pptx.ShapeType.rect, {
+            x: cx + 0.07,
+            y: cy + 0.07,
+            w: 0.32,
+            h: 0.2,
+            fill: { color: "09090b" },
+            line: { color: "09090b" },
+            rectRadius: 0.04,
+          });
+          slide.addText(String(shotNum).padStart(2, "0"), {
+            x: cx + 0.07,
+            y: cy + 0.07,
+            w: 0.32,
+            h: 0.2,
+            fontSize: 6.5,
+            color: "ffffff",
+            bold: true,
+            fontFace: "Courier New",
+            align: "center",
+            valign: "middle",
+          });
+
+          // 9:16 visual frame
+          const frameY = cy + 0.35;
+          if (shot.image) {
+            try {
+              slide.addImage({
+                data: shot.image,
+                x: cx + 0.06,
+                y: frameY,
+                w: CARD_W - 0.12,
+                h: FRAME_H,
+                sizing: { type: "cover", w: CARD_W - 0.12, h: FRAME_H },
+              });
+            } catch {
+              // fallback if image data fails
+              slide.addShape(pptx.ShapeType.rect, {
+                x: cx + 0.06,
+                y: frameY,
+                w: CARD_W - 0.12,
+                h: FRAME_H,
+                fill: { color: "e4e4e7" },
+                line: { color: "d4d4d8" },
+              });
+            }
+          } else {
+            slide.addShape(pptx.ShapeType.rect, {
+              x: cx + 0.06,
+              y: frameY,
+              w: CARD_W - 0.12,
+              h: FRAME_H,
+              fill: { color: "f0f0f2" },
+              line: { color: "d4d4d8" },
+            });
+            slide.addText("No Visual", {
+              x: cx + 0.06,
+              y: frameY + FRAME_H / 2 - 0.1,
+              w: CARD_W - 0.12,
+              h: 0.2,
+              fontSize: 6,
+              color: "a1a1aa",
+              align: "center",
+              fontFace: "Arial",
+            });
+          }
+
+          // Text content below frame
+          const textY = frameY + FRAME_H + 0.1;
+          // Camera angle label
+          slide.addText("SHOTLIST:", {
+            x: cx + 0.07,
+            y: textY,
+            w: CARD_W - 0.14,
+            h: 0.16,
+            fontSize: 5.5,
+            color: "18181b",
+            bold: true,
+            fontFace: "Arial",
+            charSpacing: 1,
+          });
+          slide.addText(shot.angle || "", {
+            x: cx + 0.07,
+            y: textY + 0.17,
+            w: CARD_W - 0.14,
+            h: 0.22,
+            fontSize: 6,
+            color: "3f3f46",
+            bold: true,
+            italic: true,
+            fontFace: "Arial",
+          });
+          // Action description
+          slide.addText(shot.action || "", {
+            x: cx + 0.07,
+            y: textY + 0.42,
+            w: CARD_W - 0.14,
+            h: 0.55,
+            fontSize: 5.5,
+            color: "52525b",
+            fontFace: "Arial",
+            valign: "top",
+            breakLine: true,
+          });
+        });
+      }
+
+      // Download the file
+      const safeName = (coverTitle || "vibeshot-storyboard")
+        .replace(/[^a-zA-Z0-9\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, "-");
+      await pptx.writeFile({ fileName: `${safeName}.pptx` });
+      toast.dismiss(toastId);
+      toast.success(
+        lang === "id"
+          ? "File .pptx berhasil didownload! Buka di Google Slides → File → Buka."
+          : "PPTX downloaded! Open in Google Slides → File → Open.",
+        { duration: 6000 },
+      );
+    } catch (err: any) {
+      toast.dismiss(toastId);
+      toast.error(err.message || "Export failed.");
+    }
+  };
+
   const handleShareLink = () => {
     if (!cloudBriefId) {
       toast.error("Cloud ID missing.");
@@ -2652,11 +2957,11 @@ export function VibeShotPlatform() {
                       )}
                       <button
                         type="button"
-                        onClick={handleExportSlides}
+                        onClick={handleExportPptx}
                         className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-2 text-xs font-bold transition shadow-sm cursor-pointer hover:scale-105 active:scale-95 duration-100"
                       >
                         <Film className="w-3.5 h-3.5" />{" "}
-                        {lang === "id" ? "Ekspor ke Slides 📊" : "Export to Slides 📊"}
+                        {lang === "id" ? "Ekspor .pptx 📊" : "Export .pptx 📊"}
                       </button>
                     </div>
                   )}
