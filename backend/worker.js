@@ -902,7 +902,8 @@ export default {
       // CHAT TURN: CONVERSATIONAL AI INTERACTION
       // ========================================================
       if (action === "chat_turn") {
-        const { conversationHistory, newMessage, attachedImage, currentBriefId } = bodyData;
+        const { conversationHistory, newMessage, attachedImage, currentBriefId, activeShots } =
+          bodyData;
         if (!newMessage) {
           return new Response(JSON.stringify({ error: "Missing parameter: newMessage" }), {
             status: 400,
@@ -910,11 +911,25 @@ export default {
           });
         }
 
-        // Load active storyboard context from Supabase if editing
+        // Load active storyboard context — prefer frontend-sent activeShots (faster, no extra DB call)
         let currentStoryboardContext = "";
         let currentBriefData = null;
 
-        if (currentBriefId) {
+        // Use shots sent directly from frontend if available
+        if (activeShots && Array.isArray(activeShots) && activeShots.length > 0) {
+          currentBriefData = { shotlist: activeShots, id: currentBriefId };
+          currentStoryboardContext = `\n\n[ACTIVE STORYBOARD — ${activeShots.length} SHOTS CURRENTLY ON SCREEN]
+
+⚠️ CRITICAL EDIT RULES — READ CAREFULLY:
+1. EDIT INTENT: Jika user menyebut kata seperti "ganti", "edit", "ubah", "update", "semua", "jadiin", "bikin", "tambahin", "hapusin", atau merujuk pada shot/scene/adegan tertentu → kamu WAJIB memodifikasi shotlist dan mengembalikan seluruh storyboard hasil edit di properti 'updatedBrief'.
+2. JANGAN set 'readyToGenerate: true' jika user meminta edit — ini BUKAN permintaan generate baru.
+3. Setelah edit: tulis SELURUH shotlist yang sudah dimodifikasi (bukan hanya shot yang berubah). Setiap shot yang terpengaruh WAJIB punya 'imagePrompt' yang sudah diperbarui sesuai perubahan.
+4. CREATE INTENT: Hanya set 'readyToGenerate: true' jika user secara eksplisit minta "buat baru", "bikin storyboard baru", atau tidak ada storyboard aktif.
+
+Shotlist Aktif Saat Ini:
+${activeShots.map((s, idx) => `Shot ${idx + 1}: Angle="${s.angle}", Location="${s.location}", Action="${s.action}", Audio="${s.audio}", ImagePrompt="${s.imagePrompt || ""}"`).join("\n")}`;
+        } else if (currentBriefId) {
+          // Fallback: fetch from Supabase if frontend didn't send shots
           try {
             const fetchRes = await fetch(`${supabaseUrl}/rest/v1/briefs?id=eq.${currentBriefId}`, {
               headers: {
@@ -926,7 +941,15 @@ export default {
               const briefs = await fetchRes.json();
               if (briefs.length > 0) {
                 currentBriefData = briefs[0];
-                currentStoryboardContext = `\n\n[SITUATION: User sedang melihat storyboard aktif berikut di layarnya. Jika user meminta perubahan/edit pada storyboard ini (misal: "Ganti angle shot 3", "Tambahin scene di akhir tentang brand logo", "Hapus shot 2", dll.), kamu WAJIB melakukan perubahan tersebut pada data ini dan mengembalikan data lengkap storyboard hasil modifikasi di properti 'updatedBrief'. Pastikan jumlah shot dan urutan disesuaikan. Jika tidak ada permintaan edit, biarkan 'updatedBrief' kosong/null.]\n\nStoryboard Aktif Saat Ini:\n- Title: "${currentBriefData.title}"\n- Premise: "${currentBriefData.premise}"\n- Visual Style: "${currentBriefData.visual_style || "real-life"}"\n- Master Identity: ${JSON.stringify(currentBriefData.master_identity || {})}\n- Shotlist:\n${(currentBriefData.shotlist || []).map((s, idx) => `Shot ${idx + 1}: Angle="${s.angle}", Location="${s.location}", Action="${s.action}", Audio="${s.audio}", ImagePrompt="${s.imagePrompt || ""}"`).join("\n")}`;
+                currentStoryboardContext = `\n\n[ACTIVE STORYBOARD — ${currentBriefData.shotlist?.length || 0} SHOTS]
+
+⚠️ CRITICAL EDIT RULES:
+1. EDIT INTENT: Jika user menyebut kata seperti "ganti", "edit", "ubah", "update", "semua", "jadiin", "bikin", "tambahin", "hapusin" → kamu WAJIB modifikasi dan kembalikan 'updatedBrief'.
+2. JANGAN set 'readyToGenerate: true' untuk permintaan edit.
+3. Tulis SELURUH shotlist setelah edit, pastikan 'imagePrompt' diperbarui untuk shot yang berubah.
+
+Shotlist Aktif:
+${(currentBriefData.shotlist || []).map((s, idx) => `Shot ${idx + 1}: Angle="${s.angle}", Location="${s.location}", Action="${s.action}", Audio="${s.audio}", ImagePrompt="${s.imagePrompt || ""}"`).join("\n")}`;
               }
             }
           } catch (e) {
@@ -970,13 +993,19 @@ PENTING:
 2. Jika ada data yang kurang, mintalah informasi tersebut secara natural dan asik melalui 'reply' atau 'nextQuestion'. Jangan nanya kaku satu-satu seperti bot survei. Contoh: "Kopi Janji Jiwa oke banget tuh. Nah, angle apa nih yang mau ditonjolkan? Kelembutan susunya, atau efek melek instannya?"
 3. Gunakan 'reply' untuk memberikan respon santai atas perkataan user, disusul dengan pertanyaan berikutnya.
 4. Jika 'product' dan 'usp' SUDAH LENGKAP, set 'readyToGenerate' menjadi true, dan buatlah ringkasan ringkas dan asik di 'confirmMessage' (dalam Bahasa Indonesia), lalu tanyakan apakah mereka siap meracik storyboardnya sekarang (misal: "📋 Mantap! Data lo udah lengkap... Mau langsung kita eksekusi sekarang? 🚀").
-5. LIVE STORYBOARD EDITING: Jika user meminta perubahan (misal: ubah VO, tambah shot baru, ganti angle, hapus adegan, dll.) pada storyboard aktif saat ini, kamu WAJIB memodifikasi 'title', 'premise', 'visual_style', 'master_identity', atau 'shotlist' sesuai permintaannya. Kembalikan data lengkap yang sudah diedit tersebut di properti 'updatedBrief'. Properti 'updatedBrief' wajib mengikuti struktur objek brief yang sama persis seperti schema brief pembuatan baru. Tulis konfirmasi edit yang ramah dan asik di properti 'reply' (contoh: "Sip Cok! VO adegan 3 udah gue ganti sesuai request lo ya!").
+5. LIVE STORYBOARD EDITING: Jika ada ACTIVE STORYBOARD di context di bawah dan user meminta perubahan (misal: ubah VO, tambah shot baru, ganti angle, hapus adegan, edit lokasi, dll.), kamu WAJIB:
+   a. Set 'readyToGenerate' ke FALSE — ini bukan generate baru
+   b. Memodifikasi shotlist sesuai permintaan
+   c. Kembalikan SELURUH storyboard hasil edit di properti 'updatedBrief'
+   d. Perbarui 'imagePrompt' setiap shot yang terpengaruh agar sesuai dengan perubahan konten
+   e. Tulis konfirmasi edit yang ramah dan spesifik di 'reply' (contoh: "Sip Cok! Lokasi semua shot udah gue ganti jadi 'area 1 rumah aja' + image prompt-nya gue update juga!")
 ${currentStoryboardContext}
 
 Riwayat Percakapan:
 ${conversationText}
 
 User berkata: "${newMessage}"${ytTranscriptContext}`;
+
 
         const chatTurnJsonSchema = {
           type: "OBJECT",
