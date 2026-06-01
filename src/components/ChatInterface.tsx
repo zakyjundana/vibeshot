@@ -61,6 +61,8 @@ interface ChatInterfaceProps {
   onLoadBrief: (briefId: string) => Promise<void>;
   isDocked?: boolean;
   onBriefUpdated?: (brief: any) => void;
+  activeShots?: any[];
+  onShotsEdited?: (updatedShots: any[]) => void;
 }
 
 export function ChatInterface({
@@ -73,6 +75,8 @@ export function ChatInterface({
   onLoadBrief,
   isDocked = false,
   onBriefUpdated,
+  activeShots,
+  onShotsEdited,
 }: ChatInterfaceProps) {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
@@ -339,6 +343,19 @@ export function ChatInterface({
               newMessage: text,
               attachedImage: imagePayload || undefined,
               currentBriefId: currentSession?.brief_id || undefined,
+              // Send active shots directly to backend — avoids extra Supabase fetch
+              activeShots:
+                activeShots && activeShots.length > 0
+                  ? activeShots.map((s) => ({
+                      id: s.id,
+                      angle: s.angle,
+                      location: s.location,
+                      action: s.action,
+                      audio: s.audio,
+                      tech_budget_hack: s.tech_budget_hack,
+                      imagePrompt: s.imagePrompt,
+                    }))
+                  : undefined,
             }),
           });
           // Break on success or non-retryable errors
@@ -374,8 +391,11 @@ export function ChatInterface({
       }
 
       // Live Storyboard Editing Callback
-      if (data.updatedBrief && onBriefUpdated) {
-        onBriefUpdated(data.updatedBrief);
+      if (data.updatedBrief) {
+        if (onBriefUpdated) onBriefUpdated(data.updatedBrief);
+        if (onShotsEdited && data.updatedBrief.shotlist) {
+          onShotsEdited(data.updatedBrief.shotlist);
+        }
       }
 
       // Save history to Supabase asynchronously

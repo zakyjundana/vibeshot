@@ -2035,7 +2035,7 @@ export function VibeShotPlatform() {
     }
   };
 
-  const handleBriefUpdated = (updatedData: any) => {
+  const handleBriefUpdated = async (updatedData: any) => {
     if (!updatedData) return;
 
     const normalized = (updatedData.shotlist || []).map((r: any, idx: number) => {
@@ -2047,8 +2047,9 @@ export function VibeShotPlatform() {
         tech_budget_hack: String(r?.tech_budget_hack || ""),
         action: String(r?.action || ""),
         audio: String(r?.audio || ""),
+        // Keep old image temporarily — will be regenerated below if shot already had one
         image: r?.image || existing?.image || "",
-        imagePrompt: String(r?.imagePrompt || ""),
+        imagePrompt: String(r?.imagePrompt || existing?.imagePrompt || ""),
         imageModel: r?.imageModel || existing?.imageModel || "",
       };
     });
@@ -2070,11 +2071,63 @@ export function VibeShotPlatform() {
       cloudBriefId,
     );
 
-    toast.success(
-      lang === "id"
-        ? "✨ Adegan storyboard berhasil diupdate via AI Chat!"
-        : "✨ Storyboard updated live via AI Chat!",
-    );
+    // Detect which shots already had images — auto-regenerate with updated imagePrompt
+    const shotsWithImages = normalized.filter((s: any) => s.image && s.imagePrompt);
+    if (shotsWithImages.length > 0 && cloudBriefId && accessToken) {
+      toast.info(
+        lang === "id"
+          ? `✨ Storyboard diupdate! Auto-regenerate ${shotsWithImages.length} visual sesuai perubahan...`
+          : `✨ Storyboard updated! Auto-regenerating ${shotsWithImages.length} visuals with new context...`,
+        { duration: 5000 },
+      );
+      // Regenerate images sequentially to avoid overloading the API
+      for (const shot of shotsWithImages) {
+        try {
+          setLoadingShotsImages((prev) => ({ ...prev, [shot.id]: true }));
+          const res = await fetch(workerUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              action: "render_single_image",
+              briefId: cloudBriefId,
+              visual_style: updatedData.visual_style || visualStyle,
+              singleShotId: shot.id,
+              shotToGenerate: shot,
+              masterIdentity: updatedData.master_identity || masterIdentity,
+              imageModel: imageModel,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok && data.imageUrl) {
+            setShots((prev) =>
+              prev.map((s) => (s.id === shot.id ? { ...s, image: data.imageUrl } : s)),
+            );
+            setMoodboard((prev) =>
+              prev.map((img, idx) => {
+                const shotAtIdx = normalized[idx];
+                return shotAtIdx?.id === shot.id ? data.imageUrl : img;
+              }),
+            );
+          }
+        } catch {
+          // silently skip failed renders
+        } finally {
+          setLoadingShotsImages((prev) => ({ ...prev, [shot.id]: false }));
+        }
+      }
+      toast.success(
+        lang === "id" ? "🎬 Semua visual berhasil diperbarui!" : "🎬 All visuals updated!",
+      );
+    } else {
+      toast.success(
+        lang === "id"
+          ? "✨ Adegan storyboard berhasil diupdate via AI Chat!"
+          : "✨ Storyboard updated live via AI Chat!",
+      );
+    }
   };
 
   const onLoadBrief = async (briefId: string) => {
@@ -2935,6 +2988,7 @@ export function VibeShotPlatform() {
                 onLoadBrief={onLoadBrief}
                 isDocked={true}
                 onBriefUpdated={handleBriefUpdated}
+                activeShots={shots.length > 0 ? shots : undefined}
               />
             </div>
 
@@ -3150,6 +3204,7 @@ export function VibeShotPlatform() {
                 onLoadBrief={onLoadBrief}
                 isDocked={false}
                 onBriefUpdated={handleBriefUpdated}
+                activeShots={shots.length > 0 ? shots : undefined}
               />
             </div>
           </div>
