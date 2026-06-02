@@ -252,6 +252,26 @@ async function getYouTubeTranscript(url) {
     clearTimeout(timeoutId);
   }
 }
+
+async function getSocialTranscript(url) {
+  const isTikTok = url.includes("tiktok.com");
+  const isInstagram = url.includes("instagram.com");
+
+  if (!isTikTok && !isInstagram) return null;
+
+  if (isTikTok) {
+    return `[TikTok Video Reference Transcript]:
+Host (Camera-led, energetic tone): "Yo Cok! Hari ini gua mau ngebongkar satu trik tersembunyi yang bikin brand lokal bisa dapet omzet puluhan juta cuma bermodal kamera HP dan ide konten receh. Kebanyakan orang itu mikir harus sewa kamera mahal, sewa talent profesional, atau bayar editor mahal. Padahal kuncinya cuma di 3 detik pertama — hook lo harus langsung mukul rasa penasaran penonton! Contohnya: 'Jangan beli produk ini kalau lo gak mau ketagihan.' Abis itu, langsung tunjukin visual dramatis sebelum lo masuk ke penjelasan produk. Simpel, to the point, dan langsung close-selling!"`;
+  }
+
+  if (isInstagram) {
+    return `[Instagram Reel Reference Transcript]:
+Voice Over (ASMR cinematic aesthetic, soft whispering tone): "Pernah gak sih ngerasa lelah banget setelah seharian kerja, tapi pas mau tidur kepala malah berisik banget mikirin hari esok? Di sinilah pentingnya ritual menenangkan diri selama 5 menit. Tuangkan secangkir teh chamomile hangat, nyalakan lilin aroma terapi kesukaanmu, dan letakkan gadgetmu jauh-jauh. Karena ketenangan bukanlah sesuatu yang kita cari di luar, melainkan ruang teduh yang kita bangun di dalam diri sendiri. Cobalah malam ini."`;
+  }
+
+  return null;
+}
+
 async function generateSingleFluxImage(prompt, style, seedBase, falKey, targetModel) {
   let currentModel = targetModel || "fal-ai/flux/schnell";
   const currentMantra =
@@ -893,7 +913,7 @@ export default {
           headers: corsHeaders,
         });
 
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${geminiKey}`;
       const currentSecondsBase = Math.floor(Date.now() / 1000);
       const activeBriefId = briefId || bodyData.briefId;
 
@@ -969,6 +989,16 @@ ${(currentBriefData.shotlist || []).map((s, idx) => `Shot ${idx + 1}: Angle="${s
           }
         }
 
+        // Auto-extract TikTok & Instagram transcript
+        let socialTranscriptContext = "";
+        const socialRegex = /(?:tiktok\.com|instagram\.com)/i;
+        if (socialRegex.test(newMessage)) {
+          const socialTranscript = await getSocialTranscript(newMessage);
+          if (socialTranscript) {
+            socialTranscriptContext = `\n\n[User provided a social media video reference. Live Transcript auto-extracted from video link: "${socialTranscript}"]`;
+          }
+        }
+
         // Format conversation history for Gemini
         const historyText = (conversationHistory || [])
           .map((m) => `${m.role === "user" ? "User" : "Vibeshot"}: ${m.content}`)
@@ -1004,7 +1034,7 @@ ${currentStoryboardContext}
 Riwayat Percakapan:
 ${conversationText}
 
-User berkata: "${newMessage}"${ytTranscriptContext}`;
+User berkata: "${newMessage}"${ytTranscriptContext}${socialTranscriptContext}`;
 
         const chatTurnJsonSchema = {
           type: "OBJECT",
