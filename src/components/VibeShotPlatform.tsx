@@ -23,11 +23,32 @@ import {
   Mail,
   Key,
   ShieldAlert,
+  CreditCard,
+  Coins,
+  Settings as SettingsIcon,
+  LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
 import pptxgen from "pptxgenjs";
 import { supabase } from "../lib/supabase";
 import { ChatInterface } from "./ChatInterface";
+import { AccountSettingsModal } from "./AccountSettingsModal";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "./ui/dropdown-menu";
+declare global {
+  interface Window {
+    pendo?: {
+      track: (event: string, metadata?: any) => void;
+      identify: (config: any) => void;
+    };
+  }
+}
 
 interface Shot {
   id: string;
@@ -316,6 +337,10 @@ interface ShotCardProps {
   handleExecuteSingleImage: (shot: Shot) => Promise<void>;
   loadingSingleImage: boolean;
   setPreviewImage: (src: string | null) => void;
+  masterIdentity?: {
+    talent?: string;
+    product?: string;
+  } | null;
 }
 
 function ShotCard({
@@ -328,6 +353,7 @@ function ShotCard({
   handleExecuteSingleImage,
   loadingSingleImage,
   setPreviewImage,
+  masterIdentity,
 }: ShotCardProps) {
   const [localAngle, setLocalAngle] = useState(shot.angle);
   const [localLocation, setLocalLocation] = useState(shot.location);
@@ -442,16 +468,108 @@ function ShotCard({
             <span className="text-[9px] font-mono text-indigo-500 dark:text-indigo-400 uppercase tracking-wider font-semibold flex items-center gap-1">
               <Sparkles className="w-3 h-3" /> {t.aiPromptLabel}
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(localImagePrompt);
-                toast.success("Prompt disalin!");
-              }}
-              className="text-[9px] text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center gap-1 font-mono transition-colors cursor-pointer"
-            >
-              <Copy className="w-3 h-3" /> copy prompt
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  // Reconstruct prompt dynamically from live editable card inputs!
+                  let basePrompt = localAction || "cinematic commercial scenario";
+                  
+                  // Detect camera perspective from localAngle
+                  let cameraFraming = "";
+                  const angleUpper = localAngle.toUpperCase();
+                  const isDroneOrWide = angleUpper.includes("DRONE") || angleUpper.includes("AERIAL") || angleUpper.includes("BIRD") || angleUpper.includes("ESTABLISHING") || angleUpper.includes("WIDE");
+                  
+                  if (angleUpper.includes("DRONE") || angleUpper.includes("AERIAL") || angleUpper.includes("BIRD")) {
+                    cameraFraming = "Ultra-high-angle drone follow-cam wide landscape shot";
+                  } else if (angleUpper.includes("WIDE") || angleUpper.includes("ESTABLISHING")) {
+                    cameraFraming = "Cinematic extreme wide establishing landscape shot, expansive scale";
+                  } else if (angleUpper.includes("CLOSE")) {
+                    cameraFraming = "Extreme close-up macro shot, highly detailed focus";
+                  } else if (angleUpper.includes("MEDIUM")) {
+                    cameraFraming = "Cinematic medium shot, waist-up framing";
+                  } else if (angleUpper.includes("POV")) {
+                    cameraFraming = "First-person point-of-view (POV) cinematic perspective shot";
+                  } else if (localAngle) {
+                    cameraFraming = `${localAngle} camera angle shot`;
+                  }
+                  
+                  let lensStyle = "shot on 35mm anamorphic lens, cinematic composition, professional studio lighting, gorgeous depth of field";
+                  if (isDroneOrWide) {
+                    lensStyle = "shot on ultra-wide 16mm cinema lens, deep focus, epic landscape scale, volumetric golden hour morning sun rays, cinematic lighting";
+                  } else if (angleUpper.includes("CLOSE")) {
+                    lensStyle = "shot on 85mm macro lens, sharp focus, professional portrait studio lighting, dramatic background bokeh blur";
+                  }
+                  
+                  // Clean portrait metrics for wide view
+                  if (isDroneOrWide) {
+                    basePrompt = basePrompt
+                      .replace(/A stylish young Indonesian woman, confident and relaxed, wearing natural-toned comfortable clothes, ready for work\./gi, "")
+                      .replace(/A stylish young Indonesian woman/gi, "")
+                      .replace(/wearing natural-toned comfortable clothes/gi, "")
+                      .replace(/portrait/gi, "wide landscape view")
+                      .replace(/close-up/gi, "wide view")
+                      .replace(/close up/gi, "wide view");
+                  }
+                  
+                  let identityPart = "";
+                  if (masterIdentity) {
+                    const talent = masterIdentity.talent || "";
+                    const product = masterIdentity.product || "";
+                    
+                    const masterStr = isDroneOrWide 
+                      ? [product].filter(Boolean).join(". ")
+                      : [talent, product].filter(Boolean).join(". ");
+                    
+                    if (masterStr) {
+                      const baseLower = basePrompt.toLowerCase();
+                      const masterTerms = masterStr.toLowerCase().split(/\s+/).slice(0, 3);
+                      const hasOverlap = masterTerms.some(term => term.length > 3 && baseLower.includes(term));
+                      if (!hasOverlap) {
+                        identityPart = `${masterStr.trim()}. `;
+                      }
+                    }
+                  }
+                  
+                  let enhanced = "";
+                  if (cameraFraming) {
+                    enhanced += `${cameraFraming}. `;
+                  }
+                  enhanced += identityPart;
+                  enhanced += `${basePrompt.trim()}. `;
+                  if (localLocation) {
+                    enhanced += `Location environment: ${localLocation}. `;
+                  }
+                  enhanced += lensStyle;
+                  
+                  // Final sanitization
+                  if (isDroneOrWide) {
+                    enhanced = enhanced
+                      .replace(/portrait/gi, "wide landscape view")
+                      .replace(/close-up/gi, "wide view")
+                      .replace(/close up/gi, "wide view");
+                  }
+                  
+                  setLocalImagePrompt(enhanced);
+                  handleBlur("imagePrompt", enhanced, shot.imagePrompt || "");
+                  toast.success(lang === "id" ? "Prompt berhasil ditingkatkan berdasarkan data kartu adegan!" : "Prompt dynamically enhanced using card data!");
+                }}
+                className="text-[9px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-bold flex items-center gap-1 font-mono transition-all hover:scale-105 active:scale-95 duration-100 cursor-pointer mr-2"
+              >
+                <Sparkles className="w-3 h-3 animate-pulse" /> enhance prompt
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(localImagePrompt);
+                  toast.success("Prompt disalin!");
+                }}
+                className="text-[9px] text-zinc-400 hover:text-indigo-500 dark:hover:text-indigo-400 flex items-center gap-1 font-mono transition-colors cursor-pointer"
+              >
+                <Copy className="w-3 h-3" /> copy prompt
+              </button>
+            </div>
           </div>
           <textarea
             rows={2}
@@ -583,6 +701,11 @@ function AuthModal({ isOpen, onClose, lang, t, initialMode }: AuthModalProps) {
   const handleGoogleLogin = async () => {
     setErrorMsg(null);
     setLoading(true);
+    // Pendo Track: Google OAuth initiated
+    window.pendo?.track("google_oauth_initiated", {
+      provider: "google",
+      language: lang,
+    });
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -634,6 +757,11 @@ function AuthModal({ isOpen, onClose, lang, t, initialMode }: AuthModalProps) {
           password,
         });
         if (error) throw error;
+        // Pendo Track: User logged in
+        window.pendo?.track("user_logged_in", {
+          email: email,
+          language: lang,
+        });
         toast.success(lang === "id" ? "Berhasil masuk ke studio!" : "Successfully logged in!");
         onClose();
       } else {
@@ -642,6 +770,12 @@ function AuthModal({ isOpen, onClose, lang, t, initialMode }: AuthModalProps) {
           password,
         });
         if (error) throw error;
+        // Pendo Track: User signed up
+        window.pendo?.track("user_signed_up", {
+          email: email,
+          has_session: !!data?.session,
+          language: lang,
+        });
         if (data?.session) {
           toast.success(
             lang === "id" ? "Akun berhasil dibuat dan masuk!" : "Account created and logged in!",
@@ -1663,11 +1797,22 @@ export function VibeShotPlatform() {
   const [hasResult, setHasResult] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+  // Shared Chat State to preserve context across View transitions
+  const [chatSessions, setChatSessions] = useState<any[]>([]);
+  const [currentChatSession, setCurrentChatSession] = useState<any | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatExtracted, setChatExtracted] = useState<any>({});
+  const [chatAttachedImage, setChatAttachedImage] = useState<string | null>(null);
+
   const [user, setUser] = useState<any>(null);
   const [accessToken, setAccessToken] = useState<string>("");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<"login" | "signup">("login");
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [settingsModalTab, setSettingsModalTab] = useState<
+    "profile" | "billing" | "credit" | "settings"
+  >("profile");
 
   const [profile, setProfile] = useState<{ tier: string; credits: number } | null>(null);
 
@@ -1770,6 +1915,14 @@ export function VibeShotPlatform() {
             setCloudBriefId(sharedId);
             setHasResult(true);
             setView("app");
+            // Pendo Track: Shared brief viewed
+            window.pendo?.track("shared_brief_viewed", {
+              brief_id: sharedId,
+              has_shots: (cloudData.shotlist || []).length > 0,
+              shot_count: (cloudData.shotlist || []).length,
+              visual_style: cloudData.visual_style || "real-life",
+              language: lang,
+            });
             setIsGenerating(false);
             return;
           }
@@ -1833,6 +1986,11 @@ export function VibeShotPlatform() {
   };
 
   const handleClearAll = () => {
+    // Capture state before clearing for tracking
+    const hadBrief = !!cloudBriefId;
+    const hadShots = shots.length > 0;
+    const shotCountBeforeClear = shots.length;
+    
     localStorage.clear();
     window.history.replaceState({}, document.title, window.location.pathname);
     setShots([]);
@@ -1848,6 +2006,15 @@ export function VibeShotPlatform() {
     setRefImageBase64("");
     setImageModel("fal-ai/flux/schnell");
     setView("app");
+    
+    // Pendo Track: Workspace cleared
+    window.pendo?.track("workspace_cleared", {
+      had_existing_brief: hadBrief,
+      had_existing_shots: hadShots,
+      shot_count_before_clear: shotCountBeforeClear,
+      language: lang,
+    });
+    
     toast.success(lang === "id" ? "Workspace dibersihkan." : "Workspace cleared.");
   };
 
@@ -1861,6 +2028,14 @@ export function VibeShotPlatform() {
     const reader = new FileReader();
     reader.onloadend = () => {
       setRefImageBase64(reader.result as string);
+      
+      // Pendo Track: Reference image uploaded
+      window.pendo?.track("reference_image_uploaded", {
+        file_size_bytes: file.size,
+        file_type: file.type,
+        language: lang,
+      });
+      
       toast.success(lang === "id" ? "Aset visual terkunci." : "Visual asset cached.");
     };
     reader.readAsDataURL(file);
@@ -1935,10 +2110,38 @@ export function VibeShotPlatform() {
         data.visual_style,
         data.briefId || null,
       );
+      
+      // Pendo Track: Brief generated successfully
+      window.pendo?.track("brief_generated", {
+        engine_mode: activeEngine,
+        platform: platform,
+        pillar: pillar,
+        talent: talent,
+        shot_count: shotCount,
+        ref_type: refType,
+        image_model: imageModel,
+        visual_style: data.visual_style || "real-life",
+        has_product_name: !!productName,
+        has_usp: !!usp,
+        has_trend: !!trend,
+        brief_id: data.briefId || "",
+        language: lang,
+      });
+      
       toast.success(lang === "id" ? "Brief berhasil diracik!" : "Brief successfully compiled!");
     } catch (err: any) {
       setErrorMsg(err.message);
       toast.error(err.message);
+      
+      // Pendo Track: Brief generation failed
+      window.pendo?.track("brief_generation_failed", {
+        error_message: String(err.message).substring(0, 100),
+        engine_mode: activeEngine,
+        platform: platform,
+        ref_type: refType,
+        shot_count: shotCount,
+        language: lang,
+      });
     } finally {
       setIsGenerating(false);
     }
@@ -2212,11 +2415,30 @@ export function VibeShotPlatform() {
         visualStyle,
         cloudBriefId,
       );
+      
+      // Pendo Track: Bulk images rendered
+      window.pendo?.track("bulk_images_rendered", {
+        brief_id: cloudBriefId || "",
+        shot_count: shots.length,
+        visual_style: visualStyle,
+        image_model: imageModel,
+        language: lang,
+      });
+      
       toast.success(
         lang === "id" ? "Semua frame visual berhasil dirender!" : "All visual frames rendered!",
       );
     } catch (err: any) {
       toast.error(err.message);
+      
+      // Pendo Track: Image rendering failed (bulk)
+      window.pendo?.track("image_rendering_failed", {
+        render_type: "bulk",
+        error_message: String(err.message).substring(0, 100),
+        brief_id: cloudBriefId || "",
+        shot_count: shots.length,
+        language: lang,
+      });
     } finally {
       setIsRenderingVisuals(false);
     }
@@ -2292,6 +2514,16 @@ export function VibeShotPlatform() {
         visualStyle,
         data.briefId || cloudBriefId,
       );
+      
+      // Pendo Track: Story timeline extended
+      window.pendo?.track("story_timeline_extended", {
+        brief_id: data.briefId || cloudBriefId || "",
+        previous_shot_count: shots.length,
+        added_shot_count: normalizedNewShots.length,
+        final_shot_count: finalShots.length,
+        language: lang,
+      });
+      
       toast.success(
         lang === "id"
           ? "Alur berhasil disambung secara inline!"
@@ -2527,8 +2759,10 @@ export function VibeShotPlatform() {
           const frameY = cy + 0.35;
           if (shot.image) {
             try {
+              const isBase64 = shot.image.startsWith("data:");
               slide.addImage({
-                data: shot.image,
+                path: isBase64 ? undefined : shot.image,
+                data: isBase64 ? shot.image : undefined,
                 x: cx + 0.06,
                 y: frameY,
                 w: CARD_W - 0.12,
@@ -2634,6 +2868,12 @@ export function VibeShotPlatform() {
     navigator.clipboard.writeText(
       `${window.location.origin}${window.location.pathname}?id=${cloudBriefId}`,
     );
+    // Pendo Track: Brief shared
+    window.pendo?.track("brief_shared", {
+      brief_id: cloudBriefId,
+      shot_count: shots.length,
+      language: lang,
+    });
     toast.success(t.shareSuccess);
   };
 
@@ -2648,6 +2888,14 @@ export function VibeShotPlatform() {
       await navigator.clipboard.write([
         new ClipboardItem({ "text/html": new Blob([htmlString], { type: "text/html" }) }),
       ]);
+      
+      // Pendo Track: Production table exported
+      window.pendo?.track("production_table_exported", {
+        brief_id: cloudBriefId || "",
+        shot_count: shots.length,
+        language: lang,
+      });
+      
       toast.success(lang === "id" ? "Struktur tabel berhasil disalin!" : "Table layout copied!");
     } catch {
       toast.error("Copy failed.");
@@ -2713,9 +2961,28 @@ export function VibeShotPlatform() {
         visualStyle,
         cloudBriefId,
       );
+      
+      // Pendo Track: Single image rendered
+      window.pendo?.track("single_image_rendered", {
+        brief_id: cloudBriefId,
+        shot_id: shot.id,
+        visual_style: visualStyle,
+        image_model: imageModel,
+        language: lang,
+      });
+      
       toast.success(lang === "id" ? "Visual adegan berhasil dirender!" : "Visual frame generated!");
     } catch (err: any) {
       toast.error(err.message);
+      
+      // Pendo Track: Image rendering failed (single)
+      window.pendo?.track("image_rendering_failed", {
+        render_type: "single",
+        error_message: String(err.message).substring(0, 100),
+        brief_id: cloudBriefId || "",
+        shot_id: shot.id,
+        language: lang,
+      });
     } finally {
       setLoadingShotsImages((prev) => ({ ...prev, [shot.id]: false }));
     }
@@ -2773,17 +3040,73 @@ export function VibeShotPlatform() {
               />
             </div>
             {user ? (
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-400 font-mono">
-                  <User className="h-3 w-3 text-zinc-400 dark:text-zinc-500" />
-                  {user.email}
-                </div>
-                <button
-                  onClick={() => supabase.auth.signOut()}
-                  className="text-[11px] font-medium text-zinc-500 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
-                >
-                  {t.logout}
-                </button>
+              <div className="flex items-center gap-3 animate-fade-in">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-800 text-[10px] text-zinc-655 dark:text-zinc-350 font-mono transition-all cursor-pointer shadow-sm">
+                      <User className="h-2.5 w-2.5 text-zinc-450" />
+                      <span>{user.email}</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-48 bg-white dark:bg-[#151515] border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200"
+                  >
+                    <DropdownMenuLabel className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">
+                      {lang === "id" ? "Menu Akun" : "Account Menu"}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-zinc-200/60 dark:bg-zinc-800/80" />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSettingsModalTab("profile");
+                        setIsSettingsModalOpen(true);
+                      }}
+                      className="cursor-pointer text-xs flex items-center gap-2"
+                    >
+                      <User className="h-3.5 w-3.5" />
+                      <span>{lang === "id" ? "Profil Saya" : "My Profile"}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSettingsModalTab("billing");
+                        setIsSettingsModalOpen(true);
+                      }}
+                      className="cursor-pointer text-xs flex items-center gap-2"
+                    >
+                      <CreditCard className="h-3.5 w-3.5" />
+                      <span>{lang === "id" ? "Tagihan & Pembayaran" : "Billing & Payments"}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSettingsModalTab("credit");
+                        setIsSettingsModalOpen(true);
+                      }}
+                      className="cursor-pointer text-xs flex items-center gap-2"
+                    >
+                      <Coins className="h-3.5 w-3.5" />
+                      <span>{lang === "id" ? "Kredit Penggunaan" : "Usage Credits"}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSettingsModalTab("settings");
+                        setIsSettingsModalOpen(true);
+                      }}
+                      className="cursor-pointer text-xs flex items-center gap-2"
+                    >
+                      <SettingsIcon className="h-3.5 w-3.5" />
+                      <span>{lang === "id" ? "Pengaturan Aplikasi" : "App Settings"}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-zinc-200/60 dark:bg-zinc-800/80" />
+                    <DropdownMenuItem
+                      onClick={() => supabase.auth.signOut()}
+                      className="cursor-pointer text-xs text-red-500 focus:text-red-500 flex items-center gap-2"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      <span>{t.logout}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <button
                   onClick={() => setView("app")}
                   className="text-xs font-medium bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 px-3 py-1.5 rounded-md hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-colors shadow-sm cursor-pointer"
@@ -2876,6 +3199,15 @@ export function VibeShotPlatform() {
           profile={profile}
           onProfileUpdated={fetchProfile}
         />
+        <AccountSettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          user={user}
+          profile={profile}
+          onProfileUpdated={fetchProfile}
+          lang={lang}
+          initialTab={settingsModalTab}
+        />
       </div>
     );
 
@@ -2911,10 +3243,71 @@ export function VibeShotPlatform() {
             <div className="flex items-center gap-3">
               {user ? (
                 <div className="flex items-center gap-2">
-                  <div className="hidden md:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-zinc-50 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800 text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">
-                    <User className="h-2.5 w-2.5 text-zinc-400" />
-                    {user.email}
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-400 font-mono transition-all cursor-pointer shadow-sm">
+                        <User className="h-2.5 w-2.5 text-zinc-450" />
+                        <span>{user.email}</span>
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-48 bg-white dark:bg-[#151515] border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200"
+                    >
+                      <DropdownMenuLabel className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest">
+                        {lang === "id" ? "Menu Akun" : "Account Menu"}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator className="bg-zinc-200/60 dark:bg-zinc-800/80" />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSettingsModalTab("profile");
+                          setIsSettingsModalOpen(true);
+                        }}
+                        className="cursor-pointer text-xs flex items-center gap-2"
+                      >
+                        <User className="h-3.5 w-3.5" />
+                        <span>{lang === "id" ? "Profil Saya" : "My Profile"}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSettingsModalTab("billing");
+                          setIsSettingsModalOpen(true);
+                        }}
+                        className="cursor-pointer text-xs flex items-center gap-2"
+                      >
+                        <CreditCard className="h-3.5 w-3.5" />
+                        <span>{lang === "id" ? "Tagihan & Pembayaran" : "Billing & Payments"}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSettingsModalTab("credit");
+                          setIsSettingsModalOpen(true);
+                        }}
+                        className="cursor-pointer text-xs flex items-center gap-2"
+                      >
+                        <Coins className="h-3.5 w-3.5" />
+                        <span>{lang === "id" ? "Kredit Penggunaan" : "Usage Credits"}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSettingsModalTab("settings");
+                          setIsSettingsModalOpen(true);
+                        }}
+                        className="cursor-pointer text-xs flex items-center gap-2"
+                      >
+                        <SettingsIcon className="h-3.5 w-3.5" />
+                        <span>{lang === "id" ? "Pengaturan Aplikasi" : "App Settings"}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-zinc-200/60 dark:bg-zinc-800/80" />
+                      <DropdownMenuItem
+                        onClick={() => supabase.auth.signOut()}
+                        className="cursor-pointer text-xs text-red-500 focus:text-red-500 flex items-center gap-2"
+                      >
+                        <LogOut className="h-3.5 w-3.5" />
+                        <span>{t.logout}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   {profile && (
                     <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-55/10 dark:bg-emerald-950/40 border border-emerald-500/20 text-[10px] font-mono text-emerald-600 dark:text-emerald-450 uppercase font-extrabold animate-[fadeIn_0.3s_ease-out]">
                       {profile.tier === "premium"
@@ -2945,14 +3338,20 @@ export function VibeShotPlatform() {
                 </button>
               )}
               <span className="text-zinc-200 dark:text-zinc-700 font-mono text-xs">|</span>
-              <button
-                onClick={() => setView("landing")}
-                className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors cursor-pointer"
-              >
-                {t.backToHome}
-              </button>
-              {hasResult && (
-                <span className="text-zinc-200 dark:text-zinc-700 font-mono text-xs">|</span>
+              {hasResult ? (
+                <button
+                  onClick={() => setHasResult(false)}
+                  className="text-[11px] font-bold text-indigo-650 dark:text-indigo-400 hover:text-indigo-500 transition-colors cursor-pointer"
+                >
+                  {lang === "id" ? "← Kembali ke Chat" : "← Back to Chat"}
+                </button>
+              ) : (
+                <button
+                  onClick={() => setView("landing")}
+                  className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100 transition-colors cursor-pointer"
+                >
+                  {t.backToHome}
+                </button>
               )}
               {hasResult && (
                 <button
@@ -2989,6 +3388,16 @@ export function VibeShotPlatform() {
                 isDocked={true}
                 onBriefUpdated={handleBriefUpdated}
                 activeShots={shots.length > 0 ? shots : undefined}
+                sessions={chatSessions}
+                setSessions={setChatSessions}
+                currentSession={currentChatSession}
+                setCurrentSession={setCurrentChatSession}
+                messages={chatMessages}
+                setMessages={setChatMessages}
+                extracted={chatExtracted}
+                setExtracted={setChatExtracted}
+                attachedImage={chatAttachedImage}
+                setAttachedImage={setChatAttachedImage}
               />
             </div>
 
@@ -3122,6 +3531,7 @@ export function VibeShotPlatform() {
                           handleExecuteSingleImage={handleExecuteSingleImage}
                           loadingSingleImage={loadingShotsImages[s.id]}
                           setPreviewImage={setPreviewImage}
+                          masterIdentity={masterIdentity}
                         />
                       ))}
                     </div>
@@ -3205,6 +3615,16 @@ export function VibeShotPlatform() {
                 isDocked={false}
                 onBriefUpdated={handleBriefUpdated}
                 activeShots={shots.length > 0 ? shots : undefined}
+                sessions={chatSessions}
+                setSessions={setChatSessions}
+                currentSession={currentChatSession}
+                setCurrentSession={setCurrentChatSession}
+                messages={chatMessages}
+                setMessages={setChatMessages}
+                extracted={chatExtracted}
+                setExtracted={setChatExtracted}
+                attachedImage={chatAttachedImage}
+                setAttachedImage={setChatAttachedImage}
               />
             </div>
           </div>
@@ -3250,6 +3670,15 @@ export function VibeShotPlatform() {
         workerUrl={workerUrl}
         profile={profile}
         onProfileUpdated={fetchProfile}
+      />
+      <AccountSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        user={user}
+        profile={profile}
+        onProfileUpdated={fetchProfile}
+        lang={lang}
+        initialTab={settingsModalTab}
       />
 
       {/* Hidden container for printing landscape slides */}
