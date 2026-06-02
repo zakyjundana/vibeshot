@@ -9,8 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as Web3HubRouteImport } from './routes/web3-hub'
+import { Route as MagnificRouteImport } from './routes/magnific'
 import { Route as IndexRouteImport } from './routes/index'
 
+const Web3HubRoute = Web3HubRouteImport.update({
+  id: '/web3-hub',
+  path: '/web3-hub',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MagnificRoute = MagnificRouteImport.update({
+  id: '/magnific',
+  path: '/magnific',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -19,28 +31,50 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/magnific': typeof MagnificRoute
+  '/web3-hub': typeof Web3HubRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/magnific': typeof MagnificRoute
+  '/web3-hub': typeof Web3HubRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/magnific': typeof MagnificRoute
+  '/web3-hub': typeof Web3HubRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/magnific' | '/web3-hub'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/magnific' | '/web3-hub'
+  id: '__root__' | '/' | '/magnific' | '/web3-hub'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MagnificRoute: typeof MagnificRoute
+  Web3HubRoute: typeof Web3HubRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/web3-hub': {
+      id: '/web3-hub'
+      path: '/web3-hub'
+      fullPath: '/web3-hub'
+      preLoaderRoute: typeof Web3HubRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/magnific': {
+      id: '/magnific'
+      path: '/magnific'
+      fullPath: '/magnific'
+      preLoaderRoute: typeof MagnificRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -53,6 +87,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MagnificRoute: MagnificRoute,
+  Web3HubRoute: Web3HubRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

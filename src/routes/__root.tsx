@@ -177,14 +177,29 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
+import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+import { PhantomWalletAdapter, SolflareWalletAdapter } from "@solana/wallet-adapter-wallets";
+import { clusterApiUrl } from "@solana/web3.js";
+import "@solana/wallet-adapter-react-ui/styles.css";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  const endpoint = clusterApiUrl("mainnet-beta");
+  const wallets = [new PhantomWalletAdapter(), new SolflareWalletAdapter()];
 
   return (
     <div id="vibeshot-root">
       <QueryClientProvider client={queryClient}>
-        <Outlet />
-        <Toaster />
+        <ConnectionProvider endpoint={endpoint}>
+          <WalletProvider wallets={wallets} autoConnect>
+            <WalletModalProvider>
+              <Outlet />
+              <Toaster />
+            </WalletModalProvider>
+          </WalletProvider>
+        </ConnectionProvider>
       </QueryClientProvider>
     </div>
   );

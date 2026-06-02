@@ -49,7 +49,7 @@ export function AccountSettingsModal({
 
   useEffect(() => {
     const handleOAuthMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'TIKTOK_LINK_SUCCESS') {
+      if (event.data && event.data.type === "TIKTOK_LINK_SUCCESS") {
         setIsConnectingTikTok(false);
         setIsTikTokLinked(true);
         if (event.data.username) {
@@ -58,14 +58,14 @@ export function AccountSettingsModal({
         toast.success(
           lang === "id"
             ? `Akun TikTok ${event.data.username || ""} berhasil ditautkan secara resmi!`
-            : `TikTok account ${event.data.username || ""} successfully linked officially!`
+            : `TikTok account ${event.data.username || ""} successfully linked officially!`,
         );
         if (onProfileUpdated) onProfileUpdated();
       }
     };
-    
-    window.addEventListener('message', handleOAuthMessage);
-    return () => window.removeEventListener('message', handleOAuthMessage);
+
+    window.addEventListener("message", handleOAuthMessage);
+    return () => window.removeEventListener("message", handleOAuthMessage);
   }, [lang, onProfileUpdated]);
 
   useEffect(() => {
@@ -77,7 +77,6 @@ export function AccountSettingsModal({
       setTiktokUsername("");
     }
   }, [user]);
-
 
   useEffect(() => {
     if (isOpen) {
@@ -94,7 +93,6 @@ export function AccountSettingsModal({
   const [isInstagramLinked, setIsInstagramLinked] = useState(false);
   const [isConnectingTikTok, setIsConnectingTikTok] = useState(false);
   const [isConnectingInstagram, setIsConnectingInstagram] = useState(false);
-
 
   // Redeem code states
   const [redeemCode, setRedeemCode] = useState("");
@@ -185,7 +183,7 @@ export function AccountSettingsModal({
           data: {
             tiktok_username: null,
             tiktok_linked: false,
-          }
+          },
         });
         if (error) throw error;
         setIsTikTokLinked(false);
@@ -200,25 +198,29 @@ export function AccountSettingsModal({
     } else {
       setIsConnectingTikTok(true);
       toast.info(lang === "id" ? "Menghubungkan ke TikTok..." : "Connecting to TikTok...");
-      
+
       const width = 500;
       const height = 650;
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
-      
+
       try {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token || "";
         const oauthUrl = `${workerUrl}api/auth/tiktok?userId=${user?.id || ""}&token=${encodeURIComponent(token)}`;
-        
+
         const oauthWindow = window.open(
           oauthUrl,
           "TikTok Authorization",
-          `width=${width},height=${height},left=${left},top=${top},status=no,location=no,toolbar=no,menubar=no`
+          `width=${width},height=${height},left=${left},top=${top},status=no,location=no,toolbar=no,menubar=no`,
         );
-        
+
         if (!oauthWindow) {
-          toast.error(lang === "id" ? "Popup diblokir! Harap izinkan popup untuk situs ini." : "Popup blocked! Please allow popups for this website.");
+          toast.error(
+            lang === "id"
+              ? "Popup diblokir! Harap izinkan popup untuk situs ini."
+              : "Popup blocked! Please allow popups for this website.",
+          );
           setIsConnectingTikTok(false);
         }
       } catch (err: any) {
@@ -235,18 +237,18 @@ export function AccountSettingsModal({
     } else {
       setIsConnectingInstagram(true);
       toast.info(lang === "id" ? "Menghubungkan ke Instagram..." : "Connecting to Instagram...");
-      
+
       const width = 500;
       const height = 650;
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
-      
+
       const oauthWindow = window.open(
         "",
         "Instagram Authorization",
-        `width=${width},height=${height},left=${left},top=${top},status=no,location=no,toolbar=no,menubar=no`
+        `width=${width},height=${height},left=${left},top=${top},status=no,location=no,toolbar=no,menubar=no`,
       );
-      
+
       if (oauthWindow) {
         oauthWindow.document.write(`
           <html>
@@ -302,7 +304,7 @@ export function AccountSettingsModal({
             </body>
           </html>
         `);
-        
+
         const checkTimer = setInterval(() => {
           if (oauthWindow.closed) {
             clearInterval(checkTimer);
@@ -311,7 +313,7 @@ export function AccountSettingsModal({
             toast.success(
               lang === "id"
                 ? "Akun Instagram berhasil tersambung! @zakyjundana.studio"
-                : "Instagram account successfully linked! @zakyjundana.studio"
+                : "Instagram account successfully linked! @zakyjundana.studio",
             );
           }
         }, 500);
@@ -323,7 +325,7 @@ export function AccountSettingsModal({
           toast.success(
             lang === "id"
               ? "Akun Instagram berhasil tersambung! @zakyjundana.studio"
-              : "Instagram account successfully linked! @zakyjundana.studio"
+              : "Instagram account successfully linked! @zakyjundana.studio",
           );
         }, 1500);
       }
@@ -524,8 +526,6 @@ export function AccountSettingsModal({
                   </div>
                 </div>
               </div>
-
-
 
               {/* Action Save Button */}
               <div className="pt-2 flex justify-end">

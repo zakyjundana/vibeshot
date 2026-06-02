@@ -1,4 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { Link } from "@tanstack/react-router";
 import {
   Trash2,
   Sparkles,
@@ -46,6 +48,18 @@ declare global {
     pendo?: {
       track: (event: string, metadata?: any) => void;
       identify: (config: any) => void;
+    };
+  }
+}
+
+// 🔥 PENDO SAFETY STUB: Mencegah crash "window.pendo?.track is not a function"
+// sebelum SDK Pendo selesai dimuat secara asinkron dari CDN.
+if (typeof window !== "undefined") {
+  window.pendo = (window.pendo || []) as any;
+  const pendo = window.pendo;
+  if (pendo && typeof pendo.track !== "function") {
+    pendo.track = function (event: string, metadata?: any) {
+      console.log("[Pendo Stub] Track event queued:", event, metadata);
     };
   }
 }
@@ -474,16 +488,26 @@ function ShotCard({
                 onClick={() => {
                   // Reconstruct prompt dynamically from live editable card inputs!
                   let basePrompt = localAction || "cinematic commercial scenario";
-                  
+
                   // Detect camera perspective from localAngle
                   let cameraFraming = "";
                   const angleUpper = localAngle.toUpperCase();
-                  const isDroneOrWide = angleUpper.includes("DRONE") || angleUpper.includes("AERIAL") || angleUpper.includes("BIRD") || angleUpper.includes("ESTABLISHING") || angleUpper.includes("WIDE");
-                  
-                  if (angleUpper.includes("DRONE") || angleUpper.includes("AERIAL") || angleUpper.includes("BIRD")) {
+                  const isDroneOrWide =
+                    angleUpper.includes("DRONE") ||
+                    angleUpper.includes("AERIAL") ||
+                    angleUpper.includes("BIRD") ||
+                    angleUpper.includes("ESTABLISHING") ||
+                    angleUpper.includes("WIDE");
+
+                  if (
+                    angleUpper.includes("DRONE") ||
+                    angleUpper.includes("AERIAL") ||
+                    angleUpper.includes("BIRD")
+                  ) {
                     cameraFraming = "Ultra-high-angle drone follow-cam wide landscape shot";
                   } else if (angleUpper.includes("WIDE") || angleUpper.includes("ESTABLISHING")) {
-                    cameraFraming = "Cinematic extreme wide establishing landscape shot, expansive scale";
+                    cameraFraming =
+                      "Cinematic extreme wide establishing landscape shot, expansive scale";
                   } else if (angleUpper.includes("CLOSE")) {
                     cameraFraming = "Extreme close-up macro shot, highly detailed focus";
                   } else if (angleUpper.includes("MEDIUM")) {
@@ -493,44 +517,52 @@ function ShotCard({
                   } else if (localAngle) {
                     cameraFraming = `${localAngle} camera angle shot`;
                   }
-                  
-                  let lensStyle = "shot on 35mm anamorphic lens, cinematic composition, professional studio lighting, gorgeous depth of field";
+
+                  let lensStyle =
+                    "shot on 35mm anamorphic lens, cinematic composition, professional studio lighting, gorgeous depth of field";
                   if (isDroneOrWide) {
-                    lensStyle = "shot on ultra-wide 16mm cinema lens, deep focus, epic landscape scale, volumetric golden hour morning sun rays, cinematic lighting";
+                    lensStyle =
+                      "shot on ultra-wide 16mm cinema lens, deep focus, epic landscape scale, volumetric golden hour morning sun rays, cinematic lighting";
                   } else if (angleUpper.includes("CLOSE")) {
-                    lensStyle = "shot on 85mm macro lens, sharp focus, professional portrait studio lighting, dramatic background bokeh blur";
+                    lensStyle =
+                      "shot on 85mm macro lens, sharp focus, professional portrait studio lighting, dramatic background bokeh blur";
                   }
-                  
+
                   // Clean portrait metrics for wide view
                   if (isDroneOrWide) {
                     basePrompt = basePrompt
-                      .replace(/A stylish young Indonesian woman, confident and relaxed, wearing natural-toned comfortable clothes, ready for work\./gi, "")
+                      .replace(
+                        /A stylish young Indonesian woman, confident and relaxed, wearing natural-toned comfortable clothes, ready for work\./gi,
+                        "",
+                      )
                       .replace(/A stylish young Indonesian woman/gi, "")
                       .replace(/wearing natural-toned comfortable clothes/gi, "")
                       .replace(/portrait/gi, "wide landscape view")
                       .replace(/close-up/gi, "wide view")
                       .replace(/close up/gi, "wide view");
                   }
-                  
+
                   let identityPart = "";
                   if (masterIdentity) {
                     const talent = masterIdentity.talent || "";
                     const product = masterIdentity.product || "";
-                    
-                    const masterStr = isDroneOrWide 
+
+                    const masterStr = isDroneOrWide
                       ? [product].filter(Boolean).join(". ")
                       : [talent, product].filter(Boolean).join(". ");
-                    
+
                     if (masterStr) {
                       const baseLower = basePrompt.toLowerCase();
                       const masterTerms = masterStr.toLowerCase().split(/\s+/).slice(0, 3);
-                      const hasOverlap = masterTerms.some(term => term.length > 3 && baseLower.includes(term));
+                      const hasOverlap = masterTerms.some(
+                        (term) => term.length > 3 && baseLower.includes(term),
+                      );
                       if (!hasOverlap) {
                         identityPart = `${masterStr.trim()}. `;
                       }
                     }
                   }
-                  
+
                   let enhanced = "";
                   if (cameraFraming) {
                     enhanced += `${cameraFraming}. `;
@@ -541,7 +573,7 @@ function ShotCard({
                     enhanced += `Location environment: ${localLocation}. `;
                   }
                   enhanced += lensStyle;
-                  
+
                   // Final sanitization
                   if (isDroneOrWide) {
                     enhanced = enhanced
@@ -549,16 +581,20 @@ function ShotCard({
                       .replace(/close-up/gi, "wide view")
                       .replace(/close up/gi, "wide view");
                   }
-                  
+
                   setLocalImagePrompt(enhanced);
                   handleBlur("imagePrompt", enhanced, shot.imagePrompt || "");
-                  toast.success(lang === "id" ? "Prompt berhasil ditingkatkan berdasarkan data kartu adegan!" : "Prompt dynamically enhanced using card data!");
+                  toast.success(
+                    lang === "id"
+                      ? "Prompt berhasil ditingkatkan berdasarkan data kartu adegan!"
+                      : "Prompt dynamically enhanced using card data!",
+                  );
                 }}
                 className="text-[9px] text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-bold flex items-center gap-1 font-mono transition-all hover:scale-105 active:scale-95 duration-100 cursor-pointer mr-2"
               >
                 <Sparkles className="w-3 h-3 animate-pulse" /> enhance prompt
               </button>
-              
+
               <button
                 type="button"
                 onClick={() => {
@@ -1028,6 +1064,7 @@ function UpgradeModal({
   profile,
   onProfileUpdated,
 }: UpgradeModalProps) {
+  const { select, wallets, connect, disconnect, connected, publicKey, wallet } = useWallet();
   const [activeTab, setActiveTab] = useState<"crypto" | "card" | "mayar">("crypto");
 
   // Crypto Flow states
@@ -1037,6 +1074,8 @@ function UpgradeModal({
 
   // PLG Free Tier Activation Lock states
   const [isPaymentMethodAdded, setIsPaymentMethodAdded] = useState(false);
+  const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+  const [showWalletList, setShowWalletList] = useState(false);
   const [isActivatingFree, setIsActivatingFree] = useState(false);
 
   // Card Flow states
@@ -1060,8 +1099,25 @@ function UpgradeModal({
       setCvv("");
       setCardFlipped(false);
       setIsPaymentMethodAdded(false);
+      setSelectedWallet(null);
+      setShowWalletList(false);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (connected && publicKey && wallet) {
+      setIsPaymentMethodAdded(true);
+      setSelectedWallet(wallet.adapter.name);
+      toast.success(
+        lang === "id"
+          ? `${wallet.adapter.name} terhubung! Metode pembayaran tersimpan.`
+          : `${wallet.adapter.name} linked! Payment method registered.`,
+      );
+    } else {
+      setIsPaymentMethodAdded(false);
+      setSelectedWallet(null);
+    }
+  }, [connected, publicKey, wallet, lang]);
 
   const handleCopySolanaAddress = () => {
     navigator.clipboard.writeText("Guz6jxrmW8744a4k9CLa19SWLdm4HPs4yEefEj6PTje2");
@@ -1411,31 +1467,97 @@ function UpgradeModal({
               </div>
 
               {/* Anti-Bot Connect Wallet */}
-              <div className="p-3 bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/50 dark:border-zinc-800/80 rounded-xl flex items-center justify-between gap-3 animate-[fadeIn_0.2s_ease-out]">
-                <div className="space-y-0.5">
-                  <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest font-extrabold">
-                    Anti-Bot Identity Verification
+              <div className="p-3 bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/50 dark:border-zinc-800/80 rounded-xl space-y-3 animate-[fadeIn_0.2s_ease-out]">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <div className="text-[10px] font-mono text-zinc-400 uppercase tracking-widest font-extrabold">
+                      Anti-Bot Identity Verification
+                    </div>
+                    <p className="text-[9px] text-zinc-500 leading-normal">
+                      {lang === "id"
+                        ? "Hubungkan dompet Anda untuk verifikasi identitas anti-bot instan."
+                        : "Link Solana wallet for instant anti-bot verification."}
+                    </p>
                   </div>
-                  <p className="text-[9px] text-zinc-500 leading-normal">
-                    {lang === "id"
-                      ? "Hubungkan dompet Anda untuk verifikasi identitas anti-bot instan."
-                      : "Link Solana wallet for instant anti-bot verification."}
-                  </p>
+                  {isPaymentMethodAdded ? (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className="px-2.5 py-1.5 rounded-lg text-[9px] font-extrabold tracking-tight bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-250/20">
+                        🟢 {selectedWallet} Connected
+                      </span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            await disconnect();
+                          } catch (e) {
+                            console.error(e);
+                          }
+                          setIsPaymentMethodAdded(false);
+                          setSelectedWallet(null);
+                          setShowWalletList(false);
+                        }}
+                        className="text-[9px] font-mono text-zinc-400 hover:text-red-500 cursor-pointer transition-colors"
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowWalletList(!showWalletList)}
+                      className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold tracking-tight active:scale-98 transition-all cursor-pointer border shrink-0 bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 border-transparent`}
+                    >
+                      {showWalletList ? (lang === "id" ? "Tutup" : "Close") : "🔗 Connect Wallet"}
+                    </button>
+                  )}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsPaymentMethodAdded(true);
-                    toast.success(
-                      lang === "id"
-                        ? "Dompet Solana terhubung! Metode pembayaran tersimpan."
-                        : "Solana Wallet linked! Payment method registered.",
-                    );
-                  }}
-                  className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold tracking-tight active:scale-98 transition-all cursor-pointer border shrink-0 ${isPaymentMethodAdded ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border-emerald-250/20" : "bg-zinc-950 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 border-transparent"}`}
-                >
-                  {isPaymentMethodAdded ? "🟢 Connected" : "🔗 Connect Wallet"}
-                </button>
+
+                {!isPaymentMethodAdded && showWalletList && (
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-200/50 dark:border-zinc-850 animate-[fadeIn_0.15s_ease-out]">
+                    {[
+                      { name: "Phantom", icon: "👻", desc: "Most popular" },
+                      { name: "Solflare", icon: "🔥", desc: "Feature rich" },
+                      { name: "Backpack", icon: "🎒", desc: "xNFT support" },
+                      { name: "Ledger", icon: "🔒", desc: "Hardware wallet" },
+                    ].map((wallet) => (
+                      <button
+                        key={wallet.name}
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const target = wallets.find((w) => w.adapter.name === wallet.name);
+                            if (target) {
+                              select(target.adapter.name);
+                              // Auto connect is configured in provider, but trigger manual connect if needed
+                              if (!connected) {
+                                await connect();
+                              }
+                            } else {
+                              toast.error(
+                                lang === "id"
+                                  ? `Gagal menghubungkan ${wallet.name}. Pastikan extension browser terpasang!`
+                                  : `Failed to link ${wallet.name}. Make sure the browser extension is installed!`,
+                              );
+                            }
+                          } catch (e: any) {
+                            console.error("Wallet connection failed:", e);
+                            toast.error(e.message || "Failed to connect wallet.");
+                          }
+                          setShowWalletList(false);
+                        }}
+                        className="flex items-center gap-2 p-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-850 rounded-lg hover:border-zinc-400 dark:hover:border-zinc-750 transition-all text-left cursor-pointer hover:shadow-sm"
+                      >
+                        <span className="text-base">{wallet.icon}</span>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-zinc-800 dark:text-zinc-200 leading-tight">
+                            {wallet.name}
+                          </span>
+                          <span className="text-[8px] text-zinc-400 font-mono">{wallet.desc}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* QR Code and Wallet Area */}
@@ -1999,7 +2121,7 @@ export function VibeShotPlatform() {
     const hadBrief = !!cloudBriefId;
     const hadShots = shots.length > 0;
     const shotCountBeforeClear = shots.length;
-    
+
     localStorage.clear();
     window.history.replaceState({}, document.title, window.location.pathname);
     setShots([]);
@@ -2015,7 +2137,7 @@ export function VibeShotPlatform() {
     setRefImageBase64("");
     setImageModel("fal-ai/flux/schnell");
     setView("app");
-    
+
     // Pendo Track: Workspace cleared
     window.pendo?.track("workspace_cleared", {
       had_existing_brief: hadBrief,
@@ -2023,7 +2145,7 @@ export function VibeShotPlatform() {
       shot_count_before_clear: shotCountBeforeClear,
       language: lang,
     });
-    
+
     toast.success(lang === "id" ? "Workspace dibersihkan." : "Workspace cleared.");
   };
 
@@ -2037,14 +2159,14 @@ export function VibeShotPlatform() {
     const reader = new FileReader();
     reader.onloadend = () => {
       setRefImageBase64(reader.result as string);
-      
+
       // Pendo Track: Reference image uploaded
       window.pendo?.track("reference_image_uploaded", {
         file_size_bytes: file.size,
         file_type: file.type,
         language: lang,
       });
-      
+
       toast.success(lang === "id" ? "Aset visual terkunci." : "Visual asset cached.");
     };
     reader.readAsDataURL(file);
@@ -2119,7 +2241,7 @@ export function VibeShotPlatform() {
         data.visual_style,
         data.briefId || null,
       );
-      
+
       // Pendo Track: Brief generated successfully
       window.pendo?.track("brief_generated", {
         engine_mode: activeEngine,
@@ -2136,12 +2258,12 @@ export function VibeShotPlatform() {
         brief_id: data.briefId || "",
         language: lang,
       });
-      
+
       toast.success(lang === "id" ? "Brief berhasil diracik!" : "Brief successfully compiled!");
     } catch (err: any) {
       setErrorMsg(err.message);
       toast.error(err.message);
-      
+
       // Pendo Track: Brief generation failed
       window.pendo?.track("brief_generation_failed", {
         error_message: String(err.message).substring(0, 100),
@@ -2424,7 +2546,7 @@ export function VibeShotPlatform() {
         visualStyle,
         cloudBriefId,
       );
-      
+
       // Pendo Track: Bulk images rendered
       window.pendo?.track("bulk_images_rendered", {
         brief_id: cloudBriefId || "",
@@ -2433,13 +2555,13 @@ export function VibeShotPlatform() {
         image_model: imageModel,
         language: lang,
       });
-      
+
       toast.success(
         lang === "id" ? "Semua frame visual berhasil dirender!" : "All visual frames rendered!",
       );
     } catch (err: any) {
       toast.error(err.message);
-      
+
       // Pendo Track: Image rendering failed (bulk)
       window.pendo?.track("image_rendering_failed", {
         render_type: "bulk",
@@ -2523,7 +2645,7 @@ export function VibeShotPlatform() {
         visualStyle,
         data.briefId || cloudBriefId,
       );
-      
+
       // Pendo Track: Story timeline extended
       window.pendo?.track("story_timeline_extended", {
         brief_id: data.briefId || cloudBriefId || "",
@@ -2532,7 +2654,7 @@ export function VibeShotPlatform() {
         final_shot_count: finalShots.length,
         language: lang,
       });
-      
+
       toast.success(
         lang === "id"
           ? "Alur berhasil disambung secara inline!"
@@ -2897,14 +3019,14 @@ export function VibeShotPlatform() {
       await navigator.clipboard.write([
         new ClipboardItem({ "text/html": new Blob([htmlString], { type: "text/html" }) }),
       ]);
-      
+
       // Pendo Track: Production table exported
       window.pendo?.track("production_table_exported", {
         brief_id: cloudBriefId || "",
         shot_count: shots.length,
         language: lang,
       });
-      
+
       toast.success(lang === "id" ? "Struktur tabel berhasil disalin!" : "Table layout copied!");
     } catch {
       toast.error("Copy failed.");
@@ -2970,7 +3092,7 @@ export function VibeShotPlatform() {
         visualStyle,
         cloudBriefId,
       );
-      
+
       // Pendo Track: Single image rendered
       window.pendo?.track("single_image_rendered", {
         brief_id: cloudBriefId,
@@ -2979,11 +3101,11 @@ export function VibeShotPlatform() {
         image_model: imageModel,
         language: lang,
       });
-      
+
       toast.success(lang === "id" ? "Visual adegan berhasil dirender!" : "Visual frame generated!");
     } catch (err: any) {
       toast.error(err.message);
-      
+
       // Pendo Track: Image rendering failed (single)
       window.pendo?.track("image_rendering_failed", {
         render_type: "single",
@@ -3164,7 +3286,7 @@ export function VibeShotPlatform() {
             {user ? (
               <button
                 onClick={() => setView("app")}
-                className="inline-flex items-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-955 font-medium text-xs px-5 py-3 rounded-lg shadow hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all transform hover:-translate-y-0.5 cursor-pointer"
+                className="inline-flex items-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 font-medium text-xs px-5 py-3 rounded-lg shadow hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all transform hover:-translate-y-0.5 cursor-pointer"
               >
                 Launch Studio Workspace <ArrowRight className="h-3.5 w-3.5" />
               </button>
@@ -3240,6 +3362,13 @@ export function VibeShotPlatform() {
             </button>
             <span className="text-xs text-zinc-400 dark:text-zinc-650 font-mono">/</span>
             <span className="text-xs font-medium tracking-tight">vibeshot.studio/workspace</span>
+            <span className="text-xs text-zinc-400 dark:text-zinc-650 font-mono">/</span>
+            <Link
+              to="/web3-hub"
+              className="text-xs font-bold text-indigo-650 dark:text-indigo-400 hover:underline flex items-center gap-1 transition-all"
+            >
+              <Coins className="w-3.5 h-3.5" /> Web3 Intelligence Hub
+            </Link>
           </div>
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
             <div className="flex items-center gap-4 border-r border-zinc-200 dark:border-zinc-700 pr-3">

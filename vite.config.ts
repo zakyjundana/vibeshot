@@ -12,4 +12,18 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  vite: {
+    resolve: {
+      alias: {
+        https:
+          "/Users/gaungantrasita/.gemini/antigravity/scratch/vibeshot-workspace/vibeshot-creative-hub/src/empty.ts",
+        http: "/Users/gaungantrasita/.gemini/antigravity/scratch/vibeshot-workspace/vibeshot-creative-hub/src/empty.ts",
+        stream:
+          "/Users/gaungantrasita/.gemini/antigravity/scratch/vibeshot-workspace/vibeshot-creative-hub/src/empty.ts",
+        crypto:
+          "/Users/gaungantrasita/.gemini/antigravity/scratch/vibeshot-workspace/vibeshot-creative-hub/src/empty.ts",
+        zlib: "/Users/gaungantrasita/.gemini/antigravity/scratch/vibeshot-workspace/vibeshot-creative-hub/src/empty.ts",
+      },
+    },
+  },
 });

@@ -105,15 +105,17 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const [localSessions, setLocalSessions] = useState<ChatSession[]>([]);
   const sessions = propSessions !== undefined ? propSessions : localSessions;
-  const setSessions = propSetSessions !== undefined ? propSetSessions : setLocalSessions as any;
+  const setSessions = propSetSessions !== undefined ? propSetSessions : (setLocalSessions as any);
 
   const [localCurrentSession, setLocalCurrentSession] = useState<ChatSession | null>(null);
-  const currentSession = propCurrentSession !== undefined ? propCurrentSession : localCurrentSession;
-  const setCurrentSession = propSetCurrentSession !== undefined ? propSetCurrentSession : setLocalCurrentSession;
+  const currentSession =
+    propCurrentSession !== undefined ? propCurrentSession : localCurrentSession;
+  const setCurrentSession =
+    propSetCurrentSession !== undefined ? propSetCurrentSession : setLocalCurrentSession;
 
   const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const messages = propMessages !== undefined ? propMessages : localMessages;
-  const setMessages = propSetMessages !== undefined ? propSetMessages : setLocalMessages as any;
+  const setMessages = propSetMessages !== undefined ? propSetMessages : (setLocalMessages as any);
 
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -121,14 +123,16 @@ export function ChatInterface({
 
   const [localExtracted, setLocalExtracted] = useState<ExtractedParams>({});
   const extracted = propExtracted !== undefined ? propExtracted : localExtracted;
-  const setExtracted = propSetExtracted !== undefined ? propSetExtracted : setLocalExtracted as any;
+  const setExtracted =
+    propSetExtracted !== undefined ? propSetExtracted : (setLocalExtracted as any);
 
   const [readyToGenerate, setReadyToGenerate] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState("");
 
   const [localAttachedImage, setLocalAttachedImage] = useState<string | null>(null);
   const attachedImage = propAttachedImage !== undefined ? propAttachedImage : localAttachedImage;
-  const setAttachedImage = propSetAttachedImage !== undefined ? propSetAttachedImage : setLocalAttachedImage;
+  const setAttachedImage =
+    propSetAttachedImage !== undefined ? propSetAttachedImage : setLocalAttachedImage;
 
   const [isDragging, setIsDragging] = useState(false);
   const [isCustomDraft, setIsCustomDraft] = useState(false);
@@ -269,7 +273,7 @@ export function ChatInterface({
 
       if (error) throw error;
 
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      setSessions((prev: ChatSession[]) => prev.filter((s: ChatSession) => s.id !== sessionId));
       toast.success(lang === "id" ? "Sesi berhasil dihapus." : "Session deleted successfully.");
 
       if (currentSession?.id === sessionId) {
@@ -321,7 +325,9 @@ export function ChatInterface({
         if (data && data.length > 0) {
           const updated = data[0] as ChatSession;
           setCurrentSession(updated);
-          setSessions((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+          setSessions((prev: ChatSession[]) =>
+            prev.map((s: ChatSession) => (s.id === updated.id ? updated : s)),
+          );
         }
       } else {
         // Create new session
@@ -331,7 +337,7 @@ export function ChatInterface({
         if (data && data.length > 0) {
           const created = data[0] as ChatSession;
           setCurrentSession(created);
-          setSessions((prev) => [created, ...prev]);
+          setSessions((prev: ChatSession[]) => [created, ...prev]);
         }
       }
     } catch (e: any) {
@@ -449,7 +455,7 @@ export function ChatInterface({
     } catch (err: any) {
       toast.error(err.message);
       // Append error message to chat so the UI stays interactive
-      setMessages((prev) => [
+      setMessages((prev: Message[]) => [
         ...prev,
         {
           role: "assistant",
@@ -759,7 +765,11 @@ export function ChatInterface({
                 >
                   {m.image && (
                     <div className="relative max-w-xs overflow-hidden rounded-lg border border-white/10 shadow-md mb-2">
-                      <img src={m.image} className="h-auto w-full object-contain max-h-[250px]" alt="Attachment" />
+                      <img
+                        src={m.image}
+                        className="h-auto w-full object-contain max-h-[250px]"
+                        alt="Attachment"
+                      />
                     </div>
                   )}
                   {m.content}
@@ -1211,7 +1221,11 @@ export function ChatInterface({
                     >
                       {m.image && (
                         <div className="relative max-w-xs overflow-hidden rounded-xl border border-white/10 shadow-md mb-2.5">
-                          <img src={m.image} className="h-auto w-full object-contain max-h-[300px]" alt="Attachment" />
+                          <img
+                            src={m.image}
+                            className="h-auto w-full object-contain max-h-[300px]"
+                            alt="Attachment"
+                          />
                         </div>
                       )}
                       {m.content}

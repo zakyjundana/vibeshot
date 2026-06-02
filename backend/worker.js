@@ -184,7 +184,7 @@ function getCorsHeaders(request) {
     "https://vibeshot-creative-hub.zakyjundana.workers.dev",
   ];
 
-  let allowedOrigin = "*";
+  let allowedOrigin = "https://vibeshot-creative-hub.pages.dev"; // Restrict default from wildcard * to production domain
   if (origin) {
     const isAllowed = allowedOrigins.some(
       (ao) => origin === ao || origin.endsWith(ao.replace("https://", ".")),
@@ -200,6 +200,16 @@ function getCorsHeaders(request) {
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Max-Age": "86400",
   };
+}
+
+// ReDoS-safe and memory-efficient helper to extract data URL mimeType and base64 string
+function extractDataUrlParts(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== "string") return null;
+  const prefixIndex = dataUrl.indexOf(";base64,");
+  if (prefixIndex === -1) return null;
+  const mimeType = dataUrl.substring(5, prefixIndex); // Skip "data:"
+  const base64Data = dataUrl.substring(prefixIndex + 8); // Skip ";base64,"
+  return { mimeType, base64Data };
 }
 
 async function getYouTubeTranscript(url) {
@@ -739,19 +749,50 @@ export default {
           const { paymentMethod, amount, name, description, redirectUrl } = bodyData;
           const userEmail = bodyData.email || jwtPayload.email || "client@vibeshot.studio";
 
-          // 1. STRIPE CARD PAYMENTS (Sandbox / Mock)
+          // 1. STRIPE CARD PAYMENTS (Real Sandbox Integration)
           if (paymentMethod === "card") {
-            return new Response(
-              JSON.stringify({
-                checkoutUrl: "https://stripe.com/mock-checkout-sandbox-kyc-pending",
-                success: true,
-                message: "Stripe sandbox gateway initialized. KYC pending.",
-              }),
-              {
-                status: 200,
-                headers: { ...corsHeaders, "Content-Type": "application/json" },
+            const stripeSecret = env.STRIPE_SECRET_KEY;
+            if (!stripeSecret) {
+              throw new Error("Stripe Environment Error: STRIPE_SECRET_KEY binding missing");
+            }
+
+            const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${stripeSecret}`,
+                "Content-Type": "application/x-www-form-urlencoded",
               },
-            );
+              body: new URLSearchParams({
+                "payment_method_types[0]": "card",
+                "line_items[0][price_data][currency]": "usd",
+                "line_items[0][price_data][product_data][name]": "VibeShot Pro Plan Upgrade",
+                "line_items[0][price_data][product_data][description]":
+                  "Akses premium Vibeshot Studio + 300 render visual",
+                "line_items[0][price_data][unit_amount]": "999", // $9.99 USD
+                "line_items[0][quantity]": "1",
+                mode: "payment",
+                success_url:
+                  redirectUrl ||
+                  "https://vibeshot-creative-hub.zakyjundana.workers.dev/?payment=success",
+                cancel_url:
+                  redirectUrl ||
+                  "https://vibeshot-creative-hub.zakyjundana.workers.dev/?payment=cancelled",
+                client_reference_id: userId, // Pass Supabase user_id as reference
+                "metadata[user_id]": userId,
+              }).toString(),
+            });
+
+            const stripeData = await stripeRes.json();
+            if (!stripeRes.ok) {
+              throw new Error(
+                stripeData.error?.message || "Failed to create payment session from Stripe",
+              );
+            }
+
+            return new Response(JSON.stringify({ checkoutUrl: stripeData.url }), {
+              status: 200,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
           }
 
           // 2. MAYAR PAYMENTS (Active / Live or Sandbox depending on Key)
@@ -1104,14 +1145,12 @@ User berkata: "${newMessage}"${ytTranscriptContext}${socialTranscriptContext}`;
 
         // Native Gemini Multimodal vision decoding
         if (attachedImage && attachedImage.startsWith("data:image/")) {
-          const partsImage = attachedImage.split(";base64,");
-          if (partsImage.length === 2) {
-            const mimeType = partsImage[0].replace("data:", "");
-            const base64Data = partsImage[1];
+          const parts = extractDataUrlParts(attachedImage);
+          if (parts) {
             promptParts.push({
               inlineData: {
-                mimeType: mimeType,
-                data: base64Data,
+                mimeType: parts.mimeType,
+                data: parts.base64Data,
               },
             });
           }
@@ -1367,10 +1406,8 @@ User berkata: "${newMessage}"${ytTranscriptContext}${socialTranscriptContext}`;
       // ========================================================
       let imageToTextDescription = "";
       if (refType === "photo" && refImageBase64 && refImageBase64.startsWith("data:image/")) {
-        const parts = refImageBase64.split(";base64,");
-        if (parts.length === 2) {
-          const mimeType = parts[0].replace("data:", "");
-          const base64Data = parts[1];
+        const parts = extractDataUrlParts(refImageBase64);
+        if (parts) {
           try {
             const descResponse = await fetch(geminiUrl, {
               method: "POST",
@@ -1382,12 +1419,13 @@ User berkata: "${newMessage}"${ytTranscriptContext}${socialTranscriptContext}`;
                       {
                         text: "Bedah ringkas gambar moodboard referensi ini. Tulis dalam 2 kalimat bahasa inggris tentang: core framing layout, visual composition, and pacing rhythm.",
                       },
-                      { inlineData: { mimeType: mimeType, data: base64Data } },
+                      { inlineData: { mimeType: parts.mimeType, data: parts.base64Data } },
                     ],
                   },
                 ],
               }),
             });
+
             if (descResponse.ok) {
               const descData = await descResponse.json();
               imageToTextDescription = descData.candidates[0].content.parts[0].text;
