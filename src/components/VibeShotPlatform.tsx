@@ -377,7 +377,7 @@ function ShotCard({
   };
 
   return (
-    <div className="group relative flex flex-col gap-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] p-4 shadow-sm transition hover:border-zinc-300 dark:hover:border-zinc-700">
+    <div className="group relative flex flex-col gap-4 rounded-xl border border-zinc-200/55 dark:border-zinc-850/55 backdrop-blur-md bg-white/45 dark:bg-[#111114]/40 p-4 shadow-sm transition hover:border-zinc-300/80 dark:hover:border-zinc-700/80">
       <div className="flex flex-col md:flex-row gap-5">
         <div className="flex items-start gap-3 shrink-0">
           <div className="text-xs font-mono font-semibold text-zinc-300 dark:text-zinc-600 pt-1">
@@ -1756,6 +1756,7 @@ export function VibeShotPlatform() {
   const [lang, setLang] = useState<"id" | "en">("en");
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [activeEngine, setActiveEngine] = useState<"hybrid" | "clone">("hybrid");
+  // 🔥 FALLBACK SAFETY: Gunakan direct workers.dev agar loading data brief selalu mulus tanpa hambatan DNS Rumahweb!
   const workerUrl = "https://vibeshot-backend-ai.zakyjundana.workers.dev/";
 
   const [productName, setProductName] = useState("");
@@ -3011,10 +3012,7 @@ export function VibeShotPlatform() {
     }
     return chunks;
   }, [shots]);
-  const inputStyle =
-    "w-full rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-zinc-400 dark:focus:border-zinc-500 focus:outline-none transition-colors";
-  const hybridActiveStyle =
-    activeEngine =  if (!isHydrated) {
+  if (!isHydrated) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] text-zinc-400 font-mono text-xs flex items-center justify-center">
         <div className="flex flex-col items-center gap-2">
@@ -3224,8 +3222,15 @@ export function VibeShotPlatform() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#fafafa] dark:bg-[#0a0a0a] font-sans text-zinc-900 dark:text-zinc-100 antialiased transition-colors duration-200 print:hidden">
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] px-6 py-2.5 gap-3 sm:gap-0">
+      <div className="min-h-screen bg-[#fafafa] dark:bg-[#050507] font-sans text-zinc-900 dark:text-zinc-100 antialiased transition-colors duration-200 print:hidden relative overflow-x-hidden">
+        {/* 🔥 AMBIENT GLOW BACKDROP: Memberikan kedalaman visual estetik untuk menonjolkan efek glassmorphism */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0 print:hidden">
+          <div className="absolute top-[-10%] left-[-5%] w-[45vw] h-[45vw] rounded-full bg-indigo-500/10 dark:bg-indigo-500/5 blur-[120px]" />
+          <div className="absolute bottom-[5%] right-[-5%] w-[55vw] h-[55vw] rounded-full bg-violet-600/10 dark:bg-violet-600/5 blur-[150px]" />
+          <div className="absolute top-[35%] right-[10%] w-[35vw] h-[35vw] rounded-full bg-emerald-500/5 dark:bg-emerald-500/2.5 blur-[110px]" />
+        </div>
+
+        <header className="sticky top-0 z-40 flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-md bg-white/70 dark:bg-[#0c0c0e]/75 px-6 py-2.5 gap-3 sm:gap-0">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setView("landing")}
@@ -3386,8 +3391,8 @@ export function VibeShotPlatform() {
         </header>
 
         {hasResult ? (
-          <div className="grid min-h-[calc(100vh-42px)] grid-cols-1 lg:grid-cols-[380px_1fr] animate-[fadeIn_0.3s_ease-out]">
-            <div className="border-r border-zinc-200/70 dark:border-zinc-800/80 bg-white dark:bg-[#111111] lg:sticky lg:top-[42px] lg:h-[calc(100vh-42px)] shadow-sm">
+          <div className="relative z-10 grid min-h-[calc(100vh-42px)] grid-cols-1 lg:grid-cols-[380px_1fr] animate-[fadeIn_0.3s_ease-out]">
+            <div className="border-r border-zinc-200/40 dark:border-zinc-800/40 backdrop-blur-md bg-white/50 dark:bg-[#0c0c0e]/60 lg:sticky lg:top-[42px] lg:h-[calc(100vh-42px)] shadow-sm">
               <ChatInterface
                 user={user}
                 accessToken={accessToken}
@@ -3412,7 +3417,7 @@ export function VibeShotPlatform() {
               />
             </div>
 
-            <main className="p-6 lg:p-10 overflow-y-auto max-h-[calc(100vh-42px)] bg-[#fafafa] dark:bg-[#0a0a0a]">
+            <main className="p-6 lg:p-10 overflow-y-auto max-h-[calc(100vh-42px)] bg-transparent">
               <div className="mx-auto max-w-4xl space-y-8">
                 <div className="pb-4 border-b border-zinc-200/60 dark:border-zinc-800/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
@@ -3471,7 +3476,7 @@ export function VibeShotPlatform() {
                     </button>
                   </div>
                 )}
-                <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-[#111111] p-5 shadow-sm space-y-2">
+                <div className="rounded-xl border border-zinc-200/50 dark:border-zinc-850/50 backdrop-blur-md bg-white/45 dark:bg-[#111114]/40 p-5 shadow-sm space-y-2">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 dark:text-zinc-500 block">
                     {t.premisNaratif}
                   </span>
@@ -3488,7 +3493,7 @@ export function VibeShotPlatform() {
                       {moodboardTiles.map((src, i) => (
                         <div
                           key={i}
-                          className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm"
+                          className="group relative aspect-[9/16] overflow-hidden rounded-lg border border-zinc-200/55 dark:border-zinc-850/55 backdrop-blur-sm bg-white/20 dark:bg-[#151518]/30 shadow-sm transition-all hover:border-zinc-300/85 dark:hover:border-zinc-700/85"
                         >
                           {src ? (
                             <SimpleAIImage
@@ -3525,7 +3530,7 @@ export function VibeShotPlatform() {
                     )}
                   </div>
                   {shots.length === 0 ? (
-                    <div className="py-12 border border-dashed border-zinc-200 dark:border-dashed dark:border-zinc-800 bg-white dark:bg-[#111111] text-center rounded-xl text-xs text-zinc-400 dark:text-zinc-600 font-mono">
+                    <div className="py-12 border border-dashed border-zinc-200/55 dark:border-dashed dark:border-zinc-850 backdrop-blur-sm bg-white/20 dark:bg-[#111113]/25 text-center rounded-xl text-xs text-zinc-400 dark:text-zinc-650 font-mono">
                       {t.belumAda}
                     </div>
                   ) : (

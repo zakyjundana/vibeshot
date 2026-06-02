@@ -1454,30 +1454,30 @@ User berkata: "${newMessage}"${ytTranscriptContext}${socialTranscriptContext}`;
       }
 
       const strictJsonSchema = {
-        type: "OBJECT",
+        type: "object",
         properties: {
-          title: { type: "STRING" },
-          premise: { type: "STRING" },
-          visual_style: { type: "STRING" },
+          title: { type: "string" },
+          premise: { type: "string" },
+          visual_style: { type: "string" },
           master_identity: {
-            type: "OBJECT",
+            type: "object",
             properties: {
-              talent: { type: "STRING" },
-              product: { type: "STRING" },
+              talent: { type: "string" },
+              product: { type: "string" },
             },
             required: ["talent", "product"],
           },
           shotlist: {
-            type: "ARRAY",
+            type: "array",
             items: {
-              type: "OBJECT",
+              type: "object",
               properties: {
-                angle: { type: "STRING" },
-                location: { type: "STRING" },
-                tech_budget_hack: { type: "STRING" },
-                action: { type: "STRING" },
-                audio: { type: "STRING" },
-                imagePrompt: { type: "STRING" },
+                angle: { type: "string" },
+                location: { type: "string" },
+                tech_budget_hack: { type: "string" },
+                action: { type: "string" },
+                audio: { type: "string" },
+                imagePrompt: { type: "string" },
               },
               required: ["angle", "location", "tech_budget_hack", "action", "audio", "imagePrompt"],
             },
