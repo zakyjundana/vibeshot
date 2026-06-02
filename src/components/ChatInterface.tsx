@@ -59,13 +59,25 @@ interface ChatInterfaceProps {
   accessToken: string;
   lang: "id" | "en";
   workerUrl: string;
-  onGenerateStoryboard: (params: ExtractedParams) => Promise<void>;
+  onGenerateStoryboard: (params: ExtractedParams) => Promise<any>;
   isGeneratingStoryboard: boolean;
   onLoadBrief: (briefId: string) => Promise<void>;
   isDocked?: boolean;
   onBriefUpdated?: (brief: any) => void;
   activeShots?: any[];
   onShotsEdited?: (updatedShots: any[]) => void;
+
+  // Shared state props
+  sessions?: ChatSession[];
+  setSessions?: React.Dispatch<React.SetStateAction<ChatSession[]>>;
+  currentSession?: ChatSession | null;
+  setCurrentSession?: (session: ChatSession | null) => void;
+  messages?: Message[];
+  setMessages?: React.Dispatch<React.SetStateAction<Message[]>>;
+  extracted?: ExtractedParams;
+  setExtracted?: React.Dispatch<React.SetStateAction<ExtractedParams>>;
+  attachedImage?: string | null;
+  setAttachedImage?: (img: string | null) => void;
 }
 
 export function ChatInterface({
@@ -80,17 +92,44 @@ export function ChatInterface({
   onBriefUpdated,
   activeShots,
   onShotsEdited,
+  sessions: propSessions,
+  setSessions: propSetSessions,
+  currentSession: propCurrentSession,
+  setCurrentSession: propSetCurrentSession,
+  messages: propMessages,
+  setMessages: propSetMessages,
+  extracted: propExtracted,
+  setExtracted: propSetExtracted,
+  attachedImage: propAttachedImage,
+  setAttachedImage: propSetAttachedImage,
 }: ChatInterfaceProps) {
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [localSessions, setLocalSessions] = useState<ChatSession[]>([]);
+  const sessions = propSessions !== undefined ? propSessions : localSessions;
+  const setSessions = propSetSessions !== undefined ? propSetSessions : setLocalSessions as any;
+
+  const [localCurrentSession, setLocalCurrentSession] = useState<ChatSession | null>(null);
+  const currentSession = propCurrentSession !== undefined ? propCurrentSession : localCurrentSession;
+  const setCurrentSession = propSetCurrentSession !== undefined ? propSetCurrentSession : setLocalCurrentSession;
+
+  const [localMessages, setLocalMessages] = useState<Message[]>([]);
+  const messages = propMessages !== undefined ? propMessages : localMessages;
+  const setMessages = propSetMessages !== undefined ? propSetMessages : setLocalMessages as any;
+
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [extracted, setExtracted] = useState<ExtractedParams>({});
+
+  const [localExtracted, setLocalExtracted] = useState<ExtractedParams>({});
+  const extracted = propExtracted !== undefined ? propExtracted : localExtracted;
+  const setExtracted = propSetExtracted !== undefined ? propSetExtracted : setLocalExtracted as any;
+
   const [readyToGenerate, setReadyToGenerate] = useState(false);
   const [confirmMessage, setConfirmMessage] = useState("");
-  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+
+  const [localAttachedImage, setLocalAttachedImage] = useState<string | null>(null);
+  const attachedImage = propAttachedImage !== undefined ? propAttachedImage : localAttachedImage;
+  const setAttachedImage = propSetAttachedImage !== undefined ? propSetAttachedImage : setLocalAttachedImage;
+
   const [isDragging, setIsDragging] = useState(false);
   const [isCustomDraft, setIsCustomDraft] = useState(false);
   const [customUserDraft, setCustomUserDraft] = useState("");
@@ -436,11 +475,10 @@ export function ChatInterface({
     }
 
     try {
-      await onGenerateStoryboard(extracted);
-
-      // Update the chat session with the newly generated brief link
-      // Wait: in VibeShotPlatform, we'll return the new cloudBriefId.
-      // So we can save the brief ID into Supabase chat session after generation completes!
+      const briefId = await onGenerateStoryboard(extracted);
+      if (briefId) {
+        await saveSession(messages, extracted, briefId);
+      }
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -457,12 +495,30 @@ export function ChatInterface({
     }
 
     try {
-      await onGenerateStoryboard({
+      const briefId = await onGenerateStoryboard({
         product: extracted.product || "Custom Draft Campaign",
         usp: extracted.usp || "Berdasarkan naskah draf kustom user",
         engineMode: "custom_draft",
         customUserDraft: customUserDraft,
       });
+
+      if (briefId) {
+        await saveSession(
+          [
+            ...messages,
+            {
+              role: "user",
+              content: `Generate storyboard from this draft: ${customUserDraft}`,
+              timestamp: new Date().toISOString(),
+            },
+          ],
+          {
+            product: extracted.product || "Custom Draft Campaign",
+            usp: extracted.usp || "Berdasarkan naskah draf kustom user",
+          },
+          briefId,
+        );
+      }
 
       setCustomUserDraft("");
       setIsCustomDraft(false);
@@ -699,11 +755,11 @@ export function ChatInterface({
               {/* Message Bubble */}
               <div className="flex flex-col gap-1.5">
                 <div
-                  className={`p-3 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap shadow-sm ${m.role === "user" ? "bg-indigo-600 text-white rounded-tr-none" : "bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-tl-none"}`}
+                  className={`p-3 rounded-2xl text-xs leading-relaxed whitespace-pre-wrap shadow-sm select-text ${m.role === "user" ? "bg-indigo-600 text-white rounded-tr-none" : "bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-tl-none"}`}
                 >
                   {m.image && (
-                    <div className="relative aspect-[9/16] w-32 overflow-hidden rounded-lg border border-white/10 shadow-md mb-2">
-                      <img src={m.image} className="h-full w-full object-cover object-center" />
+                    <div className="relative max-w-xs overflow-hidden rounded-lg border border-white/10 shadow-md mb-2">
+                      <img src={m.image} className="h-auto w-full object-contain max-h-[250px]" alt="Attachment" />
                     </div>
                   )}
                   {m.content}
@@ -1151,11 +1207,11 @@ export function ChatInterface({
 
                   <div className="flex flex-col gap-1.5">
                     <div
-                      className={`p-4 rounded-2xl text-xs sm:text-xs leading-relaxed whitespace-pre-wrap shadow-md ${m.role === "user" ? "bg-indigo-600 text-white rounded-tr-none" : "bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-tl-none backdrop-blur-sm"}`}
+                      className={`p-4 rounded-2xl text-xs sm:text-xs leading-relaxed whitespace-pre-wrap shadow-md select-text ${m.role === "user" ? "bg-indigo-600 text-white rounded-tr-none" : "bg-white/80 dark:bg-zinc-900/80 border border-zinc-200/50 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-tl-none backdrop-blur-sm"}`}
                     >
                       {m.image && (
-                        <div className="relative aspect-[9/16] w-36 overflow-hidden rounded-xl border border-white/10 shadow-md mb-2.5">
-                          <img src={m.image} className="h-full w-full object-cover object-center" />
+                        <div className="relative max-w-xs overflow-hidden rounded-xl border border-white/10 shadow-md mb-2.5">
+                          <img src={m.image} className="h-auto w-full object-contain max-h-[300px]" alt="Attachment" />
                         </div>
                       )}
                       {m.content}
