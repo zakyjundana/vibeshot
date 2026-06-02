@@ -1815,6 +1815,7 @@ export function VibeShotPlatform() {
   >("profile");
 
   const [profile, setProfile] = useState<{ tier: string; credits: number } | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   const fetchProfile = async () => {
     if (!user) {
@@ -1837,6 +1838,10 @@ export function VibeShotPlatform() {
       console.error("Error fetching profile:", err);
     }
   };
+
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     fetchProfile();
@@ -1955,6 +1960,9 @@ export function VibeShotPlatform() {
           if (savedModel) setImageModel(savedModel);
           setHasResult(true);
           setView("app");
+        } else {
+          // Jika belum ada data brief, pastikan view diarahkan ke landing page utama
+          setView("landing");
         }
       } catch {
         localStorage.clear();
@@ -3006,13 +3014,16 @@ export function VibeShotPlatform() {
   const inputStyle =
     "w-full rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:border-zinc-400 dark:focus:border-zinc-500 focus:outline-none transition-colors";
   const hybridActiveStyle =
-    activeEngine === "hybrid"
-      ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white"
-      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600";
-  const cloneActiveStyle =
-    activeEngine === "clone"
-      ? "bg-white dark:bg-zinc-800 shadow-sm text-zinc-950 dark:text-white"
-      : "text-zinc-400 dark:text-zinc-500 hover:text-zinc-600";
+    activeEngine =  if (!isHydrated) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] text-zinc-400 font-mono text-xs flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+          <span>Booting VibeShot Studio Workspace...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (view === "landing")
     return (
@@ -3043,8 +3054,8 @@ export function VibeShotPlatform() {
               <div className="flex items-center gap-3 animate-fade-in">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-800 text-[10px] text-zinc-655 dark:text-zinc-350 font-mono transition-all cursor-pointer shadow-sm">
-                      <User className="h-2.5 w-2.5 text-zinc-450" />
+                    <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-300 font-mono transition-all cursor-pointer shadow-sm">
+                      <User className="h-2.5 w-2.5 text-zinc-400" />
                       <span>{user.email}</span>
                     </button>
                   </DropdownMenuTrigger>
@@ -3155,7 +3166,7 @@ export function VibeShotPlatform() {
             {user ? (
               <button
                 onClick={() => setView("app")}
-                className="inline-flex items-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 font-medium text-xs px-5 py-3 rounded-lg shadow hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all transform hover:-translate-y-0.5 cursor-pointer"
+                className="inline-flex items-center gap-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-955 font-medium text-xs px-5 py-3 rounded-lg shadow hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all transform hover:-translate-y-0.5 cursor-pointer"
               >
                 Launch Studio Workspace <ArrowRight className="h-3.5 w-3.5" />
               </button>
@@ -3172,7 +3183,7 @@ export function VibeShotPlatform() {
                 </button>
                 <button
                   onClick={() => setView("app")}
-                  className="text-xs font-mono font-semibold text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors py-2 px-3 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 rounded-lg cursor-pointer"
+                  className="text-xs font-mono font-semibold text-zinc-450 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors py-2 px-3 border border-transparent hover:border-zinc-200 dark:hover:border-zinc-800 rounded-lg cursor-pointer"
                 >
                   {t.guestMode}
                 </button>
@@ -3222,7 +3233,7 @@ export function VibeShotPlatform() {
             >
               V
             </button>
-            <span className="text-xs text-zinc-400 dark:text-zinc-600 font-mono">/</span>
+            <span className="text-xs text-zinc-400 dark:text-zinc-650 font-mono">/</span>
             <span className="text-xs font-medium tracking-tight">vibeshot.studio/workspace</span>
           </div>
           <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
@@ -3246,7 +3257,7 @@ export function VibeShotPlatform() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <button className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-50 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-800 text-[10px] text-zinc-600 dark:text-zinc-400 font-mono transition-all cursor-pointer shadow-sm">
-                        <User className="h-2.5 w-2.5 text-zinc-450" />
+                        <User className="h-2.5 w-2.5 text-zinc-400" />
                         <span>{user.email}</span>
                       </button>
                     </DropdownMenuTrigger>
