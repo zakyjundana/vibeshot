@@ -57,6 +57,7 @@ To monetize premium storyboard renders, Vibeshot supports both local Indonesian 
 ## 🌐 Web3 Intelligence Hub
 
 A premium, glassmorphic analytics sub-dashboard (`src/routes/web3-hub.tsx`) that consolidates:
+
 - **Solana Wallet Connection**: Built-in adapter displaying connection status, public keys, and network information.
 - **Campaign Document Adapter**: Interactive viewer displaying the live JSON/BSON schema translations optimized for the Google Cloud Agent Builder and MongoDB MCP Server.
 - **Billing Telemetry**: Real-time feedback for Mayar payments and Stripe invoice details.
@@ -74,4 +75,3 @@ A premium, glassmorphic analytics sub-dashboard (`src/routes/web3-hub.tsx`) that
 
 - **Service (`backend/socialScraper.ts`)**: A standalone Bun/Express HTTP service leveraging RapidAPI's SMVD host.
 - **Extraction**: Efficiently scrapers high-fidelity TikTok and Instagram Reels metadata (video URLs, caption, views, likes, comments count) to guide video brief strategies with real-world viral telemetry.
-
